@@ -49,7 +49,7 @@ npm run dev
 Lalu buka di browser: [http://localhost:3000](http://localhost:3000)
 
 **Backend Repository:**
-👉 [https://github.com/MuhammadHadistRifannan/SimajaAPI.git](https://github.com/MuhammadHadistRifannan/SimajaAPI.git)
+👉 [https://github.com/MuhammadHadistRifannan/AngkaraBE.git](https://github.com/MuhammadHadistRifannan/AngkaraBE.git)
 
 ---
 
