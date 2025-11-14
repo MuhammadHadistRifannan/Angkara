@@ -46,7 +46,7 @@ npm install
 npm run dev
 ```
 
-Lalu buka di browser: [http://localhost:3000](http://localhost:3000)
+Lalu buka di browser: [http://localhost:5173](http://localhost:5173)
 
 **Backend Repository:**
 👉 [https://github.com/MuhammadHadistRifannan/AngkaraBE.git](https://github.com/MuhammadHadistRifannan/AngkaraBE.git)
