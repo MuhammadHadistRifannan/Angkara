@@ -26,16 +26,18 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/ backdrop-blur-md border-b border-white/5">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20        ">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="bg-gradient-to-br from-primary to-accent p-2 rounded-lg">
-              <Anchor className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-accent bg-clip-text text-transparent">
-              Angkara
-            </span>
-          </div>
+          <div className="flex items-center ">
+    {/* Hapus kelas background untuk membuat div ini transparan */}
+    <div className="p-2 rounded-lg"> 
+        <img src="logo.png" className="w-30 h-20"></img>
+    </div>
+    <span className="text-xl font-bold bg-gradient-to-r from-blue-500 to-accent bg-clip-text text-transparent">
+  Angkara
+</span>
+
+</div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">

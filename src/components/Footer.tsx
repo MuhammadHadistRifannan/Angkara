@@ -11,7 +11,7 @@ const Footer = () => {
               <div className="bg-white p-2 rounded-lg">
                 <Anchor className="h-6 w-6 text-primary" />
               </div>
-              <span className="text-xl font-bold">SeaBook</span>
+              <span className="text-xl font-bold">Angkara</span>
             </div>
             <p className="text-white/80 mb-4">
               Platform booking kapal wisata terpercaya untuk eksplorasi Nusakambangan dan sekitarnya.
@@ -65,14 +65,14 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-5 w-5 shrink-0" />
-                <span>info@seabook.id</span>
+                <span>info@Angkara.id</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-          <p>&copy; 2025 SeaBook App. Semua hak cipta dilindungi.</p>
+          <p>&copy; 2025 Angkara App. Semua hak cipta dilindungi.</p>
         </div>
       </div>
     </footer>

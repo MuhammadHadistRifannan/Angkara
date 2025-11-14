@@ -70,7 +70,7 @@ const Auth = () => {
               <Anchor className="h-8 w-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl">SeaBook</CardTitle>
+          <CardTitle className="text-2xl">Angkara</CardTitle>
           <CardDescription>Platform booking kapal wisata terpercaya</CardDescription>
         </CardHeader>
         <CardContent>
