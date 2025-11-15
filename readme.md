@@ -91,6 +91,8 @@ Laporan lengkap aktivitas kapal, data wisatawan, dan pendapatan operator untuk t
 * ✅ Tampilan **dashboard operator** dan **pencarian kapal**
 * 🚧 Tahap berikutnya: optimasi sistem pembayaran dan notifikasi cuaca BMKG
 * 🚧 Tahap berikutnya: integrasi dengan backend api asp .net
+* 🚧 Tahap berikutnya: mengembangkan fitur chat realtime dengan integrasi ai
+
 
 ---
 
