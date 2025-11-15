@@ -76,9 +76,6 @@ Sistem DP 30% via e-wallet dengan escrow system agar transaksi lebih aman.
 - ⭐ **Rating & Review Terverifikasi**
 Ulasan pasca-perjalanan yang dikonfirmasi dengan GPS dan foto nyata.
 
-- 💬 **Chat Real-time Multibahasa**
-Komunikasi langsung dengan operator, dilengkapi auto-translate untuk turis asing.
-
 - 🏝️ **Paket Wisata Fleksibel**
 Pilihan trip siap pakai seperti keliling Nusakambangan, sunset tour, atau edukasi bahari.
 

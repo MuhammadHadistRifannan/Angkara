@@ -66,7 +66,8 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-br from-primary to-accent p-3 rounded-xl">
+            <div>
+              <img src="logo.png" alt="logo" />
               <Anchor className="h-8 w-8 text-white" />
             </div>
           </div>
@@ -102,7 +103,7 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                   {loading ? "Memproses..." : "Masuk"}
                 </Button>
               </form>
