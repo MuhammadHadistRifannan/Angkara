@@ -8,10 +8,9 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-white p-2 rounded-lg">
-                <Anchor className="h-6 w-6 text-primary" />
+              <div className="p-2 rounded-lg items-center justify-center">
+                <img src="logo.png" width="100px" ></img>
               </div>
-              <span className="text-xl font-bold">Angkara</span>
             </div>
             <p className="text-white/80 mb-4">
               Platform booking kapal wisata terpercaya untuk eksplorasi Nusakambangan dan sekitarnya.
