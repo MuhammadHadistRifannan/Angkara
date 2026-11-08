@@ -6,7 +6,7 @@ import BoatListings from "@/components/BoatListings";
 import Footer from "@/components/Footer";
 import FareCalculator from "@/components/FareCalculator";
 import WeatherWidget from "@/components/WeatherWidget";
-import ChatWidget from "@/components/ChatWidget";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 const Index = () => {
   return (
@@ -28,7 +28,7 @@ const Index = () => {
       </section>
       
       <Footer />
-      <ChatWidget />
+      <AssistantWidget />
     </div>
   );
 };
