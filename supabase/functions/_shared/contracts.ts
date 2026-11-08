@@ -1,4 +1,5 @@
-import type { HourSample, Level } from "./safety/rules";
+import type { z } from "zod";
+import type { BoatType, HourSample, Level } from "./safety/rules";
 import type { CacheDb } from "./cache";
 
 export type MarineSource = "official" | "model" | "unavailable";
@@ -25,4 +26,101 @@ export interface MarineDeps {
   fetch: typeof fetch;
   db: CacheDb;
   now: () => Date;
+}
+
+// -------------------------------------------------------------
+// Kartu Antarmuka Asisten (Assistant Cards)
+// -------------------------------------------------------------
+
+export interface BoatOptionsCard {
+  type: "boat_options";
+  boats: Array<{
+    id: string;
+    name: string;
+    type: BoatType;
+    capacity: number;
+    basePrice: number;
+    location: string;
+    description?: string;
+    imageUrl?: string;
+  }>;
+}
+
+export interface WeatherVerdictCard {
+  type: "weather_verdict";
+  pointId: string;
+  pointName: string;
+  date: string;
+  level: Level;
+  reasons: string[];
+  source: MarineSource;
+  fetched_at: string;
+}
+
+export interface SafestWindowCard {
+  type: "safest_window";
+  pointId: string;
+  pointName: string;
+  days: Array<{
+    date: string;
+    level: Level;
+    worstHour: string | null;
+    reasons: string[];
+  }>;
+}
+
+export interface BookingDraftCard {
+  type: "booking_draft";
+  boatId: string;
+  boatName: string;
+  date: string;
+  time: string;
+  passengers: number;
+  totalPrice: number;
+  dpPrice: number;
+  verdict: Level;
+  verdictReasons: string[];
+  source: MarineSource;
+  fetched_at: string;
+}
+
+export type AssistantCard =
+  | BoatOptionsCard
+  | WeatherVerdictCard
+  | SafestWindowCard
+  | BookingDraftCard;
+
+// -------------------------------------------------------------
+// Kontrak Tool Agen
+// -------------------------------------------------------------
+
+export type ToolResult<T> =
+  | { ok: true; data: T; card?: AssistantCard }
+  | { ok: false; reason: string };
+
+export interface SupabaseLike {
+  from: (table: string) => {
+    select: (columns: string) => {
+      eq: (column: string, val: unknown) => {
+        eq?: (column: string, val: unknown) => unknown;
+        maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
+      };
+      gte?: (column: string, val: unknown) => unknown;
+      order?: (column: string, opts?: unknown) => unknown;
+    };
+  };
+  rpc: (func: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+}
+
+export interface ToolCtx {
+  supabase: SupabaseLike;
+  marine: (pointId: string) => Promise<MarineResponse>;
+  now: () => Date;
+}
+
+export interface ToolDef<I, O> {
+  name: string;
+  description: string;
+  schema: z.ZodType<I>;
+  run(input: I, ctx: ToolCtx): Promise<ToolResult<O>>;
 }

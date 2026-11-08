@@ -2,62 +2,10 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, CheckCircle, AlertCircle, Shield } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import permitData from "../../supabase/functions/_shared/data/permits.json";
 
 const PermitInfo = () => {
-  const permits = [
-    {
-      title: "Izin Operasional KSOP",
-      required: true,
-      description: "Surat izin operasional dari Kantor Kesyahbandaran dan Otoritas Pelabuhan",
-      documents: [
-        "Surat Permohonan Izin",
-        "Akta Pendirian Perusahaan",
-        "NPWP Perusahaan",
-        "Sertifikat Kelaikan Kapal",
-        "Pas Foto Direktur 4x6 (2 lembar)",
-      ],
-    },
-    {
-      title: "Sertifikat Keselamatan Kapal",
-      required: true,
-      description: "Dokumen yang menyatakan kapal layak dan aman untuk beroperasi",
-      documents: [
-        "Hasil Inspeksi Teknis Kapal",
-        "Sertifikat Stabilitas",
-        "Alat Keselamatan Lengkap",
-        "Lifebuoy dan Life Jacket sesuai kapasitas",
-      ],
-    },
-    {
-      title: "Izin Trayek",
-      required: true,
-      description: "Penetapan rute perjalanan yang diizinkan untuk beroperasi",
-      documents: [
-        "Peta Rute Perjalanan",
-        "Jadwal Operasional",
-        "Persetujuan KSOP",
-      ],
-    },
-    {
-      title: "Asuransi Penumpang",
-      required: true,
-      description: "Perlindungan asuransi untuk penumpang selama perjalanan",
-      documents: [
-        "Polis Asuransi",
-        "Bukti Pembayaran Premi",
-        "Coverage Details",
-      ],
-    },
-  ];
-
-  const requirements = [
-    "Operator harus memiliki badan usaha yang sah (CV/PT)",
-    "Kapal harus lolos uji kelayakan dari KSOP",
-    "Nahkoda dan ABK memiliki sertifikat kompetensi",
-    "Alat keselamatan lengkap dan sesuai standar",
-    "Asuransi penumpang aktif dan valid",
-    "Laporan berkala kepada KSOP",
-  ];
+  const { permits, requirements } = permitData;
 
   return (
     <div className="min-h-screen bg-background">
