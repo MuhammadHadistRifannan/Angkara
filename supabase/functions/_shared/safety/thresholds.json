@@ -1,0 +1,26 @@
+{
+  "boats": {
+    "speedboat": {
+      "maxWaveM": 1.25,
+      "maxWindKn": 15.0,
+      "source": "Imbauan Keselamatan Pelayaran BMKG untuk perahu nelayan (angin > 15 knot, gelombang > 1,25 m)"
+    },
+    "kapal_kayu": {
+      "maxWaveM": 1.25,
+      "maxWindKn": 15.0,
+      "source": "Imbauan Keselamatan Pelayaran BMKG untuk perahu nelayan (angin > 15 knot, gelombang > 1,25 m)"
+    }
+  },
+  "rain": {
+    "waspadaMmH": 5.0,
+    "tundaMmH": 20.0,
+    "sources": {
+      "waspadaMmH": "Heuristik produk Angkara sejalan dengan batas bawah hujan sedang BMKG (5,0 mm/jam)",
+      "tundaMmH": "Batas bawah klasifikasi Hujan Sangat Lebat BMKG (20,0 mm/jam) berdasarkan Peraturan Kepala BMKG No. KEP. 009 Tahun 2010 dan SOP BMKG No. SOP/025/KB/VIII/2023 Lampiran (URL: https://jdih.bmkg.go.id/storage/common/dokumen/2023sopbmkg025.pdf)"
+    }
+  },
+  "warningRatio": 0.8,
+  "sources": {
+    "warningRatio": "Heuristik produk Angkara (80% batas aman kapal)"
+  }
+}
