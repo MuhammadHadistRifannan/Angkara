@@ -124,3 +124,47 @@ export interface ToolDef<I, O> {
   schema: z.ZodType<I>;
   run(input: I, ctx: ToolCtx): Promise<ToolResult<O>>;
 }
+
+// -------------------------------------------------------------
+// Agent & LLM Chat Contracts (Task 7)
+// -------------------------------------------------------------
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface AssistantReply {
+  text: string;
+  cards: AssistantCard[];
+}
+
+export type LlmTurn =
+  | { role: "user"; content: string }
+  | { role: "assistant"; content?: string; toolCalls?: Array<{ name: string; args: unknown }> }
+  | { role: "tool"; name: string; response: unknown };
+
+export interface ToolSpec {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export type LlmResult =
+  | { kind: "text"; text: string }
+  | { kind: "tool_calls"; calls: Array<{ name: string; args: unknown }> };
+
+export interface LlmClient {
+  generate(req: { system: string; messages: LlmTurn[]; tools: ToolSpec[] }): Promise<LlmResult>;
+}
+
+export interface ChatDeps {
+  llm: LlmClient;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tools: ToolDef<any, any>[];
+  ctx: ToolCtx;
+  now: () => Date;
+  clientIp?: string;
+  supabase?: SupabaseLike;
+}
+
