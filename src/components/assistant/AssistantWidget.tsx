@@ -40,6 +40,22 @@ export const AssistantWidget: React.FC = () => {
     }
   }, []);
 
+  // Dengarkan event eksternal "open-assistant" (misal dari tombol "Tanya Juru Mudi" di peta)
+  useEffect(() => {
+    const onOpenEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ prompt?: string }>;
+      setIsOpen(true);
+      if (customEvent.detail?.prompt) {
+        handleSend(customEvent.detail.prompt);
+      }
+    };
+
+    window.addEventListener("open-assistant", onOpenEvent);
+    return () => {
+      window.removeEventListener("open-assistant", onOpenEvent);
+    };
+  }, [messages, isLoading]);
+
   // Auto-scroll ke bawah saat ada pesan baru
   useEffect(() => {
     if (scrollRef.current) {

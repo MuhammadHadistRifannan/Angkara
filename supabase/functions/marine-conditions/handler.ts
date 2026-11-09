@@ -9,6 +9,7 @@ import { fetchBmkg } from "../_shared/weather/bmkg";
 import { fetchWaves, fetchOpenMeteoForecast } from "../_shared/weather/openmeteo";
 import { mergeSamples } from "../_shared/weather/merge";
 import { evaluateDay } from "../_shared/safety/rules";
+import thresholdsData from "../_shared/safety/thresholds.json";
 
 export class BadRequest extends Error {
   readonly status = 400;
@@ -192,6 +193,12 @@ export async function handleMarine(
         },
       ],
       attribution,
+      thresholds: {
+        maxWaveM: thresholdsData.boats.speedboat.maxWaveM,
+        maxWindKn: thresholdsData.boats.speedboat.maxWindKn,
+        waspadaMmH: thresholdsData.rain.waspadaMmH,
+        tundaMmH: thresholdsData.rain.tundaMmH,
+      },
     };
 
     // Simpan ke cache
@@ -233,6 +240,12 @@ export async function handleMarine(
         },
       ],
       attribution: defaultAttribution,
+      thresholds: {
+        maxWaveM: thresholdsData.boats.speedboat.maxWaveM,
+        maxWindKn: thresholdsData.boats.speedboat.maxWindKn,
+        waspadaMmH: thresholdsData.rain.waspadaMmH,
+        tundaMmH: thresholdsData.rain.tundaMmH,
+      },
     };
   }
 }

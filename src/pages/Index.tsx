@@ -5,7 +5,7 @@ import HowItWorks from "@/components/HowItWorks";
 import BoatListings from "@/components/BoatListings";
 import Footer from "@/components/Footer";
 import FareCalculator from "@/components/FareCalculator";
-import WeatherWidget from "@/components/WeatherWidget";
+import { WeatherMapPanel } from "@/components/weather/WeatherMapPanel";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 const Index = () => {
@@ -22,7 +22,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             <FareCalculator />
-            <WeatherWidget />
+            <WeatherMapPanel />
           </div>
         </div>
       </section>

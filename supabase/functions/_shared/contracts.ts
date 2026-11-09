@@ -16,6 +16,12 @@ export interface MarineResponse {
   stale: boolean;
   series: MarineSeries[];
   attribution: string[];
+  thresholds?: {
+    maxWaveM: number;
+    maxWindKn: number;
+    waspadaMmH: number;
+    tundaMmH: number;
+  };
 }
 
 export type MarineRequest =
