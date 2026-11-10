@@ -8,6 +8,8 @@ import { Anchor } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { signInWithGoogle } from "@/lib/auth";
+import googleLogo from "@/assets/google.svg";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -61,6 +63,16 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+    }
+    // Jika tidak error, Supabase akan mengarahkan browser ke alur login Google
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
       <Card className="w-full max-w-md">
@@ -106,6 +118,26 @@ const Auth = () => {
                 <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                   {loading ? "Memproses..." : "Masuk"}
                 </Button>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">atau</span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2"
+                  disabled={loading}
+                  onClick={handleGoogleSignIn}
+                >
+                  <img src={googleLogo} alt="" className="h-4 w-4" />
+                  <span>{loading ? "Memproses..." : "Masuk dengan Google"}</span>
+                </Button>
               </form>
             </TabsContent>
             
@@ -144,6 +176,26 @@ const Auth = () => {
                 </div>
                 <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                   {loading ? "Memproses..." : "Daftar Sekarang"}
+                </Button>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">atau</span>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2"
+                  disabled={loading}
+                  onClick={handleGoogleSignIn}
+                >
+                  <img src={googleLogo} alt="" className="h-4 w-4" />
+                  <span>{loading ? "Memproses..." : "Daftar dengan Google"}</span>
                 </Button>
               </form>
             </TabsContent>
