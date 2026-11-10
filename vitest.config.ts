@@ -4,7 +4,7 @@ import path from "path";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "supabase/functions/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "supabase/functions/**/*.test.ts", "scripts/**/*.test.ts"],
     setupFiles: ["./src/test/setup.ts"],
     poolOptions: {
       forks: {
