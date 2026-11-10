@@ -3,6 +3,9 @@
 **Platform Digital Angkutan Segara – Solusi Cerdas Ekonomi Laut Nusantara**
 *“Menghubungkan laut, nelayan, dan wisatawan dalam satu gerakan.”*
 
+[![CI](https://github.com/MuhammadHadistRifannan/Angkara/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhammadHadistRifannan/Angkara/actions/workflows/ci.yml)
+[![Deploy](https://github.com/MuhammadHadistRifannan/Angkara/actions/workflows/deploy.yml/badge.svg)](https://github.com/MuhammadHadistRifannan/Angkara/actions/workflows/deploy.yml)
+
 ---
 
 ## 📝 Deskripsi Singkat
