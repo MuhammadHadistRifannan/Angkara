@@ -90,7 +90,7 @@ async function fetchWithRetry(
 
       if (res.status === 429 && attempt === 1) {
         const retryHeader = res.headers.get("retry-after");
-        let waitSec = 10;
+        let waitSec = 15;
         if (retryHeader) {
           const parsed = parseInt(retryHeader, 10);
           if (!isNaN(parsed) && parsed > 0) {
@@ -187,9 +187,10 @@ async function main(): Promise<void> {
       const tc = cases[i];
       const startMs = Date.now();
 
-      // Jeda minimal 8 detik antar pemanggilan agar tidak menabrak batas rate limit 8 req/menit
+      // Jeda antar pemanggilan agar tidak menabrak batas rate limit 8 req/menit atau RPM Gemini
+      const caseDelayMs = parseInt(process.env.EVAL_DELAY_MS || "12000", 10) || 12000;
       if (i > 0 || iteration > 1) {
-        await sleep(8000);
+        await sleep(caseDelayMs);
       }
 
       // 1. Cek dependensi fixture jika ditentukan

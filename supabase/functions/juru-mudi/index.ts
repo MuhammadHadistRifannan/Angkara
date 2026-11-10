@@ -31,7 +31,7 @@ if (typeof Deno !== "undefined" && Deno.serve) {
         );
       }
 
-      const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.0-flash";
+      const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
       const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
       const supabase = createClient(supabaseUrl, supabaseServiceKey);

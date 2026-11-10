@@ -4,14 +4,18 @@ import { UpstreamError } from "../_shared/weather/bmkg.ts";
 interface GeminiFunctionCall {
   name: string;
   args?: Record<string, unknown>;
+  id?: string;
 }
 
 interface GeminiPart {
   text?: string;
+  thought?: boolean;
+  thoughtSignature?: string;
   functionCall?: GeminiFunctionCall;
   functionResponse?: {
     name: string;
     response: { output: unknown };
+    id?: string;
   };
 }
 
@@ -62,12 +66,19 @@ export function createGeminiClient(
             parts.push({ text: turn.content });
           }
           if (turn.toolCalls && turn.toolCalls.length > 0) {
-            for (const call of turn.toolCalls) {
+            for (const call of turn.toolCalls as Array<{
+              name: string;
+              args?: Record<string, unknown>;
+              id?: string;
+              thoughtSignature?: string;
+            }>) {
               parts.push({
                 functionCall: {
                   name: call.name,
-                  args: (call.args as Record<string, unknown>) || {},
+                  args: call.args || {},
+                  id: call.id,
                 },
+                thoughtSignature: call.thoughtSignature,
               });
             }
           }
@@ -76,7 +87,7 @@ export function createGeminiClient(
           }
         } else if (turn.role === "tool") {
           contents.push({
-            role: "function",
+            role: "user",
             parts: [
               {
                 functionResponse: {
@@ -142,7 +153,12 @@ export function createGeminiClient(
           const candidate = data.candidates?.[0];
           const parts = candidate?.content?.parts || [];
 
-          const toolCalls: Array<{ name: string; args: unknown }> = [];
+          const toolCalls: Array<{
+            name: string;
+            args: unknown;
+            id?: string;
+            thoughtSignature?: string;
+          }> = [];
           let text = "";
 
           for (const part of parts) {
@@ -150,6 +166,8 @@ export function createGeminiClient(
               toolCalls.push({
                 name: part.functionCall.name,
                 args: part.functionCall.args || {},
+                id: part.functionCall.id,
+                thoughtSignature: part.thoughtSignature,
               });
             }
             if (part.text) {

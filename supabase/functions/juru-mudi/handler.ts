@@ -74,9 +74,16 @@ export async function handleChat(
     };
   } catch (err: unknown) {
     if (err instanceof UpstreamError) {
+      if (err.status === 429) {
+        return {
+          status: 429,
+          body: { error: "Batas permintaan ke Gemini terlampaui. Silakan coba sesaat lagi." },
+        };
+      }
+      console.error("Upstream error in agent:", err.message);
       return {
         status: 502,
-        body: { error: "Asisten sedang tidak tersedia. Silakan coba beberapa saat lagi." },
+        body: { error: `Asisten sedang tidak tersedia. (${err.message})` },
       };
     }
 

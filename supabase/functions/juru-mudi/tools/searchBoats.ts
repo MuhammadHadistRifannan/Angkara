@@ -5,6 +5,7 @@ export const searchBoatsSchema = z.object({
   passengers: z.number().int().positive().optional(),
   boatType: z.enum(["speedboat", "kapal_kayu"]).optional(),
   location: z.string().optional(),
+  name: z.string().optional(),
 });
 
 export type SearchBoatsInput = z.infer<typeof searchBoatsSchema>;
@@ -36,7 +37,7 @@ interface BoatRecord {
 
 export const searchBoatsTool: ToolDef<SearchBoatsInput, SearchBoatsOutput> = {
   name: "search_boats",
-  description: "Mencari daftar kapal wisata yang tersedia berdasarkan kapasitas penumpang, jenis kapal, dan lokasi keberangkatan.",
+  description: "Mencari daftar kapal wisata yang tersedia berdasarkan kapasitas penumpang, jenis kapal, lokasi keberangkatan, atau nama kapal untuk mendapatkan ID kapal (UUID), tarif, kapasitas, dan lokasi.",
   schema: searchBoatsSchema,
   async run(input: SearchBoatsInput, ctx: ToolCtx): Promise<ToolResult<SearchBoatsOutput>> {
     const parsed = searchBoatsSchema.safeParse(input);
@@ -62,8 +63,15 @@ export const searchBoatsTool: ToolDef<SearchBoatsInput, SearchBoatsOutput> = {
       if (parsed.data.boatType !== undefined && typeof query.eq === "function") {
         query = query.eq("type", parsed.data.boatType) as Record<string, unknown>;
       }
-      if (parsed.data.location !== undefined && typeof query.eq === "function") {
-        query = query.eq("location", parsed.data.location) as Record<string, unknown>;
+      if (parsed.data.name !== undefined && typeof query.ilike === "function") {
+        query = query.ilike("name", `%${parsed.data.name}%`) as Record<string, unknown>;
+      }
+      if (parsed.data.location !== undefined) {
+        if (typeof query.ilike === "function") {
+          query = query.ilike("location", `%${parsed.data.location}%`) as Record<string, unknown>;
+        } else if (typeof query.eq === "function") {
+          query = query.eq("location", parsed.data.location) as Record<string, unknown>;
+        }
       }
 
       if (typeof query.order === "function") {

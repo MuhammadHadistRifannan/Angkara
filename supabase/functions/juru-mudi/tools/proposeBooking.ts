@@ -5,7 +5,7 @@ import { findPointByBoatLocation } from "../../_shared/departurePoints.ts";
 import { isPastWib } from "./dateUtils.ts";
 
 export const proposeBookingSchema = z.object({
-  boatId: z.string().uuid("ID kapal (boatId) harus berupa UUID yang valid"),
+  boatId: z.string().min(1, "ID atau nama kapal (boatId) harus diisi"),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD"),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Format waktu harus HH:MM"),
   passengers: z.number().int().positive("Jumlah penumpang harus lebih dari 0"),
@@ -60,13 +60,17 @@ export const proposeBookingTool: ToolDef<ProposeBookingInput, ProposeBookingOutp
           eq: (col: string, val: unknown) => {
             maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
           };
+          ilike?: (col: string, val: unknown) => {
+            maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
+          };
         };
       };
 
-      const { data: boatData, error: boatErr } = await fromBoats
-        .select("id, name, type, capacity, base_price, location, description, available")
-        .eq("id", parsed.data.boatId)
-        .maybeSingle();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed.data.boatId);
+      const query = fromBoats.select("id, name, type, capacity, base_price, location, description, available");
+      const { data: boatData, error: boatErr } = isUuid || !query.ilike
+        ? await query.eq("id", parsed.data.boatId).maybeSingle()
+        : await query.ilike("name", `%${parsed.data.boatId}%`).maybeSingle();
 
       if (boatErr) {
         return { ok: false, reason: `Gagal mengambil data kapal: ${boatErr.message}` };

@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts.ts";
 
 export const quoteFareSchema = z.object({
-  boatId: z.string().uuid("ID kapal (boatId) harus berupa UUID yang valid"),
+  boatId: z.string().min(1, "ID atau nama kapal (boatId) harus diisi"),
   passengers: z.number().int().positive("Jumlah penumpang harus lebih dari 0"),
 });
 
@@ -42,13 +42,17 @@ export const quoteFareTool: ToolDef<QuoteFareInput, QuoteFareOutput> = {
           eq: (col: string, val: unknown) => {
             maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
           };
+          ilike?: (col: string, val: unknown) => {
+            maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
+          };
         };
       };
 
-      const { data, error } = await fromBoats
-        .select("id, name, capacity, base_price, available")
-        .eq("id", parsed.data.boatId)
-        .maybeSingle();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed.data.boatId);
+      const query = fromBoats.select("id, name, capacity, base_price, available");
+      const { data, error } = isUuid || !query.ilike
+        ? await query.eq("id", parsed.data.boatId).maybeSingle()
+        : await query.ilike("name", `%${parsed.data.boatId}%`).maybeSingle();
 
       if (error) {
         return { ok: false, reason: `Gagal mengambil data kapal: ${error.message}` };
