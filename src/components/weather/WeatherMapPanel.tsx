@@ -117,7 +117,13 @@ export const WeatherMapPanel: React.FC = () => {
   const selectedData = marineData[selectedPoint.id];
   const selectedSeries = selectedData?.series?.find((s) => s.pointId === selectedPoint.id) || selectedData?.series?.[0];
   const todayVerdict = selectedSeries?.verdicts?.[0];
-  const currentLevel: Level = todayVerdict?.level || "waspada";
+
+  // Aturan krusial: Jika sumber unavailable, status TIDAK PERNAH "aman"
+  const rawLevel: Level = todayVerdict?.level || "waspada";
+  const currentLevel: Level =
+    selectedData?.source === "unavailable" && rawLevel === "aman"
+      ? "waspada"
+      : rawLevel;
 
   const handleAskJuruMudi = () => {
     window.dispatchEvent(
@@ -177,136 +183,156 @@ export const WeatherMapPanel: React.FC = () => {
       </CardHeader>
 
       <CardContent className="p-4 space-y-4">
-        {/* Peringatan jika data tertunda atau sumber gagal */}
-        {selectedData?.stale && (
+        {/* Peringatan jika sumber cuaca unavailable */}
+        {selectedData?.source === "unavailable" && (
+          <Alert variant="destructive" className="py-2.5 text-xs">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <AlertTitle className="text-xs font-semibold">Sumber Data Cuaca Tidak Tersedia</AlertTitle>
+            <AlertDescription className="text-[11px] mt-0.5">
+              Prakiraan cuaca tidak dapat dijangkau dari sumber resmi maupun model. Sesuai protokol keselamatan maritim, status tidak dapat dinyatakan aman dan ditetapkan <strong>Waspada</strong>.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Peringatan jika data tertunda (stale) */}
+        {selectedData?.stale && selectedData?.source !== "unavailable" && (
           <Alert variant="default" className="py-2.5 border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-xs">
             <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-            <AlertTitle className="text-xs font-semibold">Pemberitahuan Data Cuaca</AlertTitle>
+            <AlertTitle className="text-xs font-semibold">Pemberitahuan Data Cuaca Tertunda</AlertTitle>
             <AlertDescription className="text-[11px] mt-0.5">
               Pembaruan langsung dari stasiun cuaca sedang tertunda. Menampilkan data cache terakhir yang tersimpan.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Kontainer Peta Leaflet */}
-        <div className="relative w-full h-72 sm:h-80 rounded-lg overflow-hidden border shadow-inner">
-          <MapContainer
-            center={[CILACAP_CENTER.lat, CILACAP_CENTER.lon]}
-            zoom={12}
-            scrollWheelZoom={false}
-            className="w-full h-full z-0"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-
-            {/* Marker Pengunjung */}
-            {userLoc.status === "granted" && (
-              <Marker position={[userLoc.lat, userLoc.lon]} icon={createUserIcon()}>
-                <Popup>
-                  <div className="text-xs font-semibold">Lokasi Pengunjung (Perkiraan)</div>
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Marker Titik Keberangkatan */}
-            {DEPARTURE_POINTS.map((point) => {
-              const data = marineData[point.id];
-              const series = data?.series?.find((s) => s.pointId === point.id) || data?.series?.[0];
-              const level: Level = series?.verdicts?.[0]?.level || "waspada";
-
-              return (
-                <Marker
-                  key={point.id}
-                  position={[point.lat, point.lon]}
-                  icon={createPointIcon(point.name, level)}
-                  eventHandlers={{
-                    click: () => setSelectedPointId(point.id),
-                  }}
-                >
-                  <Popup>
-                    <div className="p-1 space-y-1 text-xs">
-                      <div className="font-bold">{point.name}</div>
-                      <div>Status: <span className="capitalize font-semibold">{level}</span></div>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPointId(point.id)}
-                        className="text-primary hover:underline text-[11px] block mt-1"
-                      >
-                        Lihat Grafik Detail &rarr;
-                      </button>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
-        </div>
-
-        {/* Tab / Pemilih Titik Keberangkatan */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
-          <div className="flex items-center gap-1.5">
-            {DEPARTURE_POINTS.map((point) => (
-              <Button
-                key={point.id}
-                size="sm"
-                variant={selectedPointId === point.id ? "default" : "outline"}
-                className="text-xs h-8"
-                onClick={() => setSelectedPointId(point.id)}
-              >
-                <MapPin className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
-                <span>{point.name}</span>
-              </Button>
-            ))}
-          </div>
-
-          <Button
-            size="sm"
-            variant="hero"
-            className="text-xs h-8"
-            onClick={handleAskJuruMudi}
-          >
-            <MessageSquare className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-            <span>Tanya Juru Mudi</span>
-          </Button>
-        </div>
-
-        {/* Ringkasan & Grafik Titik Terpilih */}
         {isLoading ? (
-          <div className="space-y-3 py-4">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-48 w-full" />
+          <div className="space-y-3 py-2">
+            <Skeleton className="w-full h-72 sm:h-80 rounded-lg" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-28" />
+              <Skeleton className="h-8 w-36" />
+            </div>
+            <Skeleton className="h-48 w-full rounded-lg" />
           </div>
         ) : fetchError ? (
           <div className="p-4 text-center text-xs text-destructive border rounded-md">
             {fetchError}
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-3 rounded-lg">
-              <div>
-                <div className="font-semibold text-sm flex items-center gap-1.5">
-                  <Anchor className="h-4 w-4 text-primary" aria-hidden="true" />
-                  <span>{selectedPoint.name}</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {todayVerdict?.reasons?.length
-                    ? todayVerdict.reasons.join("; ")
-                    : "Kondisi perairan stabil dan terpantau kondusif."}
-                </div>
-              </div>
-              {getVerdictBadge(currentLevel)}
+          <>
+            {/* Kontainer Peta Leaflet */}
+            <div className="relative w-full h-72 sm:h-80 rounded-lg overflow-hidden border shadow-inner">
+              <MapContainer
+                center={[CILACAP_CENTER.lat, CILACAP_CENTER.lon]}
+                zoom={12}
+                scrollWheelZoom={false}
+                className="w-full h-full z-0"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+
+                {/* Marker Pengunjung */}
+                {userLoc.status === "granted" && (
+                  <Marker position={[userLoc.lat, userLoc.lon]} icon={createUserIcon()}>
+                    <Popup>
+                      <div className="text-xs font-semibold">Lokasi Pengunjung (Perkiraan)</div>
+                    </Popup>
+                  </Marker>
+                )}
+
+                {/* Marker Titik Keberangkatan */}
+                {DEPARTURE_POINTS.map((point) => {
+                  const data = marineData[point.id];
+                  const series = data?.series?.find((s) => s.pointId === point.id) || data?.series?.[0];
+                  let level: Level = series?.verdicts?.[0]?.level || "waspada";
+                  if (data?.source === "unavailable" && level === "aman") {
+                    level = "waspada";
+                  }
+
+                  return (
+                    <Marker
+                      key={point.id}
+                      position={[point.lat, point.lon]}
+                      icon={createPointIcon(point.name, level)}
+                      eventHandlers={{
+                        click: () => setSelectedPointId(point.id),
+                      }}
+                    >
+                      <Popup>
+                        <div className="p-1 space-y-1 text-xs">
+                          <div className="font-bold">{point.name}</div>
+                          <div>Status: <span className="capitalize font-semibold">{level}</span></div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPointId(point.id)}
+                            className="text-primary hover:underline text-[11px] block mt-1"
+                          >
+                            Lihat Grafik Detail &rarr;
+                          </button>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+              </MapContainer>
             </div>
 
-            {selectedSeries?.samples && selectedSeries.samples.length > 0 && (
-              <MarineChart
-                samples={selectedSeries.samples}
-                thresholds={selectedData?.thresholds}
-                pointName={selectedPoint.name}
-              />
-            )}
-          </div>
+            {/* Tab / Pemilih Titik Keberangkatan */}
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+              <div className="flex items-center gap-1.5">
+                {DEPARTURE_POINTS.map((point) => (
+                  <Button
+                    key={point.id}
+                    size="sm"
+                    variant={selectedPointId === point.id ? "default" : "outline"}
+                    className="text-xs h-8"
+                    onClick={() => setSelectedPointId(point.id)}
+                  >
+                    <MapPin className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+                    <span>{point.name}</span>
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                size="sm"
+                variant="hero"
+                className="text-xs h-8"
+                onClick={handleAskJuruMudi}
+              >
+                <MessageSquare className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                <span>Tanya Juru Mudi</span>
+              </Button>
+            </div>
+
+            {/* Ringkasan & Grafik Titik Terpilih */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-muted/30 p-3 rounded-lg">
+                <div>
+                  <div className="font-semibold text-sm flex items-center gap-1.5">
+                    <Anchor className="h-4 w-4 text-primary" aria-hidden="true" />
+                    <span>{selectedPoint.name}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {todayVerdict?.reasons?.length
+                      ? todayVerdict.reasons.join("; ")
+                      : "Kondisi perairan stabil dan terpantau kondusif."}
+                  </div>
+                </div>
+                {getVerdictBadge(currentLevel)}
+              </div>
+
+              {selectedSeries?.samples && selectedSeries.samples.length > 0 && (
+                <MarineChart
+                  samples={selectedSeries.samples}
+                  thresholds={selectedData?.thresholds}
+                  pointName={selectedPoint.name}
+                />
+              )}
+            </div>
+          </>
         )}
 
         {/* Footer Atribusi & Waktu Pembaruan */}

@@ -46,7 +46,7 @@ export const AssistantWidget: React.FC = () => {
       const customEvent = e as CustomEvent<{ prompt?: string }>;
       setIsOpen(true);
       if (customEvent.detail?.prompt) {
-        handleSend(customEvent.detail.prompt);
+        setInputText(customEvent.detail.prompt);
       }
     };
 
@@ -54,7 +54,7 @@ export const AssistantWidget: React.FC = () => {
     return () => {
       window.removeEventListener("open-assistant", onOpenEvent);
     };
-  }, [messages, isLoading]);
+  }, []);
 
   // Auto-scroll ke bawah saat ada pesan baru
   useEffect(() => {

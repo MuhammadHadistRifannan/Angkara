@@ -146,6 +146,34 @@ export const MarineChart: React.FC<MarineChartProps> = ({
                 fill: "#f59e0b",
               }}
             />
+            {thresholds.waspadaMmH !== undefined && (
+              <ReferenceLine
+                yAxisId="right"
+                y={thresholds.waspadaMmH}
+                stroke="#8b5cf6"
+                strokeDasharray="3 3"
+                label={{
+                  value: `Hujan Waspada (${thresholds.waspadaMmH}mm/j)`,
+                  position: "insideBottomRight",
+                  fontSize: 8,
+                  fill: "#8b5cf6",
+                }}
+              />
+            )}
+            {thresholds.tundaMmH !== undefined && (
+              <ReferenceLine
+                yAxisId="right"
+                y={thresholds.tundaMmH}
+                stroke="#dc2626"
+                strokeDasharray="3 3"
+                label={{
+                  value: `Hujan Tunda (${thresholds.tundaMmH}mm/j)`,
+                  position: "insideTopLeft",
+                  fontSize: 8,
+                  fill: "#dc2626",
+                }}
+              />
+            )}
 
             {/* Data Hujan (Bar) */}
             <Bar
