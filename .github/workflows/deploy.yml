@@ -1,0 +1,98 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify
+    uses: ./.github/workflows/_verify.yml
+
+  deploy:
+    name: Deploy to Production
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run build
+
+      - name: Deploy to Netlify (Production)
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          npx --yes netlify-cli@27.16.3 deploy \
+            --dir=dist \
+            --prod \
+            --no-build \
+            --message "$GITHUB_SHA" \
+            --json > deploy-output.json
+
+      - name: Smoke test deployed site
+        run: |
+          PROD_URL=$(node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('deploy-output.json', 'utf8'));
+            const targetUrl = data.url || data.deploy_url;
+            if (!targetUrl) {
+              console.error('URL deployment tidak ditemukan pada output deploy Netlify');
+              process.exit(1);
+            }
+            console.log(targetUrl.replace(/\/$/, ''));
+          ")
+          echo "Target Production URL: $PROD_URL"
+
+          success=false
+          for i in 1 2 3; do
+            echo "Attempt $i: Memverifikasi URL root dan SPA fallback..."
+            
+            root_content=$(curl -fsS "$PROD_URL" || true)
+            dashboard_code=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/dashboard" || true)
+
+            has_root_id=false
+            if echo "$root_content" | grep -q 'id="root"'; then
+              has_root_id=true
+            fi
+
+            if [ "$has_root_id" = true ] && [ "$dashboard_code" = "200" ]; then
+              echo "Smoke test sukses pada percobaan ke-$i: HTTP 200 dan root container ditemukan."
+              success=true
+              break
+            fi
+
+            echo "Percobaan ke-$i belum berhasil (root id: $has_root_id, dashboard HTTP: $dashboard_code). Menunggu 10 detik..."
+            sleep 10
+          done
+
+          if [ "$success" = false ]; then
+            echo "Smoke test gagal setelah 3 percobaan."
+            exit 1
+          fi
