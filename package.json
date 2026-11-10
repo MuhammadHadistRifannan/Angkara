@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "eval": "vite-node scripts/run-eval.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
