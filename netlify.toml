@@ -3,7 +3,7 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
 
 # Header keamanan dasar untuk semua rute
 # Catatan: CSP tidak ditambahkan di sini karena Leaflet (tiles), Supabase (Auth/Realtime), dan Google Fonts

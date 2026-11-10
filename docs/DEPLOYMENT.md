@@ -15,7 +15,7 @@ Dokumen ini mendokumentasikan arsitektur pipeline CI/CD proyek Angkara ke Netlif
                    ▼
        .github/workflows/_verify.yml
        ├── 1. Checkout (actions/checkout@v4)
-       ├── 2. Setup Node.js 20 & cache npm
+       ├── 2. Setup Node.js 22 & cache npm
        ├── 3. npm ci
        ├── 4. npm run typecheck (BLOKIR)
        ├── 5. npm test (BLOKIR)
