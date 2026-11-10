@@ -4,6 +4,7 @@ import { checkRateLimit } from "../_shared/rateLimit";
 import { createSupabaseCacheDb } from "../_shared/cache";
 import { handleMarine, BadRequest } from "./handler";
 import { UpstreamError } from "../_shared/weather/bmkg";
+import { isEvalForceUnavailable } from "../_shared/evalMode";
 import type { MarineRequest } from "../_shared/contracts";
 
 declare const Deno: {
@@ -63,10 +64,17 @@ if (typeof Deno !== "undefined" && Deno.serve) {
       }
 
       const db = createSupabaseCacheDb(supabase);
+      const evalMode = Deno.env.get("EVAL_MODE");
+      const forceUnavailable = isEvalForceUnavailable(
+        evalMode,
+        req.headers.get("x-eval-force-unavailable")
+      );
+
       const result = await handleMarine(payload, {
         fetch,
         db,
         now: () => new Date(),
+        forceUnavailable,
       });
 
       return new Response(JSON.stringify(result), {

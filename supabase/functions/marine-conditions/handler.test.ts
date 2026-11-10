@@ -248,4 +248,24 @@ describe("marine-conditions handler", () => {
     expect(mockFetch).not.toHaveBeenCalled();
     expect(res.stale).toBe(true);
   });
+
+  it("deps.forceUnavailable = true → mengembalikan source: unavailable, tanpa memanggil fetch dan tanpa menulis cache", async () => {
+    const db = createMockDb();
+    const mockFetch = vi.fn();
+    const setSpy = vi.spyOn(db, "set");
+
+    const req: MarineRequest = { kind: "point", pointId: "teluk-penyu" };
+    const res = await handleMarine(req, {
+      fetch: mockFetch as unknown as typeof fetch,
+      db,
+      now,
+      forceUnavailable: true,
+    });
+
+    expect(res.source).toBe("unavailable");
+    expect(res.series[0].verdicts[0].level).toBe("waspada");
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(setSpy).not.toHaveBeenCalled();
+    expect(db.entries["point:teluk-penyu"]).toBeUndefined();
+  });
 });

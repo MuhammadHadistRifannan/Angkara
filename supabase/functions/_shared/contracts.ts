@@ -32,6 +32,7 @@ export interface MarineDeps {
   fetch: typeof fetch;
   db: CacheDb;
   now: () => Date;
+  forceUnavailable?: boolean;
 }
 
 // -------------------------------------------------------------

@@ -67,7 +67,46 @@ export async function handleMarine(
     throw new BadRequest("Tipe permintaan tidak valid");
   }
 
-  // 2. Cek cache yang sudah ada
+  // 2. Pemeriksaan flag uji force unavailable
+  // Hasil unavailable karena flag JANGAN dibaca dari cache atau ditulis ke weather_cache
+  if (deps.forceUnavailable) {
+    const defaultAttribution = isUserLocation
+      ? ["Open-Meteo Forecast & Marine API (CC BY 4.0)"]
+      : [
+          "Badan Meteorologi, Klimatologi, dan Geofisika (BMKG)",
+          "Open-Meteo Marine API (CC BY 4.0)",
+        ];
+
+    return {
+      source: "unavailable",
+      fetched_at: now.toISOString(),
+      stale: false,
+      series: [
+        {
+          pointId,
+          samples: [],
+          verdicts: [
+            {
+              date: todayStr,
+              level: "waspada",
+              reasons: [
+                "Data prakiraan cuaca tidak dapat diakses dari sumber resmi maupun model",
+              ],
+            },
+          ],
+        },
+      ],
+      attribution: defaultAttribution,
+      thresholds: {
+        maxWaveM: thresholdsData.boats.speedboat.maxWaveM,
+        maxWindKn: thresholdsData.boats.speedboat.maxWindKn,
+        waspadaMmH: thresholdsData.rain.waspadaMmH,
+        tundaMmH: thresholdsData.rain.tundaMmH,
+      },
+    };
+  }
+
+  // 3. Cek cache yang sudah ada
   const cached = await deps.db.get<MarineResponse>(cacheKey);
   if (cached) {
     const cacheAgeMs = now.getTime() - new Date(cached.fetched_at).getTime();

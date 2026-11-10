@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { corsHeaders } from "../_shared/cors";
 import { createSupabaseCacheDb } from "../_shared/cache";
 import { handleMarine } from "../marine-conditions/handler";
+import { isEvalForceUnavailable } from "../_shared/evalMode";
 import type { MarineResponse, SupabaseLike } from "../_shared/contracts";
 import { TOOLS } from "./tools/index";
 import { createGeminiClient } from "./gemini";
@@ -50,11 +51,17 @@ if (typeof Deno !== "undefined" && Deno.serve) {
         );
       }
 
+      const evalMode = Deno.env.get("EVAL_MODE");
+      const forceUnavailable = isEvalForceUnavailable(
+        evalMode,
+        req.headers.get("x-eval-force-unavailable")
+      );
+
       const cacheDb = createSupabaseCacheDb(supabase);
       const marine = async (pointId: string): Promise<MarineResponse> => {
         return await handleMarine(
           { kind: "point", pointId },
-          { db: cacheDb, fetch, now: () => new Date() }
+          { db: cacheDb, fetch, now: () => new Date(), forceUnavailable }
         );
       };
 
