@@ -10,6 +10,16 @@ import Navbar from "@/components/Navbar";
 import { Calendar as CalendarIcon, Users, Clock, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { mapBookingError } from "@/lib/bookingErrors";
+import { formatDateWib, isDateInPastWib } from "@/lib/bookingDate";
+
+interface BoatDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  base_price: number;
+  capacity: number;
+}
 
 const Booking = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +27,7 @@ const Booking = () => {
   const boatId = searchParams.get("boatId");
   
   const [date, setDate] = useState<Date>();
-  const [boat, setBoat] = useState<any>(null);
+  const [boat, setBoat] = useState<BoatDetail | null>(null);
   const [passengers, setPassengers] = useState(1);
   const [departureTime, setDepartureTime] = useState("09:00");
   const [notes, setNotes] = useState("");
@@ -28,10 +38,12 @@ const Booking = () => {
       if (!boatId) return;
       const { data } = await supabase
         .from("boats")
-        .select("*")
+        .select("id, name, description, base_price, capacity")
         .eq("id", boatId)
         .single();
-      setBoat(data);
+      if (data) {
+        setBoat(data as BoatDetail);
+      }
     };
     fetchBoat();
   }, [boatId]);
@@ -42,32 +54,37 @@ const Booking = () => {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("Silakan login terlebih dahulu");
-      navigate("/auth");
+    if (isDateInPastWib(date)) {
+      toast.error("Tanggal keberangkatan sudah lewat.");
       return;
     }
 
     setLoading(true);
-    const totalPrice = boat.base_price * passengers;
+    try {
+      const formattedDate = formatDateWib(date);
+      const { error } = await supabase.rpc("create_booking", {
+        p_boat_id: boat.id,
+        p_date: formattedDate,
+        p_time: departureTime,
+        p_passengers: passengers,
+        p_notes: notes || null,
+      });
 
-    const { error } = await supabase.from("bookings").insert({
-      boat_id: boat.id,
-      user_id: user.id,
-      booking_date: date.toISOString().split('T')[0],
-      departure_time: departureTime,
-      passengers,
-      total_price: totalPrice,
-      notes,
-    });
+      if (error) {
+        const errorMsg = mapBookingError(error);
+        toast.error(errorMsg);
+        if (error.message?.includes("not_authenticated")) {
+          navigate("/auth");
+        }
+        return;
+      }
 
-    setLoading(false);
-    if (error) {
-      toast.error("Gagal membuat booking: " + error.message);
-    } else {
       toast.success("Booking berhasil dibuat!");
       navigate("/dashboard");
+    } catch (err) {
+      toast.error(mapBookingError(err));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,7 +110,7 @@ const Booking = () => {
                   mode="single"
                   selected={date}
                   onSelect={setDate}
-                  disabled={(date) => date < new Date()}
+                  disabled={(d) => isDateInPastWib(d)}
                   className="rounded-md border"
                 />
               </CardContent>
@@ -114,7 +131,7 @@ const Booking = () => {
                       min="1"
                       max={boat?.capacity || 100}
                       value={passengers}
-                      onChange={(e) => setPassengers(parseInt(e.target.value))}
+                      onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
                     />
                   </div>
                 </div>
