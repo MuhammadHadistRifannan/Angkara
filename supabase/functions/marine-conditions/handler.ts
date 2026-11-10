@@ -3,13 +3,13 @@ import type {
   MarineResponse,
   MarineDeps,
   MarineSource,
-} from "../_shared/contracts";
-import { DEPARTURE_POINTS } from "../_shared/departurePoints";
-import { fetchBmkg } from "../_shared/weather/bmkg";
-import { fetchWaves, fetchOpenMeteoForecast } from "../_shared/weather/openmeteo";
-import { mergeSamples } from "../_shared/weather/merge";
-import { evaluateDay } from "../_shared/safety/rules";
-import thresholdsData from "../_shared/safety/thresholds.json";
+} from "../_shared/contracts.ts";
+import { DEPARTURE_POINTS } from "../_shared/departurePoints.ts";
+import { fetchBmkg } from "../_shared/weather/bmkg.ts";
+import { fetchWaves, fetchOpenMeteoForecast } from "../_shared/weather/openmeteo.ts";
+import { mergeSamples } from "../_shared/weather/merge.ts";
+import { evaluateDay } from "../_shared/safety/rules.ts";
+import thresholdsData from "../_shared/safety/thresholds.json" with { type: "json" };
 
 export class BadRequest extends Error {
   readonly status = 400;

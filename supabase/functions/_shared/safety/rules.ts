@@ -1,4 +1,4 @@
-import thresholds from "./thresholds.json";
+import thresholds from "./thresholds.json" with { type: "json" };
 
 export type BoatType = "speedboat" | "kapal_kayu";
 export type Level = "aman" | "waspada" | "tunda";

@@ -1,6 +1,6 @@
 import type { z } from "zod";
-import type { BoatType, HourSample, Level } from "./safety/rules";
-import type { CacheDb } from "./cache";
+import type { BoatType, HourSample, Level } from "./safety/rules.ts";
+import type { CacheDb } from "./cache.ts";
 
 export type MarineSource = "official" | "model" | "unavailable";
 

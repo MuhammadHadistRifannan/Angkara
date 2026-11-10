@@ -7,8 +7,8 @@ import type {
   ToolDef,
   ToolCtx,
   ToolSpec,
-} from "../_shared/contracts";
-import { SYSTEM_PROMPT } from "./prompt";
+} from "../_shared/contracts.ts";
+import { SYSTEM_PROMPT } from "./prompt.ts";
 
 function convertToolToSpec(tool: ToolDef<unknown, unknown>): ToolSpec {
   let parameters: Record<string, unknown> = { type: "OBJECT", properties: {} };

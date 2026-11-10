@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx, MarineResponse, WeatherVerdictCard } from "../../_shared/contracts";
-import { getTodayWib, isPastWib } from "./dateUtils";
+import type { ToolDef, ToolResult, ToolCtx, MarineResponse, WeatherVerdictCard } from "../../_shared/contracts.ts";
+import { getTodayWib, isPastWib } from "./dateUtils.ts";
 
 export const getMarineSchema = z.object({
   pointId: z.string().min(1, "ID titik keberangkatan harus diisi"),

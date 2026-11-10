@@ -1,5 +1,5 @@
-import type { HourSample } from "../safety/rules";
-import type { BmkgHour } from "./bmkg";
+import type { HourSample } from "../safety/rules.ts";
+import type { BmkgHour } from "./bmkg.ts";
 
 export interface MergeResult {
   samples: HourSample[];

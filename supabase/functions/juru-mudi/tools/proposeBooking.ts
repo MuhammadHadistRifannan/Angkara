@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx, BookingDraftCard } from "../../_shared/contracts";
-import type { Level } from "../../_shared/safety/rules";
-import { findPointByBoatLocation } from "../../_shared/departurePoints";
-import { isPastWib } from "./dateUtils";
+import type { ToolDef, ToolResult, ToolCtx, BookingDraftCard } from "../../_shared/contracts.ts";
+import type { Level } from "../../_shared/safety/rules.ts";
+import { findPointByBoatLocation } from "../../_shared/departurePoints.ts";
+import { isPastWib } from "./dateUtils.ts";
 
 export const proposeBookingSchema = z.object({
   boatId: z.string().uuid("ID kapal (boatId) harus berupa UUID yang valid"),

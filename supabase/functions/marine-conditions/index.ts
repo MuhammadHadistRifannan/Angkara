@@ -1,11 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-import { corsHeaders } from "../_shared/cors";
-import { checkRateLimit } from "../_shared/rateLimit";
-import { createSupabaseCacheDb } from "../_shared/cache";
-import { handleMarine, BadRequest } from "./handler";
-import { UpstreamError } from "../_shared/weather/bmkg";
-import { isEvalForceUnavailable } from "../_shared/evalMode";
-import type { MarineRequest } from "../_shared/contracts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
+import { createSupabaseCacheDb } from "../_shared/cache.ts";
+import { handleMarine, BadRequest } from "./handler.ts";
+import { UpstreamError } from "../_shared/weather/bmkg.ts";
+import { isEvalForceUnavailable } from "../_shared/evalMode.ts";
+import type { MarineRequest } from "../_shared/contracts.ts";
 
 declare const Deno: {
   serve: (handler: (req: Request) => Promise<Response>) => void;

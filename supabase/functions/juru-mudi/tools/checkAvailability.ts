@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts";
-import { isPastWib } from "./dateUtils";
+import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts.ts";
+import { isPastWib } from "./dateUtils.ts";
 
 export const checkAvailabilitySchema = z.object({
   boatId: z.string().uuid("ID kapal (boatId) harus berupa UUID yang valid"),

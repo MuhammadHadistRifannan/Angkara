@@ -1,5 +1,5 @@
-import { UpstreamError } from "./bmkg";
-import type { HourSample } from "../safety/rules";
+import { UpstreamError } from "./bmkg.ts";
+import type { HourSample } from "../safety/rules.ts";
 
 function formatJakartaIsoTime(rawTime: string): string {
   if (rawTime.includes("+") || rawTime.endsWith("Z")) {

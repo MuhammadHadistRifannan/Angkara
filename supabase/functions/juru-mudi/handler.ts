@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { ChatDeps, AssistantReply } from "../_shared/contracts";
-import { checkRateLimit } from "../_shared/rateLimit";
-import { UpstreamError } from "../_shared/weather/bmkg";
-import { runAgent } from "./agent";
+import type { ChatDeps, AssistantReply } from "../_shared/contracts.ts";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
+import { UpstreamError } from "../_shared/weather/bmkg.ts";
+import { runAgent } from "./agent.ts";
 
 const chatRequestSchema = z
   .object({

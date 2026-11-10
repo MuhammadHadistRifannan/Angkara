@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx, SafestWindowCard } from "../../_shared/contracts";
-import { rankDays, type DayWindow, type Level } from "../../_shared/safety/rules";
+import type { ToolDef, ToolResult, ToolCtx, SafestWindowCard } from "../../_shared/contracts.ts";
+import { rankDays, type DayWindow, type Level } from "../../_shared/safety/rules.ts";
 
 export const evaluateWindowsSchema = z.object({
   pointId: z.string().min(1, "ID titik keberangkatan harus diisi"),

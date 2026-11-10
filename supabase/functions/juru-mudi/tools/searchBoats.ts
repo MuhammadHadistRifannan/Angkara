@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx, BoatOptionsCard } from "../../_shared/contracts";
+import type { ToolDef, ToolResult, ToolCtx, BoatOptionsCard } from "../../_shared/contracts.ts";
 
 export const searchBoatsSchema = z.object({
   passengers: z.number().int().positive().optional(),

@@ -27,3 +27,4 @@ dist-ssr
 
 client_secret*.json
 supabase/functions/juru-mudi/eval/results/
+supabase/.temp/

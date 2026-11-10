@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts";
-import permitsData from "../../_shared/data/permits.json";
+import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts.ts";
+import permitsData from "../../_shared/data/permits.json" with { type: "json" };
 
 export const permitChecklistSchema = z.object({
   category: z.string().optional(),

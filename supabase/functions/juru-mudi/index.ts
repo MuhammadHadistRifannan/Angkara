@@ -1,12 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
-import { corsHeaders } from "../_shared/cors";
-import { createSupabaseCacheDb } from "../_shared/cache";
-import { handleMarine } from "../marine-conditions/handler";
-import { isEvalForceUnavailable } from "../_shared/evalMode";
-import type { MarineResponse, SupabaseLike } from "../_shared/contracts";
-import { TOOLS } from "./tools/index";
-import { createGeminiClient } from "./gemini";
-import { handleChat } from "./handler";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createSupabaseCacheDb } from "../_shared/cache.ts";
+import { handleMarine } from "../marine-conditions/handler.ts";
+import { isEvalForceUnavailable } from "../_shared/evalMode.ts";
+import type { MarineResponse, SupabaseLike } from "../_shared/contracts.ts";
+import { TOOLS } from "./tools/index.ts";
+import { createGeminiClient } from "./gemini.ts";
+import { handleChat } from "./handler.ts";
 
 declare const Deno: {
   serve: (handler: (req: Request) => Promise<Response>) => void;

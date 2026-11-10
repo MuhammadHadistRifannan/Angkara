@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts";
+import type { ToolDef, ToolResult, ToolCtx } from "../../_shared/contracts.ts";
 
 export const quoteFareSchema = z.object({
   boatId: z.string().uuid("ID kapal (boatId) harus berupa UUID yang valid"),

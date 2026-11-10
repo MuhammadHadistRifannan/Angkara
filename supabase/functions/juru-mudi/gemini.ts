@@ -1,5 +1,5 @@
-import type { LlmClient, LlmResult, LlmTurn, ToolSpec } from "../_shared/contracts";
-import { UpstreamError } from "../_shared/weather/bmkg";
+import type { LlmClient, LlmResult, LlmTurn, ToolSpec } from "../_shared/contracts.ts";
+import { UpstreamError } from "../_shared/weather/bmkg.ts";
 
 interface GeminiFunctionCall {
   name: string;
