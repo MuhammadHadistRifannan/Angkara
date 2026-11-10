@@ -16,7 +16,7 @@ describe("signInWithGoogle", () => {
     vi.clearAllMocks();
   });
 
-  it("memanggil supabase.auth.signInWithOAuth dengan provider 'google' dan redirectTo origin/", async () => {
+  it("memanggil supabase.auth.signInWithOAuth dengan provider 'google' dan redirectTo origin/dashboard", async () => {
     vi.mocked(supabase.auth.signInWithOAuth).mockResolvedValue({
       data: { provider: "google", url: "https://accounts.google.com/o/oauth2/v2/auth" },
       error: null,
@@ -28,7 +28,7 @@ describe("signInWithGoogle", () => {
     expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
     expect(result).toEqual({ error: null });

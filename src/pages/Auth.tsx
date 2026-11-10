@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,15 @@ const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/dashboard");
+      }
+    });
+  }, [navigate]);
+
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -27,7 +36,7 @@ const Auth = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
           full_name: fullName,
         },
@@ -59,7 +68,7 @@ const Auth = () => {
       toast.error(error.message);
     } else {
       toast.success("Login berhasil!");
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
@@ -70,7 +79,7 @@ const Auth = () => {
       toast.error(error.message);
       setLoading(false);
     }
-    // Jika tidak error, Supabase akan mengarahkan browser ke alur login Google
+    // Jika tidak error, Supabase akan mengarahkan browser ke alur login Google lalu ke /dashboard
   };
 
   return (

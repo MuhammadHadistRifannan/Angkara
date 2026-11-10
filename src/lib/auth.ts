@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Memulai alur autentikasi Google OAuth via Supabase.
  * Mengembalikan objek `{ error: Error | null }` dan tidak pernah melempar exception ke pemanggil.
+ * Setelah autentikasi berhasil, pengguna diarahkan langsung ke `/dashboard`.
  */
 export async function signInWithGoogle(): Promise<{ error: Error | null }> {
   try {
@@ -10,7 +11,7 @@ export async function signInWithGoogle(): Promise<{ error: Error | null }> {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/`,
+        redirectTo: `${origin}/dashboard`,
       },
     });
 
