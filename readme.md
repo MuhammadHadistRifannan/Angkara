@@ -249,10 +249,10 @@ Karya ini dirancang dan dikembangkan dengan penuh dedikasi untuk kompetisi **IT 
 
 | Foto | Profil Anggota | Asal Instansi | Peran & Tanggung Jawab |
 | :---: | :--- | :--- | :--- |
-| 👨‍💻 | **Muhammad Hadist Rifannan**<br>`NIM: 240202107` | **Politeknik Negeri Cilacap** | **Ketua Tim / Full-Stack & AI Engineer**<br>• Arsitektur Sistem & Integrasi Edge Functions<br>• Mesin Keselamatan Cuaca & Gemini Agent<br>• Database Schema, RPC, & CI/CD Pipeline |
-| 🎨 | **Giska Saputra** | **Politeknik Negeri Cilacap** | **Anggota / Frontend & UI/UX Developer**<br>• Desain Antarmuka Pengguna & Komponen Visual<br>• Implementasi Peta Interaktif & Responsivitas Mobile<br>• Pengujian Fungsionalitas & Pengalaman Pengguna |
-| 🛠️ | **Rafi Praja Syahputra**<br>`NIM: K2324014` | **Universitas Sebelas Maret** | **Anggota / System & Quality Assurance**<br>• Evaluasi Integritas Sistem & Pengujian Performa<br>• Riset Standar Regulasi & Dokumen Perizinan KSOP |
-| 📊 | **Abdul Fattah Nagata J. N.**<br>`NIM: K2324022` | **Universitas Sebelas Maret** | **Anggota / Data Analyst & Domain Research**<br>• Analisis Data Cuaca BMKG & Pemetaan Wilayah<br>• Riset Tarif, Kapasitas Kapal, & Dokumentasi Teknis |
+| 👨‍💻 | **Hadist**<br>`NIM: 240202107` | **Politeknik Negeri Cilacap** | **Ketua Tim / Full-Stack & AI Engineer**<br>• Arsitektur Sistem & Integrasi Edge Functions<br>• Mesin Keselamatan Cuaca & Gemini Agent<br>• Database Schema, RPC, & CI/CD Pipeline |
+| 🎨 | **Bagas** | **Politeknik Negeri Cilacap** | **Anggota / Frontend & UI/UX Developer**<br>• Desain Antarmuka Pengguna & Komponen Visual<br>• Implementasi Peta Interaktif & Responsivitas Mobile<br>• Pengujian Fungsionalitas & Pengalaman Pengguna |
+| 🛠️ | **Fikri**<br>`NIM: K2324014` | **Politeknik Negeri Cilacap** | **Anggota / Frontend & UI/UX Developer**<br>• Desain Antarmuka Pengguna & Komponen Visual<br>• Implementasi Peta Interaktif & Responsivitas Mobile Perizinan KSOP |
+| 📊 | **Naysa**<br>`NIM: K2324022` | **Politeknik Negeri Cilacap** | **Anggota / Data Analyst & Domain Research**<br>• Proposal ,  Analisis Data Cuaca BMKG & Pemetaan Wilayah<br>• Riset Tarif, Kapasitas Kapal, & Dokumentasi Teknis |
 
 </div>
 
