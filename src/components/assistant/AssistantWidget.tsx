@@ -14,7 +14,13 @@ const SUGGESTIONS = [
   "Kapan hari paling aman untuk menyeberang ke Nusakambangan?",
 ];
 
-export const AssistantWidget: React.FC = () => {
+interface AssistantWidgetProps {
+  hideFloatingTrigger?: boolean;
+}
+
+export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
+  hideFloatingTrigger = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -123,6 +129,10 @@ export const AssistantWidget: React.FC = () => {
   };
 
   if (!isOpen) {
+    if (hideFloatingTrigger) {
+      return null;
+    }
+
     return (
       <Button
         variant="hero"

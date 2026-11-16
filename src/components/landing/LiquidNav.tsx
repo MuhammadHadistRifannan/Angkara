@@ -173,7 +173,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             className={`relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
               isInHero
                 ? "bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)]"
-                : "bg-slate-900/80 backdrop-blur-3xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.35)]"
+                : "bg-white/75 backdrop-blur-3xl border border-white/80 shadow-[0_18px_45px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(0,0,0,0.04)]"
             }`}
             style={{
               backdropFilter: "blur(32px) saturate(190%) contrast(95%)",
@@ -181,7 +181,13 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             }}
           >
             {/* Pantulan kilau cahaya diagonal & specular edge atas */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-white/5 to-white/10 pointer-events-none" />
+            <div
+              className={`absolute inset-0 rounded-full pointer-events-none transition-opacity duration-300 ${
+                isInHero
+                  ? "bg-gradient-to-b from-white/30 via-white/5 to-white/10"
+                  : "bg-gradient-to-b from-white/40 via-transparent to-black/[0.02]"
+              }`}
+            />
             <div className="absolute inset-x-10 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/95 to-transparent pointer-events-none" />
 
             {/* Brand Anchor (Logo & Nama) Terintegrasi di Sisi Kiri Pill */}
@@ -196,7 +202,9 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                 }
               }}
               aria-label="Kembali ke Beranda Angkara"
-              className="relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-white/70 min-h-[48px] sm:min-h-[54px] select-none hover:bg-white/10 group"
+              className={`relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[48px] sm:min-h-[54px] select-none group ${
+                isInHero ? "hover:bg-white/10" : "hover:bg-black/5"
+              }`}
             >
               <img
                 src="/logo.png"
@@ -204,10 +212,16 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                 className={`h-6 w-6 sm:h-7 sm:w-7 object-contain transition-all duration-300 group-hover:scale-105 ${
                   isInHero
                     ? "brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
-                    : "brightness-100 invert-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+                    : "brightness-100 invert-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
                 }`}
               />
-              <span className="hidden sm:inline text-[13.5px] sm:text-[15px] font-bold tracking-tight font-display text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+              <span
+                className={`hidden sm:inline text-[13.5px] sm:text-[15px] font-bold tracking-tight font-display transition-colors duration-300 ${
+                  isInHero
+                    ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+                    : "text-slate-900 drop-shadow-none"
+                }`}
+              >
                 Angkara
               </span>
             </motion.button>
@@ -215,7 +229,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             {/* Garis Pemisah Halus antara Brand & Navigasi */}
             <div
               className={`h-6 w-[1px] my-auto transition-colors duration-300 ${
-                isInHero ? "bg-white/35" : "bg-white/20"
+                isInHero ? "bg-white/35" : "bg-slate-300/80"
               } mx-1`}
             />
 
@@ -238,10 +252,30 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       onFocus={() => setHoveredId(item.id)}
                       onBlur={() => setHoveredId(null)}
                       aria-label={item.label}
-                      className="group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/70 min-h-[50px] sm:min-h-[56px]"
+                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[50px] sm:min-h-[56px] ${
+                        isInHero
+                          ? "text-white"
+                          : isHighlighted
+                          ? "text-slate-950 font-semibold"
+                          : "text-slate-600 hover:text-slate-950"
+                      }`}
                     >
-                      <Icon className="w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
-                      <span className="text-[10px] sm:text-[11.5px] font-medium tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] whitespace-nowrap truncate max-w-full">
+                      <Icon
+                        className={`w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 ${
+                          isInHero
+                            ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+                            : "drop-shadow-none"
+                        }`}
+                      />
+                      <span
+                        className={`text-[10px] sm:text-[11.5px] tracking-wide whitespace-nowrap truncate max-w-full ${
+                          isInHero
+                            ? "font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+                            : isHighlighted
+                            ? "font-semibold"
+                            : "font-medium"
+                        }`}
+                      >
                         {item.label}
                       </span>
                     </button>
@@ -255,7 +289,11 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                           stiffness: 380,
                           damping: 28,
                         }}
-                        className="absolute inset-0 z-0 rounded-full bg-white/30 border border-white/70 shadow-[0_4px_18px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)] backdrop-blur-md"
+                        className={`absolute inset-0 z-0 rounded-full backdrop-blur-md ${
+                          isInHero
+                            ? "bg-white/30 border border-white/70 shadow-[0_4px_18px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)]"
+                            : "bg-white/95 border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1)]"
+                        }`}
                       />
                     )}
                   </motion.div>

@@ -26,7 +26,7 @@ const Index = () => {
       </section>
       
       <Footer />
-      <AssistantWidget />
+      <AssistantWidget hideFloatingTrigger={true} />
     </div>
   );
 };

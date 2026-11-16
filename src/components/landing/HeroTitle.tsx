@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface HeroTitleProps {
   isTriggered: boolean;
@@ -12,64 +12,147 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({ isTriggered, isReducedMoti
   const [typedLine1, setTypedLine1] = useState(isReducedMotion ? LINE_1 : "");
   const [typedLine2, setTypedLine2] = useState(isReducedMotion ? LINE_2 : "");
   const [showCursor, setShowCursor] = useState(false);
+  const [isUntyping, setIsUntyping] = useState(false);
+
+  // Ref untuk melacak teks aktual terkini agar terhindar dari stale state pada closure timer
+  const currentLinesRef = useRef({
+    line1: isReducedMotion ? LINE_1 : "",
+    line2: isReducedMotion ? LINE_2 : "",
+  });
+
+  useEffect(() => {
+    currentLinesRef.current = {
+      line1: typedLine1,
+      line2: typedLine2,
+    };
+  }, [typedLine1, typedLine2]);
 
   useEffect(() => {
     if (isReducedMotion) {
-      setTypedLine1(LINE_1);
-      setTypedLine2(LINE_2);
+      setTypedLine1(isTriggered ? LINE_1 : "");
+      setTypedLine2(isTriggered ? LINE_2 : "");
       setShowCursor(false);
+      setIsUntyping(false);
       return;
     }
 
-    if (!isTriggered) {
-      // Reset saat user scroll mundur
-      setTypedLine1("");
-      setTypedLine2("");
-      setShowCursor(false);
-      return;
-    }
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isCancelled = false;
 
-    setShowCursor(true);
-    let index1 = 0;
-    let index2 = 0;
-    let timeoutId: ReturnType<typeof setTimeout>;
+    if (isTriggered) {
+      // Mulai pengetikan maju (forward typing)
+      setIsUntyping(false);
+      setShowCursor(true);
 
-    const typeLine1 = () => {
-      if (index1 <= LINE_1.length) {
-        setTypedLine1(LINE_1.slice(0, index1));
-        index1++;
-        timeoutId = setTimeout(typeLine1, 45);
+      let idx1 = currentLinesRef.current.line1.length;
+      let idx2 = currentLinesRef.current.line2.length;
+
+      const typeForwardLine1 = () => {
+        if (isCancelled) return;
+        if (idx1 <= LINE_1.length) {
+          const slice1 = LINE_1.slice(0, idx1);
+          setTypedLine1(slice1);
+          currentLinesRef.current.line1 = slice1;
+          idx1++;
+          timeoutId = setTimeout(typeForwardLine1, 40);
+        } else {
+          timeoutId = setTimeout(typeForwardLine2, 160);
+        }
+      };
+
+      const typeForwardLine2 = () => {
+        if (isCancelled) return;
+        if (idx2 <= LINE_2.length) {
+          const slice2 = LINE_2.slice(0, idx2);
+          setTypedLine2(slice2);
+          currentLinesRef.current.line2 = slice2;
+          idx2++;
+          timeoutId = setTimeout(typeForwardLine2, 40);
+        } else {
+          // Selesai pengetikan: sembunyikan kursor setelah 1.2 detik
+          timeoutId = setTimeout(() => {
+            if (!isCancelled) {
+              setShowCursor(false);
+            }
+          }, 1200);
+        }
+      };
+
+      if (idx1 < LINE_1.length) {
+        timeoutId = setTimeout(typeForwardLine1, 200);
+      } else if (idx2 < LINE_2.length) {
+        timeoutId = setTimeout(typeForwardLine2, 100);
       } else {
-        // Jeda singkat sebelum baris kedua
-        timeoutId = setTimeout(typeLine2, 180);
+        // Teks sudah lengkap, pastikan state sinkron
+        setTypedLine1(LINE_1);
+        setTypedLine2(LINE_2);
+        setShowCursor(false);
       }
-    };
+    } else {
+      // User scroll ke atas: jalankan animasi pengetikan penutup (backspace / untyping)
+      const hasText =
+        currentLinesRef.current.line1.length > 0 ||
+        currentLinesRef.current.line2.length > 0;
 
-    const typeLine2 = () => {
-      if (index2 <= LINE_2.length) {
-        setTypedLine2(LINE_2.slice(0, index2));
-        index2++;
-        timeoutId = setTimeout(typeLine2, 45);
-      } else {
-        // Hilangkan kursor 1.2 detik setelah selesai
-        timeoutId = setTimeout(() => {
+      if (!hasText) {
+        setTypedLine1("");
+        setTypedLine2("");
+        setShowCursor(false);
+        setIsUntyping(false);
+        return;
+      }
+
+      setIsUntyping(true);
+      setShowCursor(true);
+
+      const untypeLine2 = () => {
+        if (isCancelled) return;
+        if (currentLinesRef.current.line2.length > 0) {
+          const next = currentLinesRef.current.line2.slice(0, -1);
+          setTypedLine2(next);
+          currentLinesRef.current.line2 = next;
+          timeoutId = setTimeout(untypeLine2, 22);
+        } else {
+          timeoutId = setTimeout(untypeLine1, 50);
+        }
+      };
+
+      const untypeLine1 = () => {
+        if (isCancelled) return;
+        if (currentLinesRef.current.line1.length > 0) {
+          const next = currentLinesRef.current.line1.slice(0, -1);
+          setTypedLine1(next);
+          currentLinesRef.current.line1 = next;
+          timeoutId = setTimeout(untypeLine1, 22);
+        } else {
+          // Untyping selesai sempurna
+          setIsUntyping(false);
           setShowCursor(false);
-        }, 1200);
-      }
-    };
+        }
+      };
 
-    // Mulai pengetikan setelah kontainer selesai fade-in (sekitar 250ms)
-    timeoutId = setTimeout(typeLine1, 250);
+      if (currentLinesRef.current.line2.length > 0) {
+        timeoutId = setTimeout(untypeLine2, 40);
+      } else if (currentLinesRef.current.line1.length > 0) {
+        timeoutId = setTimeout(untypeLine1, 40);
+      } else {
+        setIsUntyping(false);
+        setShowCursor(false);
+      }
+    }
 
     return () => {
-      clearTimeout(timeoutId);
+      isCancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [isTriggered, isReducedMotion]);
 
   return (
     <div
       className={`absolute left-0 right-0 top-[26%] md:top-[30%] z-20 flex justify-center px-4 pointer-events-none transition-all duration-700 ease-out ${
-        isTriggered || isReducedMotion
+        isTriggered || isUntyping || isReducedMotion
           ? "opacity-100 blur-0 translate-y-0"
           : "opacity-0 blur-md translate-y-3"
       }`}
@@ -82,7 +165,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({ isTriggered, isReducedMoti
           <div className="sm:whitespace-nowrap">{LINE_2}</div>
         </div>
 
-        {/* Teks animasi aktual yang sedang diketik */}
+        {/* Teks animasi aktual yang sedang diketik atau di-untype */}
         <div
           aria-hidden="true"
           className="absolute inset-0 select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] text-white font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)]"
