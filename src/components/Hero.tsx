@@ -14,17 +14,26 @@ const Hero: React.FC = () => {
   // Overlay kontras gelap di langit (maks 35%)
   let overlayOpacity = 0;
   let hintOpacity = 1;
+  let bottomFadeOpacity = 0;
 
   if (isReducedMotion) {
     overlayOpacity = 0.35;
     hintOpacity = 0;
-  } else if (progress >= 0.12) {
-    overlayOpacity = 0.35;
-    hintOpacity = 0;
-  } else if (progress > 0.06) {
-    const factor = (progress - 0.06) / 0.06;
-    overlayOpacity = factor * 0.35;
-    hintOpacity = 1 - factor;
+    bottomFadeOpacity = 1;
+  } else {
+    if (progress >= 0.12) {
+      overlayOpacity = 0.35;
+      hintOpacity = 0;
+    } else if (progress > 0.06) {
+      const factor = (progress - 0.06) / 0.06;
+      overlayOpacity = factor * 0.35;
+      hintOpacity = 1 - factor;
+    }
+
+    // Gradasi kabut laut halus di bagian bawah menebal seiring mendekati section berikutnya
+    if (progress > 0.40) {
+      bottomFadeOpacity = Math.min(1, (progress - 0.40) / 0.45);
+    }
   }
 
   return (
@@ -44,9 +53,15 @@ const Hero: React.FC = () => {
           style={{ opacity: overlayOpacity }}
         />
 
+        {/* Gradasi kabut laut halus di bagian bawah yang melebur mulus ke section berikutnya */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-44 sm:h-64 bg-gradient-to-t from-background via-background/60 to-transparent transition-opacity duration-200 ease-out z-10"
+          style={{ opacity: bottomFadeOpacity }}
+        />
+
         {/* Judul & Animasi Typing di Area Langit (30-38% tinggi layar) */}
         <HeroTitle
-          isTriggered={isTitleTriggered}
+          isTriggered={isTitleTriggered && progress < 0.75}
           isReducedMotion={isReducedMotion}
         />
 

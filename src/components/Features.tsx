@@ -56,7 +56,10 @@ const features = [
 
 const Features = () => {
   return (
-    <section id="features" className="py-20 bg-gradient-to-b from-background to-muted/30">
+    <section
+      id="features"
+      className="relative z-20 -mt-12 sm:-mt-20 pt-20 pb-20 bg-gradient-to-b from-background via-background to-muted/30 rounded-t-[32px] sm:rounded-t-[48px] shadow-[0_-20px_50px_rgba(0,0,0,0.06)] border-t border-white/80"
+    >
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
