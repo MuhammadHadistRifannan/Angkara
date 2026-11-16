@@ -7,72 +7,18 @@ interface HeroVideoProps {
 
 const INITIAL_SCALE = 1.25;
 const MIN_SCALE = 1.0;
-// Kecepatan konstan zoom out (satuan scale per detik)
-// 0.22 scale/detik -> rentang 1.25 ke 1.00 (delta 0.25) ditempuh sekitar 1.14 detik secara konstan
-const CONSTANT_ZOOM_SPEED = 0.22;
 
 export const HeroVideo: React.FC<HeroVideoProps> = ({ progress, isReducedMotion }) => {
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
-  const transformRef = useRef<HTMLDivElement>(null);
   const [activeVideo, setActiveVideo] = useState<1 | 2>(1);
 
-  // Nilai scale saat ini disimpan dalam ref untuk performa 60fps tanpa re-render React
-  const currentScaleRef = useRef(isReducedMotion ? 1 : INITIAL_SCALE);
-  const lastTimeRef = useRef<number | null>(null);
-
-  // Target scale dihitung dari progres scroll: saat scroll ke bawah, zoom out ke skala 1.00
+  // Skala responsif langsung mengikuti posisi dan kecepatan scroll user:
+  // 1.25 (zoom dekat kapal saat di puncak) -> 1.00 (zoom out laut luas saat scroll ke bawah)
   const clampedProgress = Math.min(1, Math.max(0, progress));
-  const targetScale = isReducedMotion
+  const scale = isReducedMotion
     ? 1.0
-    : Math.max(MIN_SCALE, INITIAL_SCALE - clampedProgress * (INITIAL_SCALE - MIN_SCALE));
-
-  // Animasi zoom out dengan kecepatan konstan terlepas dari seberapa cepat user melakukan scroll
-  useEffect(() => {
-    if (isReducedMotion) {
-      currentScaleRef.current = 1.0;
-      if (transformRef.current) {
-        transformRef.current.style.transform = "scale(1)";
-      }
-      return;
-    }
-
-    let rafId: number;
-
-    const animate = (time: number) => {
-      if (lastTimeRef.current === null) {
-        lastTimeRef.current = time;
-      }
-      // Hitung delta waktu (detik), dibatasi maks 0.1 detik jika tab sempat idle
-      const dt = Math.min((time - lastTimeRef.current) / 1000, 0.1);
-      lastTimeRef.current = time;
-
-      const diff = targetScale - currentScaleRef.current;
-      if (Math.abs(diff) > 0.0005) {
-        const step = CONSTANT_ZOOM_SPEED * dt;
-        if (diff < 0) {
-          // Zoom out: perkecil skala hingga mencapai targetScale
-          currentScaleRef.current = Math.max(targetScale, currentScaleRef.current - step);
-        } else {
-          // Zoom in kembali saat user scroll balik ke atas
-          currentScaleRef.current = Math.min(targetScale, currentScaleRef.current + step);
-        }
-
-        if (transformRef.current) {
-          transformRef.current.style.transform = `scale(${currentScaleRef.current})`;
-        }
-      }
-
-      rafId = requestAnimationFrame(animate);
-    };
-
-    rafId = requestAnimationFrame(animate);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      lastTimeRef.current = null;
-    };
-  }, [targetScale, isReducedMotion]);
+    : INITIAL_SCALE - clampedProgress * (INITIAL_SCALE - MIN_SCALE);
 
   // Crossfade bergantian 600ms sebelum klip berakhir
   useEffect(() => {
@@ -116,10 +62,9 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({ progress, isReducedMotion 
   return (
     <div className="absolute inset-0 overflow-hidden bg-slate-900 select-none">
       <div
-        ref={transformRef}
-        className="w-full h-full will-change-transform"
+        className="w-full h-full will-change-transform transition-transform duration-100 ease-out"
         style={{
-          transform: `scale(${currentScaleRef.current})`,
+          transform: `scale(${scale})`,
           transformOrigin: "50% 65%",
         }}
       >
