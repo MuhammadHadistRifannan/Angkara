@@ -53,7 +53,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
     },
     {
       id: "boats",
-      label: "Kapal",
+      label: "Armada Kapal",
       icon: Ship,
       action: () => navigate("/boats"),
       isActive: location.pathname.startsWith("/boats"),
@@ -91,7 +91,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
     },
     {
       id: "auth",
-      label: user ? "Dashboard" : "Masuk",
+      label: user ? "Dashboard" : "Masuk / Akun",
       icon: User,
       action: () => {
         if (user) {
@@ -107,45 +107,46 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
   const activeItem = navItems.find((item) => item.isActive) || navItems[0];
   const currentHighlightedId = hoveredId || activeItem.id;
 
-  // Variasi animasi Apple spring bouncy dengan stagger 50ms per item
+  // Animasi ekspansi dari tengah: objek bulat muncul di tengah lalu melebar ke kiri-kanan dengan spring bouncy
   const navContainerVariants = {
     hidden: isReducedMotion
       ? { opacity: 0 }
-      : { opacity: 0, y: "35vh", scale: 0.55 },
+      : { opacity: 0, y: "18vh", scaleX: 0.18, scaleY: 0.65 },
     visible: {
       opacity: 1,
       y: 0,
-      scale: 1,
+      scaleX: 1,
+      scaleY: 1,
       transition: isReducedMotion
         ? { duration: 0 }
         : {
             type: "spring" as const,
-            stiffness: 300,
-            damping: 22,
-            mass: 0.9,
-            staggerChildren: 0.05,
-            delayChildren: 0.08,
+            stiffness: 240,
+            damping: 20,
+            mass: 0.85,
+            staggerChildren: 0.04,
+            delayChildren: 0.06,
           },
     },
     exit: isReducedMotion
       ? { opacity: 0 }
       : {
           opacity: 0,
-          y: "20vh",
-          scale: 0.7,
+          y: "14vh",
+          scaleX: 0.25,
+          scaleY: 0.6,
           transition: { duration: 0.2 },
         },
   };
 
   const navItemVariants = {
-    hidden: isReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.8 },
+    hidden: isReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.85 },
     visible: {
       opacity: 1,
-      y: 0,
       scale: 1,
       transition: isReducedMotion
         ? { duration: 0 }
-        : { type: "spring" as const, stiffness: 380, damping: 26 },
+        : { type: "spring" as const, stiffness: 360, damping: 25 },
     },
   };
 
@@ -159,31 +160,30 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
           exit="exit"
           role="navigation"
           aria-label="Navigasi Utama Angkara"
-          className="fixed top-5 left-0 right-0 z-50 flex justify-center px-4 pointer-events-auto"
+          className="fixed top-5 left-0 right-0 z-50 flex justify-center px-3 sm:px-4 pointer-events-auto origin-center"
         >
-          {/* Pill Kaca Liquid Glass */}
+          {/* Pill Kaca Lebar Sejajar Judul (Maks ~820px) */}
           <div
             onMouseLeave={() => setHoveredId(null)}
-            className="relative flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full max-w-[560px] w-auto bg-white/12 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/28 dark:border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.45)] select-none"
+            className="relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[760px] md:max-w-[840px] bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] select-none"
             style={{
-              backdropFilter: "blur(20px) saturate(180%)",
-              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+              backdropFilter: "blur(24px) saturate(190%)",
+              WebkitBackdropFilter: "blur(24px) saturate(190%)",
             }}
           >
             {/* Pantulan kilau cahaya diagonal tipis & rim cahaya atas */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/15 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/12 via-white/5 to-transparent pointer-events-none" />
+            <div className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none" />
 
             {navItems.map((item) => {
               const Icon = item.icon;
               const isHighlighted = currentHighlightedId === item.id;
-              const isHovered = hoveredId === item.id;
 
               return (
                 <motion.div
                   key={item.id}
                   variants={navItemVariants}
-                  className="relative flex items-center"
+                  className="relative flex-1 flex items-center justify-center min-w-0"
                 >
                   <button
                     type="button"
@@ -192,19 +192,15 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
                     onFocus={() => setHoveredId(item.id)}
                     onBlur={() => setHoveredId(null)}
                     aria-label={item.label}
-                    className="relative z-10 flex items-center justify-center min-w-[44px] min-h-[44px] px-3 py-2 rounded-full text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                    className="group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full text-white/90 hover:text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/60 min-h-[50px] sm:min-h-[56px]"
                   >
-                    <Icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" />
-
-                    {/* Label teks di mobile untuk item aktif */}
-                    {item.isActive && (
-                      <span className="sm:hidden text-xs font-medium ml-1.5 pr-1">
-                        {item.label}
-                      </span>
-                    )}
+                    <Icon className="w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
+                    <span className="text-[10px] sm:text-[11.5px] font-medium tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] whitespace-nowrap truncate max-w-full">
+                      {item.label}
+                    </span>
                   </button>
 
-                  {/* Highlight kaca yang bergeser mengikuti hover/aktif */}
+                  {/* Highlight kaca putih transparan (Apple Liquid Glass) yang bergeser mengikuti hover/aktif */}
                   {isHighlighted && (
                     <motion.div
                       layoutId="liquid-nav-highlight"
@@ -213,24 +209,9 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
                         stiffness: 380,
                         damping: 28,
                       }}
-                      className="absolute inset-0 z-0 rounded-full bg-cyan-500/25 border border-cyan-300/40 shadow-[0_0_16px_rgba(6,182,212,0.45),inset_0_1px_0_rgba(255,255,255,0.5)]"
+                      className="absolute inset-0 z-0 rounded-full bg-white/18 border border-white/40 shadow-[0_4px_20px_rgba(0,0,0,0.25),inset_0_1px_1.5px_rgba(255,255,255,0.7),inset_0_-1px_1px_rgba(0,0,0,0.2)] backdrop-blur-md"
                     />
                   )}
-
-                  {/* Tooltip kaca melayang saat hover desktop */}
-                  <AnimatePresence>
-                    {isHovered && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute -bottom-9 left-1/2 -translate-x-1/2 z-30 px-2.5 py-1 rounded-md text-[11px] font-medium tracking-wide text-white bg-slate-900/85 backdrop-blur-md border border-white/20 shadow-lg pointer-events-none whitespace-nowrap"
-                      >
-                        {item.label}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </motion.div>
               );
             })}

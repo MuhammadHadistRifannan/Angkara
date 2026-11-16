@@ -68,32 +68,32 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({ isTriggered, isReducedMoti
 
   return (
     <div
-      className={`absolute left-0 right-0 top-[28%] md:top-[33%] z-20 flex justify-center px-4 pointer-events-none transition-all duration-700 ease-out ${
+      className={`absolute left-0 right-0 top-[26%] md:top-[30%] z-20 flex justify-center px-4 pointer-events-none transition-all duration-700 ease-out ${
         isTriggered || isReducedMotion
           ? "opacity-100 blur-0 translate-y-0"
           : "opacity-0 blur-md translate-y-3"
       }`}
       aria-label={`${LINE_1} ${LINE_2}`}
     >
-      <div className="relative text-center max-w-4xl mx-auto">
+      <div className="relative text-center w-full max-w-5xl mx-auto">
         {/* Placeholder tak terlihat untuk mencegah layout shift */}
-        <div className="invisible select-none leading-[1.05] tracking-[-0.03em] font-semibold text-[clamp(2.5rem,7vw,6rem)] text-white font-display">
-          <div>{LINE_1}</div>
-          <div>{LINE_2}</div>
+        <div className="invisible select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] text-white font-display">
+          <div className="sm:whitespace-nowrap">{LINE_1}</div>
+          <div className="sm:whitespace-nowrap">{LINE_2}</div>
         </div>
 
         {/* Teks animasi aktual yang sedang diketik */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 select-none leading-[1.05] tracking-[-0.03em] font-semibold text-[clamp(2.5rem,7vw,6rem)] text-white font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)]"
+          className="absolute inset-0 select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] text-white font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)]"
         >
-          <div>
+          <div className="sm:whitespace-nowrap">
             {typedLine1}
             {showCursor && typedLine2.length === 0 && (
               <span className="inline-block w-[3px] h-[0.85em] bg-white/90 ml-1.5 align-middle animate-pulse" />
             )}
           </div>
-          <div>
+          <div className="sm:whitespace-nowrap">
             {typedLine2}
             {showCursor && typedLine2.length > 0 && (
               <span className="inline-block w-[3px] h-[0.85em] bg-white/90 ml-1.5 align-middle animate-pulse" />
