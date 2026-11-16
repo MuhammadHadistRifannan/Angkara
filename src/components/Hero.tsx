@@ -30,9 +30,9 @@ const Hero: React.FC = () => {
       hintOpacity = 1 - factor;
     }
 
-    // Gradasi kabut laut halus di bagian bawah menebal seiring mendekati section berikutnya
-    if (progress > 0.40) {
-      bottomFadeOpacity = Math.min(1, (progress - 0.40) / 0.45);
+    // Gradasi kabut laut halus di bagian bawah yang melebur mulus ke section berikutnya
+    if (progress > 0.35) {
+      bottomFadeOpacity = Math.min(1, (progress - 0.35) / 0.50);
     }
   }
 
@@ -53,15 +53,15 @@ const Hero: React.FC = () => {
           style={{ opacity: overlayOpacity }}
         />
 
-        {/* Gradasi kabut laut halus di bagian bawah yang melebur mulus ke section berikutnya */}
+        {/* Gradasi kabut laut halus di bagian bawah yang melebur mulus ke latar section berikutnya */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-44 sm:h-64 bg-gradient-to-t from-background via-background/60 to-transparent transition-opacity duration-200 ease-out z-10"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-96 bg-gradient-to-t from-background via-background/70 via-background/20 to-transparent transition-opacity duration-200 ease-out z-10"
           style={{ opacity: bottomFadeOpacity }}
         />
 
         {/* Judul & Animasi Typing di Area Langit (30-38% tinggi layar) */}
         <HeroTitle
-          isTriggered={isTitleTriggered && progress < 0.75}
+          isTriggered={isTitleTriggered}
           isReducedMotion={isReducedMotion}
         />
 
