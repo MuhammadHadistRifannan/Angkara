@@ -10,13 +10,11 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="bg-white/95 px-3 py-1.5 rounded-xl inline-flex items-center shadow-md border border-white/20">
-                <img
-                  src={logoSuar}
-                  alt="SUAR - Berlayar Aman, Berdaya Bersama"
-                  className="h-8 w-auto object-contain"
-                />
-              </div>
+              <img
+                src={logoSuar}
+                alt="SUAR - Berlayar Aman, Berdaya Bersama"
+                className="h-8 sm:h-9 w-auto object-contain filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]"
+              />
             </div>
             <p className="text-slate-300 text-sm leading-relaxed">
               Platform reservasi kapal wisata bahari pesisir Cilacap & Nusakambangan dengan standar keselamatan KSOP dan panduan AI navigasi cuaca BMKG.

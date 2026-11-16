@@ -87,9 +87,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-white/95 px-3 py-1.5 rounded-xl shadow-md border border-white/20 inline-flex items-center">
-              <img src="/logo.png" alt="SUAR Logo" className="h-8 w-auto object-contain" />
-            </div>
+            <img src="/logo.png" alt="SUAR Logo" className="h-9 w-auto object-contain" />
           </div>
           <CardTitle className="text-2xl font-black tracking-tight text-slate-900">Platform SUAR</CardTitle>
           <CardDescription>Berlayar Aman, Berdaya Bersama di Pesisir Cilacap</CardDescription>

@@ -47,16 +47,14 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo & Brand */}
           <div
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group py-1"
             onClick={() => navigate("/")}
           >
-            <div className="bg-white/95 hover:bg-white px-3 py-1.5 rounded-xl shadow-md border border-white/40 transition-all flex items-center">
-              <img
-                src={logoSuar}
-                alt="SUAR - Berlayar Aman, Berdaya Bersama"
-                className="h-7 sm:h-8 w-auto object-contain group-hover:scale-105 transition-transform"
-              />
-            </div>
+            <img
+              src={logoSuar}
+              alt="SUAR - Berlayar Aman, Berdaya Bersama"
+              className="h-8 sm:h-9 w-auto object-contain group-hover:scale-105 transition-transform filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]"
+            />
           </div>
 
           {/* Desktop Navigation */}
