@@ -1,24 +1,41 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 
 interface HeroVideoProps {
   progress: number;
   isReducedMotion: boolean;
 }
 
-// Skala diperdalam secara sinematik:
-// - Zoom in 1.90: sangat dekat dengan badan kapal, detail kemudi dan deburan ombak terlihat jelas
-// - Zoom out 1.00: kamera mundur dramatis memperlihatkan bentang samudera luas 100% full-bleed tanpa letterbox
-const INITIAL_SCALE = 1.90;
+// Skala diperdalam secara sinematik dengan skala adaptif layar:
+// - Desktop (>= 768px): 1.90 (close-up intim pada perahu dan kabin kemudi)
+// - Mobile (< 768px): 1.50 (proporsional untuk rasio potret sempit agar kapal tidak tercekik)
+// - Akhir zoom-out: 1.00 (100% full-bleed cakrawala laut lepas tanpa letterbox)
+const DESKTOP_INITIAL_SCALE = 1.90;
+const MOBILE_INITIAL_SCALE = 1.50;
 const MIN_SCALE = 1.00;
 
 export const HeroVideo: React.FC<HeroVideoProps> = ({ progress, isReducedMotion }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Skala responsif langsung mengikuti posisi dan kecepatan scroll user:
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mql.matches);
+
+    const handler = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+    };
+
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const initialScale = isMobile ? MOBILE_INITIAL_SCALE : DESKTOP_INITIAL_SCALE;
   const clampedProgress = Math.min(1, Math.max(0, progress));
   const scale = isReducedMotion
     ? 1.0
-    : INITIAL_SCALE - clampedProgress * (INITIAL_SCALE - MIN_SCALE);
+    : initialScale - clampedProgress * (initialScale - MIN_SCALE);
+
+  const origin = isMobile ? "50% 70%" : "50% 74%";
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-slate-900 select-none">
@@ -40,7 +57,7 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({ progress, isReducedMotion 
           poster="/hero/poster.webp"
           style={{
             transform: `scale(${scale})`,
-            transformOrigin: "50% 74%",
+            transformOrigin: origin,
           }}
           className="w-full h-full object-cover object-[50%_74%] will-change-transform transition-transform duration-100 ease-out"
         >

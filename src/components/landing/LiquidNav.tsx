@@ -252,7 +252,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       onFocus={() => setHoveredId(item.id)}
                       onBlur={() => setHoveredId(null)}
                       aria-label={item.label}
-                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[50px] sm:min-h-[56px] ${
+                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-1.5 sm:py-2.5 px-1 sm:px-2 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[46px] sm:min-h-[56px] ${
                         isInHero
                           ? "text-white"
                           : isHighlighted
@@ -261,7 +261,9 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       }`}
                     >
                       <Icon
-                        className={`w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 ${
+                        className={`w-5 h-5 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-110 ${
+                          isHighlighted ? "mb-1" : "mb-0 sm:mb-1"
+                        } ${
                           isInHero
                             ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
                             : "drop-shadow-none"
@@ -269,6 +271,8 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       />
                       <span
                         className={`text-[10px] sm:text-[11.5px] tracking-wide whitespace-nowrap truncate max-w-full ${
+                          isHighlighted ? "inline" : "hidden sm:inline"
+                        } ${
                           isInHero
                             ? "font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
                             : isHighlighted

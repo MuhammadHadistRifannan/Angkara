@@ -64,13 +64,15 @@ const Hero: React.FC = () => {
         {/* Petunjuk Gulir Mungil & Halus di Awal Viewport */}
         {!isReducedMotion && (
           <div
-            className="absolute bottom-6 left-0 right-0 z-20 flex flex-col items-center justify-center pointer-events-none select-none transition-opacity duration-200"
+            className="absolute bottom-5 sm:bottom-6 left-0 right-0 z-20 flex flex-col items-center justify-center pointer-events-none select-none transition-opacity duration-200"
             style={{ opacity: hintOpacity }}
           >
-            <span className="text-[11px] font-medium tracking-[0.25em] uppercase text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] mb-1">
-              Gulir
-            </span>
-            <ChevronDown className="w-4 h-4 text-white/60 animate-bounce" />
+            <div className="flex flex-col items-center justify-center bg-black/25 backdrop-blur-md px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
+              <span className="text-[10px] sm:text-[11px] font-medium tracking-[0.22em] uppercase text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] mb-0.5">
+                Gulir
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-white/75 animate-bounce" />
+            </div>
           </div>
         )}
       </div>

@@ -162,24 +162,27 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({ isTriggered, isReducedMoti
         {/* Placeholder tak terlihat untuk mencegah layout shift */}
         <div className="invisible select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] text-white font-display">
           <div className="sm:whitespace-nowrap">{LINE_1}</div>
-          <div className="sm:whitespace-nowrap">{LINE_2}</div>
+          <div className="sm:whitespace-nowrap font-medium text-white/85 mt-1 sm:mt-1.5">{LINE_2}</div>
         </div>
 
         {/* Teks animasi aktual yang sedang diketik atau di-untype */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] text-white font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)]"
+          className="absolute inset-0 select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)]"
         >
-          <div className="sm:whitespace-nowrap">
+          {/* Baris 1: Headline Promise (Solid Pure White) */}
+          <div className="sm:whitespace-nowrap text-white">
             {typedLine1}
             {showCursor && typedLine2.length === 0 && (
-              <span className="inline-block w-[3px] h-[0.85em] bg-white/90 ml-1.5 align-middle animate-pulse" />
+              <span className="inline-block w-[3px] h-[0.85em] bg-white/95 ml-1.5 align-middle animate-pulse" />
             )}
           </div>
-          <div className="sm:whitespace-nowrap">
+
+          {/* Baris 2: Functional Reassurance (Nuansa Lembut 85% White + Medium Weight) */}
+          <div className="sm:whitespace-nowrap text-white/85 font-medium tracking-tight mt-1 sm:mt-1.5">
             {typedLine2}
             {showCursor && typedLine2.length > 0 && (
-              <span className="inline-block w-[3px] h-[0.85em] bg-white/90 ml-1.5 align-middle animate-pulse" />
+              <span className="inline-block w-[3px] h-[0.85em] bg-white/80 ml-1.5 align-middle animate-pulse" />
             )}
           </div>
         </div>
