@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, Anchor } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
+import logoSuar from "@/assets/logo-suar.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -48,16 +50,12 @@ const Navbar = () => {
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => navigate("/")}
           >
-            <div className="p-2 rounded-xl bg-gradient-to-br from-primary/30 to-accent/20 border border-cyan-400/30 group-hover:border-cyan-400/60 transition-colors shadow-sm">
-              <Anchor className="h-6 w-6 text-cyan-300 group-hover:scale-110 transition-transform" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black bg-gradient-to-r from-cyan-300 via-sky-200 to-accent bg-clip-text text-transparent tracking-tight">
-                Angkara
-              </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 -mt-1">
-                Bahari Cilacap
-              </span>
+            <div className="bg-white/95 hover:bg-white px-3 py-1.5 rounded-xl shadow-md border border-white/40 transition-all flex items-center">
+              <img
+                src={logoSuar}
+                alt="SUAR - Berlayar Aman, Berdaya Bersama"
+                className="h-7 sm:h-8 w-auto object-contain group-hover:scale-105 transition-transform"
+              />
             </div>
           </div>
 

@@ -2,7 +2,7 @@ import React from "react";
 import {
   Shield,
   Calendar,
-  Calculator,
+  Anchor,
   FileText,
   Cloud,
   CreditCard,
@@ -29,11 +29,11 @@ const features = [
       "Sistem kapasitas kursi real-time dengan minimal penumpang otomatis dan opsi sharing trip untuk efisiensi maksimal.",
   },
   {
-    icon: Calculator,
-    tag: "Diskon Rombongan",
-    title: "Kalkulator Tarif",
+    icon: Anchor,
+    tag: "Dermaga Resmi",
+    title: "Akses Pandanarang",
     description:
-      "Estimasi biaya transparan dengan breakdown detail harga dasar per orang dan skema diskon kelompok tanpa biaya siluman.",
+      "Titik keberangkatan legal dan tertib di dermaga wisata Teluk Penyu dengan pos kelaikan kapal dan pemandu bersertifikasi.",
   },
   {
     icon: FileText,
