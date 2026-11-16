@@ -2,14 +2,12 @@ import React, { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Search,
   MapPin,
   Calendar,
   Users,
   Compass,
-  ShieldCheck,
   MessageSquare,
   ArrowRight,
   Anchor,
@@ -17,8 +15,9 @@ import {
   Waves,
   Wind,
   Navigation2,
-  Star,
 } from "lucide-react";
+import heroBgSea from "@/assets/hero-bg-sea.png";
+import heroBoatCard from "@/assets/hero-boat-card.png";
 
 export const HeroSection: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
@@ -71,7 +70,7 @@ export const HeroSection: React.FC = () => {
       className="relative min-h-[95vh] w-full overflow-hidden bg-[#090D16] text-white flex flex-col justify-between pt-24"
     >
       {/* =========================================================================
-          LAYER 1: z-0 (Background Laut Parallax)
+          LAYER 1: z-0 (Background Laut Parallax - Menggunakan Gambar 2)
           y: ['0%', '35%'], scale: [1, 1.1]
           ========================================================================= */}
       <motion.div
@@ -84,13 +83,13 @@ export const HeroSection: React.FC = () => {
         }}
       >
         <img
-          src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=2400&q=85"
-          alt="Lautan Ombak Pesisir Cilacap"
-          className="w-full h-[130%] -top-[15%] absolute object-cover object-center filter brightness-[0.62] contrast-[1.12]"
+          src={heroBgSea}
+          alt="Pemandangan Laut dan Karang Pesisir Cilacap"
+          className="w-full h-[130%] -top-[15%] absolute object-cover object-center filter brightness-[0.72] contrast-[1.1]"
         />
 
         {/* Dynamic Maritime Gradients & Lighting Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#090D16]/95 via-[#090D16]/75 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#090D16]/95 via-[#090D16]/70 to-[#090D16]/30" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/40 to-transparent" />
 
         {/* Ambient Oceanic Glow Orbs */}
@@ -101,8 +100,8 @@ export const HeroSection: React.FC = () => {
       {/* =========================================================================
           HERO MAIN CONTENT AREA (Grid 2 Kolom)
           ========================================================================= */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-6 pb-28 md:pb-36">
-        <div className="grid lg:grid-cols-12 gap-10 items-start">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-6 pb-24 md:pb-32">
+        <div className="grid lg:grid-cols-12 gap-10 items-center">
           {/* =====================================================================
               LAYER 2: z-10 (Teks Judul & CTA Kiri - Tenggelam di Balik Ombak)
               y: ['0%', '65%']
@@ -170,64 +169,45 @@ export const HeroSection: React.FC = () => {
           </motion.div>
 
           {/* =====================================================================
-              LAYER 4: z-30 (Kartu Kanan - Foto Wisata Perahu Unsplash)
+              LAYER 4: z-30 (Kartu Kanan - Menggunakan Gambar 3 Sesuai Desain Gambar 1)
               y: ['0%', '-15%']
               ===================================================================== */}
           <motion.div
-            className="lg:col-span-5 relative z-30"
+            className="lg:col-span-5 relative z-30 flex justify-center lg:justify-end"
             style={{
               y: cardY,
               willChange: "transform",
             }}
           >
-            <div className="relative rounded-3xl p-4 sm:p-5 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80 backdrop-blur-2xl border border-white/20 shadow-2xl space-y-4">
-              {/* Gambar Perahu Wisata Unsplash */}
-              <div className="relative h-56 sm:h-64 rounded-2xl overflow-hidden group shadow-inner">
-                <img
-                  src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1000&q=80"
-                  alt="Wisata Perahu Pesisir Cilacap"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent" />
+            {/* Kartu Wisata Perahu persis seperti Desain Gambar 1 */}
+            <div className="relative w-full max-w-[380px] sm:max-w-[420px] aspect-[4/5] rounded-[28px] overflow-hidden shadow-2xl border border-white/20 bg-slate-900 group">
+              {/* Gambar 3: Foto Perahu Biru Ambulance / Wisata Cilacap */}
+              <img
+                src={heroBoatCard}
+                alt="Kapal Wisata Bahari Cilacap - Kearifan Bahari Lokal"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
 
-                {/* Floating Badges di Gambar */}
-                <div className="absolute top-3 left-3">
-                  <Badge className="bg-primary/85 backdrop-blur-md text-white border border-white/20 text-xs px-2.5 py-1 flex items-center gap-1.5 shadow-md">
-                    <ShieldCheck className="h-3.5 w-3.5 text-accent" />
-                    <span>Terverifikasi KSOP</span>
-                  </Badge>
-                </div>
+              {/* Gradient halus di background kartu */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
 
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-black/60 backdrop-blur-md text-amber-300 border border-amber-300/30 text-xs px-2.5 py-1 flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-amber-300" />
-                    <span>4.9 / 5.0</span>
-                  </Badge>
-                </div>
-
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <div className="text-xs font-medium text-cyan-300">Wisata Bahari Populer</div>
-                  <h4 className="text-base font-bold drop-shadow">Eksplorasi Teluk Penyu & Nusakambangan</h4>
+              {/* Badge Kanan Atas: NO. LAMBUNG: TPY-048 */}
+              <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold tracking-wider text-[#1e3a5f] uppercase border border-white/50">
+                  NO. LAMBUNG: TPY-048
                 </div>
               </div>
 
-              {/* Status Intelijen Keberangkatan */}
-              <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="text-xs text-slate-300 font-medium">Jendela Keberangkatan Teraman</div>
-                  <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>07.00 - 15.00 WIB (Kondusif)</span>
-                  </div>
+              {/* Box Bawah: Kearifan Bahari Lokal */}
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 z-10">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#0B132B]/95 backdrop-blur-md border border-white/15 shadow-xl">
+                  <h4 className="text-sm sm:text-base font-bold text-white mb-1.5 tracking-tight">
+                    Kearifan Bahari Lokal
+                  </h4>
+                  <p className="text-xs sm:text-[13px] text-slate-200/95 leading-relaxed font-normal">
+                    &ldquo;Setiap nahkoda kami terdaftar resmi di Kantor Kesyahbandaran Cilacap dan dibekali asuransi perlindungan penumpang.&rdquo;
+                  </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="hero"
-                  onClick={handleAskJuruMudi}
-                  className="h-8 text-xs font-semibold px-3"
-                >
-                  Cek Jadwal
-                </Button>
               </div>
             </div>
           </motion.div>
@@ -300,9 +280,9 @@ export const HeroSection: React.FC = () => {
                     <h3 className="text-sm sm:text-base font-bold text-white">
                       Widget Cuaca Maritim AI
                     </h3>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] px-2 py-0.5">
+                    <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] px-2 py-0.5 rounded-full font-semibold">
                       Live BMKG & Open-Meteo
-                    </Badge>
+                    </div>
                   </div>
                   <p className="text-xs text-slate-300">
                     Kondisi maritim perairan Teluk Penyu & Pelabuhan Tanjung Intan
@@ -312,7 +292,7 @@ export const HeroSection: React.FC = () => {
 
               {/* 3 Parameter Cuaca Spesifik yang Diminta User */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-                {/* Tinggi Gelombang */}
+                {/* Tinggi Gelombang: 1.4 m */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
                   <Waves className="h-4 w-4 text-cyan-400" />
                   <div>
@@ -321,7 +301,7 @@ export const HeroSection: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Kecepatan Angin */}
+                {/* Kecepatan Angin: 12 knot */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
                   <Wind className="h-4 w-4 text-sky-400" />
                   <div>
@@ -330,7 +310,7 @@ export const HeroSection: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Arus Laut */}
+                {/* Arus Laut: 1.8 m/s */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
                   <Navigation2 className="h-4 w-4 text-emerald-400 rotate-45" />
                   <div>

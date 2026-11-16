@@ -79,4 +79,18 @@ describe("Hero Component", () => {
     const parallaxBg = container.querySelector("[data-testid='parallax-bg']");
     expect(parallaxBg).not.toBeNull();
   });
+
+  it("merender kartu kanan dengan no lambung kapal dan kutipan kearifan bahari lokal", () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Hero)
+      )
+    );
+
+    expect(screen.getByText(/NO\. LAMBUNG: TPY-048/i)).toBeDefined();
+    expect(screen.getByText(/Kearifan Bahari Lokal/i)).toBeDefined();
+    expect(screen.getByText(/Kantor Kesyahbandaran Cilacap/i)).toBeDefined();
+  });
 });
