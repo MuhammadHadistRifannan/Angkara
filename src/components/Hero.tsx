@@ -1,82 +1,78 @@
-import { Button } from "@/components/ui/button";
-import { Search, MapPin, Calendar } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import heroImage from "@/assets/hero-boat.jpg";
+import React, { useRef } from "react";
+import { createPortal } from "react-dom";
+import { useHeroScroll } from "./landing/useHeroScroll";
+import { HeroVideo } from "./landing/HeroVideo";
+import { HeroTitle } from "./landing/HeroTitle";
+import { LiquidNav } from "./landing/LiquidNav";
+import { ChevronDown } from "lucide-react";
 
-const Hero = () => {
+const Hero: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { progress, isTitleTriggered, showNavbar, isReducedMotion } =
+    useHeroScroll(containerRef);
+
+  // Overlay kontras gelap di langit (maks 35%)
+  let overlayOpacity = 0;
+  let hintOpacity = 1;
+
+  if (isReducedMotion) {
+    overlayOpacity = 0.35;
+    hintOpacity = 0;
+  } else if (progress >= 0.12) {
+    overlayOpacity = 0.35;
+    hintOpacity = 0;
+  } else if (progress > 0.06) {
+    const factor = (progress - 0.06) / 0.06;
+    overlayOpacity = factor * 0.35;
+    hintOpacity = 1 - factor;
+  }
+
   return (
-    <section className="relative pt-24 pb-20 overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Kapal Wisata Cilacap"
-          className="w-full h-full object-cover"
+    <section
+      ref={containerRef}
+      className="relative w-full h-[250vh] bg-slate-950"
+      aria-label="Hero Pelayaran Angkara"
+    >
+      {/* Sticky Viewport 100svh */}
+      <div className="sticky top-0 w-full h-[100svh] overflow-hidden">
+        {/* Background Video Laut & Kapal */}
+        <HeroVideo progress={progress} isReducedMotion={isReducedMotion} />
+
+        {/* Gradasi gelap adaptif di area langit untuk kontras teks WCAG AA */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-transparent transition-opacity duration-150 ease-out z-10"
+          style={{ opacity: overlayOpacity }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent" />
-      </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-2xl">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Jelajahi Nusakambangan dengan <span className="text-accent">Aman & Mudah</span>
-          </h1>
-          <p className="text-lg md:text-xl text-white/90 mb-8">
-            Platform booking kapal wisata pertama di Cilacap. Transparan, terverifikasi KSOP, dan terpercaya.
-          </p>
+        {/* Judul & Animasi Typing di Area Langit (30-38% tinggi layar) */}
+        <HeroTitle
+          isTriggered={isTitleTriggered}
+          isReducedMotion={isReducedMotion}
+        />
 
-          {/* Search Box */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-3">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Nusakambangan"
-                  className="border-0 p-0 focus-visible:ring-0"
-                />
-              </div>
-              <div className="flex items-center gap-2 border border-border rounded-lg px-4 py-3">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="border-0 p-0 focus-visible:ring-0"
-                />
-              </div>
-              <Button variant="hero" className="h-full">
-                <Search className="h-5 w-5 mr-2" />
-                Cari Kapal
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-              <span>Populer:</span>
-              <button className="text-primary hover:underline">Paket Sunset</button>
-              <span>•</span>
-              <button className="text-primary hover:underline">Private Trip</button>
-              <span>•</span>
-              <button className="text-primary hover:underline">Tour Keliling</button>
-            </div>
+        {/* Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
+        {typeof document !== "undefined" &&
+          createPortal(
+            <LiquidNav show={showNavbar} isReducedMotion={isReducedMotion} />,
+            document.body
+          )}
+
+        {/* Petunjuk Gulir Mungil & Halus di Awal Viewport */}
+        {!isReducedMotion && (
+          <div
+            className="absolute bottom-6 left-0 right-0 z-20 flex flex-col items-center justify-center pointer-events-none select-none transition-opacity duration-200"
+            style={{ opacity: hintOpacity }}
+          >
+            <span className="text-[11px] font-medium tracking-[0.25em] uppercase text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] mb-1">
+              Gulir
+            </span>
+            <ChevronDown className="w-4 h-4 text-white/60 animate-bounce" />
           </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            <div className="text-white">
-              <div className="text-3xl font-bold">50+</div>
-              <div className="text-white/80 text-sm">Kapal Terdaftar</div>
-            </div>
-            <div className="text-white">
-              <div className="text-3xl font-bold">100%</div>
-              <div className="text-white/80 text-sm">Terverifikasi KSOP</div>
-            </div>
-            <div className="text-white">
-              <div className="text-3xl font-bold">4.8/5</div>
-              <div className="text-white/80 text-sm">Rating Rata-rata</div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );
 };
 
 export default Hero;
+
