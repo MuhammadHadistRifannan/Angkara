@@ -107,36 +107,56 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
   const activeItem = navItems.find((item) => item.isActive) || navItems[0];
   const currentHighlightedId = hoveredId || activeItem.id;
 
-  // Spring bouncing Apple
-  const springTransition: Transition = isReducedMotion
-    ? { duration: 0 }
-    : {
-        type: "spring",
-        stiffness: 300,
-        damping: 22,
-        mass: 0.9,
-      };
+  // Variasi animasi Apple spring bouncy dengan stagger 50ms per item
+  const navContainerVariants = {
+    hidden: isReducedMotion
+      ? { opacity: 0 }
+      : { opacity: 0, y: "35vh", scale: 0.55 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: isReducedMotion
+        ? { duration: 0 }
+        : {
+            type: "spring" as const,
+            stiffness: 300,
+            damping: 22,
+            mass: 0.9,
+            staggerChildren: 0.05,
+            delayChildren: 0.08,
+          },
+    },
+    exit: isReducedMotion
+      ? { opacity: 0 }
+      : {
+          opacity: 0,
+          y: "20vh",
+          scale: 0.7,
+          transition: { duration: 0.2 },
+        },
+  };
+
+  const navItemVariants = {
+    hidden: isReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: isReducedMotion
+        ? { duration: 0 }
+        : { type: "spring" as const, stiffness: 380, damping: 26 },
+    },
+  };
 
   return (
     <AnimatePresence>
       {(show || isReducedMotion) && (
         <motion.nav
-          initial={
-            isReducedMotion
-              ? { opacity: 1, y: 0 }
-              : { opacity: 0, y: "35vh", scale: 0.55 }
-          }
-          animate={{
-            opacity: 1,
-            y: 0,
-            scale: 1,
-          }}
-          exit={
-            isReducedMotion
-              ? { opacity: 0 }
-              : { opacity: 0, y: "20vh", scale: 0.7 }
-          }
-          transition={springTransition}
+          variants={navContainerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           role="navigation"
           aria-label="Navigasi Utama Angkara"
           className="fixed top-5 left-0 right-0 z-50 flex justify-center px-4 pointer-events-auto"
@@ -144,22 +164,27 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
           {/* Pill Kaca Liquid Glass */}
           <div
             onMouseLeave={() => setHoveredId(null)}
-            className="relative flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-full max-w-[560px] w-auto bg-white/12 dark:bg-slate-900/40 backdrop-blur-xl border border-white/28 dark:border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.45)] select-none"
+            className="relative flex items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-full max-w-[560px] w-auto bg-white/12 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/28 dark:border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.45)] select-none"
             style={{
               backdropFilter: "blur(20px) saturate(180%)",
               WebkitBackdropFilter: "blur(20px) saturate(180%)",
             }}
           >
-            {/* Pantulan kilau cahaya diagonal tipis */}
+            {/* Pantulan kilau cahaya diagonal tipis & rim cahaya atas */}
             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/15 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
 
-            {navItems.map((item, idx) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               const isHighlighted = currentHighlightedId === item.id;
               const isHovered = hoveredId === item.id;
 
               return (
-                <div key={item.id} className="relative flex items-center">
+                <motion.div
+                  key={item.id}
+                  variants={navItemVariants}
+                  className="relative flex items-center"
+                >
                   <button
                     type="button"
                     onClick={item.action}
@@ -206,7 +231,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
+                </motion.div>
               );
             })}
           </div>

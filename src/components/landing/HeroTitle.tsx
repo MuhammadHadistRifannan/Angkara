@@ -77,7 +77,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({ isTriggered, isReducedMoti
     >
       <div className="relative text-center max-w-4xl mx-auto">
         {/* Placeholder tak terlihat untuk mencegah layout shift */}
-        <div className="invisible select-none leading-[1.08] tracking-[-0.03em] font-semibold text-[clamp(2.2rem,6.5vw,5.5rem)] text-white font-display">
+        <div className="invisible select-none leading-[1.05] tracking-[-0.03em] font-semibold text-[clamp(2.5rem,7vw,6rem)] text-white font-display">
           <div>{LINE_1}</div>
           <div>{LINE_2}</div>
         </div>
@@ -85,7 +85,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({ isTriggered, isReducedMoti
         {/* Teks animasi aktual yang sedang diketik */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 select-none leading-[1.08] tracking-[-0.03em] font-semibold text-[clamp(2.2rem,6.5vw,5.5rem)] text-white font-display drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)]"
+          className="absolute inset-0 select-none leading-[1.05] tracking-[-0.03em] font-semibold text-[clamp(2.5rem,7vw,6rem)] text-white font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)]"
         >
           <div>
             {typedLine1}
