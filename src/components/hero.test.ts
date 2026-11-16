@@ -23,7 +23,8 @@ describe("Hero Component", () => {
       )
     );
 
-    expect(screen.getByText(/Jelajahi Nusakambangan/i)).toBeDefined();
+    expect(screen.getByText(/Jelajahi Pesisir Cilacap/i)).toBeDefined();
+    expect(screen.getAllByText(/Nusakambangan/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Terverifikasi KSOP/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("button", { name: /Cari Kapal/i })).toBeDefined();
   });
