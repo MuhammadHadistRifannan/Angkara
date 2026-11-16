@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, MapPin, ShieldCheck, Fish, Trees, Users, ArrowRight } from "lucide-react";
+import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
+import imgTourMangrove from "@/assets/tour-mangrove-anakan.png";
+import imgTourMancing from "@/assets/tour-mancing-mercusuar.png";
 
 interface TourPackageItem {
   id: string;
@@ -32,8 +34,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Mulai dari",
     price: 35000,
     unit: "/ orang",
-    image_url:
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
+    image_url: imgTourTelukPenyu,
   },
   {
     id: "pkg-segara-anakan",
@@ -48,8 +49,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Kapal",
     price: 350000,
     unit: "/ group",
-    image_url:
-      "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80",
+    image_url: imgTourMangrove,
   },
   {
     id: "pkg-mancing-mercusuar",
@@ -64,8 +64,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Spesial",
     price: 550000,
     unit: "/ paket",
-    image_url:
-      "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+    image_url: imgTourMancing,
   },
 ];
 
@@ -73,7 +72,6 @@ export const TourPackagesSection: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [packages, setPackages] = useState<TourPackageItem[]>(defaultTourPackages);
-  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchPackages() {
@@ -106,8 +104,6 @@ export const TourPackagesSection: React.FC = () => {
         }
       } catch (err) {
         console.warn("Using default tour packages fallback:", err);
-      } finally {
-        setLoading(false);
       }
     }
 
@@ -167,11 +163,11 @@ export const TourPackagesSection: React.FC = () => {
           {filteredPackages.map((pkg) => (
             <div
               key={pkg.id}
-              className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col justify-between"
+              className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col justify-between group"
             >
               <div>
                 {/* Image & Badges */}
-                <div className="relative h-56 sm:h-60 w-full overflow-hidden">
+                <div className="relative h-56 sm:h-60 w-full overflow-hidden bg-slate-100">
                   <img
                     src={pkg.image_url}
                     alt={pkg.title}
@@ -191,7 +187,7 @@ export const TourPackagesSection: React.FC = () => {
 
                 {/* Body Content */}
                 <div className="p-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2.5 leading-snug line-clamp-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2.5 leading-snug line-clamp-2 group-hover:text-sky-800 transition-colors">
                     {pkg.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4 line-clamp-2">

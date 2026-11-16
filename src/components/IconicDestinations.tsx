@@ -1,6 +1,9 @@
 import React from "react";
 import { Compass, Landmark, Trees } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import imgKarangBolong from "@/assets/dest-karang-bolong.jpg";
+import imgMercusuarCimiring from "@/assets/dest-mercusuar-cimiring.png";
+import imgSegaraAnakan from "@/assets/dest-segara-anakan.png";
 
 const destinations = [
   {
@@ -10,8 +13,7 @@ const destinations = [
     icon: Compass,
     description:
       "Pasir putih eksotis di sisi timur Pulau Nusakambangan yang berpadu dengan situs cagar benteng kolonial bersejarah.",
-    image:
-      "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80",
+    image: imgKarangBolong,
   },
   {
     id: "mercusuar-cimiring",
@@ -20,8 +22,7 @@ const destinations = [
     icon: Landmark,
     description:
       "Mercusuar legendaris di tebing karang penuntun jalur pelayaran Samudera Hindia dengan panorama samudera lepas yang memukau.",
-    image:
-      "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+    image: imgMercusuarCimiring,
   },
   {
     id: "segara-anakan",
@@ -30,8 +31,7 @@ const destinations = [
     icon: Trees,
     description:
       "Hutan bakau terbesar di Pulau Jawa, surga burung endemik dan habitat biota laut yang tenang untuk jelajah perahu edukasi.",
-    image:
-      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80",
+    image: imgSegaraAnakan,
   },
 ];
 
