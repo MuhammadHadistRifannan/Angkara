@@ -18,7 +18,7 @@ const Index = () => {
       <BoatListings />
       
       {/* Additional Features Section */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-background" id="weather-map-section">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             <FareCalculator />
