@@ -1,3 +1,4 @@
+import React from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
@@ -11,22 +12,22 @@ import Footer from "@/components/Footer";
 import { WeatherMapPanel } from "@/components/weather/WeatherMapPanel";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
-const Index = () => {
+const Index: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-900">
-      {/* 1. Translucent Nav with Updated Logo */}
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-cyan-500 selection:text-white">
+      {/* 1. Translucent Nav with Updated SUAR Logo */}
       <Navbar />
 
       {/* 2. Hybrid Multi-Layer Parallax Hero with Weather Widget & Card */}
       <Hero />
 
-      {/* 3. Features Section without Fare Calculator */}
+      {/* 3. Features Section (Clean Coastal Light Theme) */}
       <Features />
 
       {/* 4. Mengapa Wisatawan Memilih Platform SUAR? (Image 2) */}
       <WhyChooseSuar />
 
-      {/* 5. How It Works */}
+      {/* 5. Cara Kerja Platform SUAR (Clean Coastal Light Theme) */}
       <HowItWorks />
 
       {/* 6. Destinasi Ikonik di Pantai Nusakambangan (Image 3) */}
@@ -41,16 +42,27 @@ const Index = () => {
       {/* 9. Tanya Apa Saja Sebelum Berlayar (Image 5) */}
       <AskBeforeSailingSection />
 
-      {/* 10. Dedicated Maritime Weather Map Section (Retained) */}
-      <section className="py-20 sm:py-24 bg-background" id="weather-map-section">
+      {/* 10. Dedicated Maritime Weather Map Section */}
+      <section className="py-20 sm:py-24 bg-[#F8FAFC] border-t border-slate-200/60" id="weather-map-section">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800">
+                Peta & Telemetri Maritim
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mt-3">
+                Pemantauan Kondisi Cuaca Perairan Cilacap
+              </h2>
+              <p className="text-sm sm:text-base text-slate-600 mt-2">
+                Data terintegrasi BMKG Stasiun Meteorologi Tunggul Wulung & satelit Open-Meteo untuk keselamatan penyeberangan Anda.
+              </p>
+            </div>
             <WeatherMapPanel />
           </div>
         </div>
       </section>
 
-      {/* 11. Footer */}
+      {/* 11. Footer with SUAR Oceanic Theme */}
       <Footer />
 
       {/* 12. Floating AI Assistant Widget */}

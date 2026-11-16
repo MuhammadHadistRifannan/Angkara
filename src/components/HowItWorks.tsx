@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Compass, Ship, ThumbsUp, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Compass, Ship, ThumbsUp, Sparkles } from "lucide-react";
 
 const steps = [
   {
@@ -36,76 +36,67 @@ const steps = [
   },
 ];
 
-const HowItWorks = () => {
+const HowItWorks: React.FC = () => {
   return (
     <section
       id="how-it-works"
-      className="py-24 sm:py-28 bg-[#090D16] text-white relative overflow-hidden border-t border-white/5"
+      className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60"
     >
-      {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[45rem] h-[25rem] bg-cyan-600/10 rounded-full blur-[160px] pointer-events-none" />
-
-      <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        {/* Header Section */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Header Section matching SUAR Coastal Theme */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-xs sm:text-sm font-semibold text-cyan-300 shadow-sm">
-            <Sparkles className="h-4 w-4" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs sm:text-sm font-semibold">
+            <Sparkles className="h-4 w-4 text-sky-700" />
             <span>Alur Pemesanan Sederhana</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Cara Kerja{" "}
-            <span className="bg-gradient-to-r from-cyan-300 via-sky-200 to-accent bg-clip-text text-transparent">
-              Angkara
+            <span className="text-sky-700">
+              Platform SUAR
             </span>
           </h2>
 
-          <p className="text-base sm:text-lg text-slate-300/90 leading-relaxed">
+          <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
             Booking kapal wisata kini semudah 4 langkah transparan tanpa calo dan terproteksi sistem kelaikan laut.
           </p>
         </div>
 
-        {/* Steps Grid */}
+        {/* Steps Grid matching SUAR Coastal Theme */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-          {/* Connecting gradient line on desktop */}
-          <div className="hidden lg:block absolute top-20 left-[12%] right-[12%] h-[2px] bg-gradient-to-r from-cyan-500/30 via-primary-light/40 to-cyan-400/30 -z-0" />
+          {/* Connecting line on desktop */}
+          <div className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-[2px] bg-sky-200/80 -z-0" />
 
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
               <div key={index} className="relative group">
-                <div className="relative p-7 pt-8 rounded-3xl bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur-xl border border-white/10 hover:border-cyan-400/50 transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/15 hover:-translate-y-1.5 flex flex-col justify-between h-full">
+                <div className="relative p-7 pt-8 rounded-3xl bg-white border border-slate-200/90 hover:border-sky-300 hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full">
                   {/* Floating Number Badge */}
-                  <div className="absolute -top-4 -left-3 bg-gradient-to-br from-primary via-primary-light to-accent text-white rounded-2xl w-12 h-12 flex items-center justify-center font-black text-lg shadow-lg shadow-cyan-500/25 border border-white/20 group-hover:scale-105 transition-transform">
+                  <div className="absolute -top-4 -left-3 bg-[#090D16] text-white rounded-2xl w-12 h-12 flex items-center justify-center font-black text-lg shadow-md border border-slate-800 group-hover:scale-105 group-hover:bg-sky-800 transition-all">
                     {step.number}
                   </div>
 
                   <div>
-                    {/* Icon Container */}
+                    {/* Icon Container & Tag */}
                     <div className="flex items-center justify-between mb-4 mt-2">
-                      <div className="p-3.5 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-400/30 text-cyan-300 group-hover:scale-110 group-hover:text-cyan-200 transition-all duration-300 shadow-sm">
-                        <Icon className="h-7 w-7" />
+                      <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 group-hover:scale-105 transition-transform">
+                        <Icon className="h-6 w-6" />
                       </div>
 
-                      <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-cyan-300">
+                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
                         {step.tag}
                       </span>
                     </div>
 
                     {/* Step Title & Description */}
-                    <h3 className="text-xl font-bold text-white group-hover:text-cyan-200 transition-colors tracking-tight mb-2">
+                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-sky-800 transition-colors tracking-tight mb-2">
                       {step.title}
                     </h3>
 
-                    <p className="text-sm text-slate-300/85 leading-relaxed">
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       {step.description}
                     </p>
-                  </div>
-
-                  {/* Step bottom arrow */}
-                  <div className="mt-5 pt-3 border-t border-white/5 flex items-center gap-1 text-xs font-semibold text-cyan-400 opacity-60 group-hover:opacity-100 transition-opacity">
-                    <span>Langkah {step.number}</span>
-                    <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </div>
