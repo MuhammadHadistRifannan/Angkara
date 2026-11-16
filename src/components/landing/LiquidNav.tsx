@@ -162,18 +162,18 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
           aria-label="Navigasi Utama Angkara"
           className="fixed top-5 left-0 right-0 z-50 flex justify-center px-3 sm:px-4 pointer-events-auto origin-center"
         >
-          {/* Pill Kaca Lebar Sejajar Judul (Maks ~820px) */}
+          {/* Pill Kaca Translucent Frosted Glass (Sesuai Referensi Apple iOS Lockscreen Glass) */}
           <div
             onMouseLeave={() => setHoveredId(null)}
-            className="relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[760px] md:max-w-[840px] bg-black/45 dark:bg-black/60 backdrop-blur-2xl border border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] select-none"
+            className="relative flex items-center justify-between p-2 sm:p-2.5 rounded-full w-full max-w-[800px] md:max-w-[890px] lg:max-w-[920px] bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)] select-none"
             style={{
-              backdropFilter: "blur(24px) saturate(190%)",
-              WebkitBackdropFilter: "blur(24px) saturate(190%)",
+              backdropFilter: "blur(32px) saturate(190%) contrast(95%)",
+              WebkitBackdropFilter: "blur(32px) saturate(190%) contrast(95%)",
             }}
           >
-            {/* Pantulan kilau cahaya diagonal tipis & rim cahaya atas */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/12 via-white/5 to-transparent pointer-events-none" />
-            <div className="absolute inset-x-8 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent pointer-events-none" />
+            {/* Pantulan kilau cahaya diagonal & specular edge atas */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-white/5 to-white/10 pointer-events-none" />
+            <div className="absolute inset-x-10 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/95 to-transparent pointer-events-none" />
 
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -192,15 +192,15 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
                     onFocus={() => setHoveredId(item.id)}
                     onBlur={() => setHoveredId(null)}
                     aria-label={item.label}
-                    className="group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full text-white/90 hover:text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/60 min-h-[50px] sm:min-h-[56px]"
+                    className="group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/70 min-h-[52px] sm:min-h-[58px]"
                   >
                     <Icon className="w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
-                    <span className="text-[10px] sm:text-[11.5px] font-medium tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] whitespace-nowrap truncate max-w-full">
+                    <span className="text-[10.5px] sm:text-[12px] font-medium tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] whitespace-nowrap truncate max-w-full">
                       {item.label}
                     </span>
                   </button>
 
-                  {/* Highlight kaca putih transparan (Apple Liquid Glass) yang bergeser mengikuti hover/aktif */}
+                  {/* Highlight kapsul kaca putih transparan (Apple Liquid Glass) yang bergeser mengikuti hover/aktif */}
                   {isHighlighted && (
                     <motion.div
                       layoutId="liquid-nav-highlight"
@@ -209,7 +209,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
                         stiffness: 380,
                         damping: 28,
                       }}
-                      className="absolute inset-0 z-0 rounded-full bg-white/18 border border-white/40 shadow-[0_4px_20px_rgba(0,0,0,0.25),inset_0_1px_1.5px_rgba(255,255,255,0.7),inset_0_-1px_1px_rgba(0,0,0,0.2)] backdrop-blur-md"
+                      className="absolute inset-0 z-0 rounded-full bg-white/30 border border-white/70 shadow-[0_4px_18px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)] backdrop-blur-md"
                     />
                   )}
                 </motion.div>
