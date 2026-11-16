@@ -1,0 +1,41 @@
+services:
+  # Service Production (Default)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY:-}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID:-}
+    container_name: angkara-app
+    image: angkara-app:latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8088}:80"
+    environment:
+      - NODE_ENV=production
+
+  # Service Development (Jalankan dengan: docker compose --profile dev up app-dev)
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: angkara-app-dev
+    image: angkara-app:dev
+    profiles:
+      - dev
+    ports:
+      - "${DEV_PORT:-5174}:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-}
+      - VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY:-}
+      - VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID:-}
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+

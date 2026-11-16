@@ -11,7 +11,10 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "eval": "vite-node scripts/run-eval.ts"
+    "eval": "vite-node scripts/run-eval.ts",
+    "docker:build": "docker compose build app",
+    "docker:up": "docker compose up -d app",
+    "docker:down": "docker compose down"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

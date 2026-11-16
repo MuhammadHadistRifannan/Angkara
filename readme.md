@@ -210,6 +210,24 @@ npm run dev
 ```
 Buka browser Anda di `http://localhost:5173`.
 
+### 5️⃣ Menjalankan Menggunakan Docker (Opsional)
+Proyek telah dilengkapi dengan multi-stage Dockerfile yang mengoptimalkan image lokal (`node:22` dan `nginx:alpine`) tanpa perlu mengunduh image besar berulang kali:
+
+```bash
+# Menjalankan kontainer bundle produksi (Nginx) di http://localhost:8088
+docker compose up -d app
+# atau melalui npm script:
+npm run docker:up
+
+# Menjalankan kontainer mode pengembangan (HMR Live Reload) di http://localhost:5174
+docker compose --profile dev up app-dev
+
+# Menghentikan kontainer
+docker compose down
+# atau melalui npm script:
+npm run docker:down
+```
+
 ---
 
 ## 🧪 Pengujian & Verifikasi Kualitas
