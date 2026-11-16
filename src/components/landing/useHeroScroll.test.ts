@@ -3,6 +3,7 @@ import {
   calculateProgress,
   shouldTriggerTitle,
   shouldShowNavbar,
+  checkIfInHero,
 } from "./useHeroScroll";
 
 describe("useHeroScroll - pure helper logic", () => {
@@ -45,6 +46,19 @@ describe("useHeroScroll - pure helper logic", () => {
       expect(shouldShowNavbar(0.29)).toBe(false);
       expect(shouldShowNavbar(0.30)).toBe(true);
       expect(shouldShowNavbar(0.50)).toBe(true);
+    });
+  });
+
+  describe("checkIfInHero", () => {
+    it("mengembalikan true jika batas bawah hero masih di atas threshold (70px)", () => {
+      expect(checkIfInHero(1000)).toBe(true);
+      expect(checkIfInHero(71)).toBe(true);
+    });
+
+    it("mengembalikan false jika batas bawah hero sudah melewati threshold (keluar dari hero)", () => {
+      expect(checkIfInHero(70)).toBe(false);
+      expect(checkIfInHero(0)).toBe(false);
+      expect(checkIfInHero(-200)).toBe(false);
     });
   });
 });

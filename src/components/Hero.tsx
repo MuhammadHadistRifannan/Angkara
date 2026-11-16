@@ -4,11 +4,12 @@ import { useHeroScroll } from "./landing/useHeroScroll";
 import { HeroVideo } from "./landing/HeroVideo";
 import { HeroTitle } from "./landing/HeroTitle";
 import { LiquidNav } from "./landing/LiquidNav";
+import { BrandLogo } from "./landing/BrandLogo";
 import { ChevronDown } from "lucide-react";
 
 const Hero: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { progress, isTitleTriggered, showNavbar, isReducedMotion } =
+  const { progress, isTitleTriggered, showNavbar, isReducedMotion, isInHero } =
     useHeroScroll(containerRef);
 
   // Overlay kontras gelap di langit (maks 35%)
@@ -50,10 +51,17 @@ const Hero: React.FC = () => {
           isReducedMotion={isReducedMotion}
         />
 
-        {/* Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
+        {/* Brand Logo & Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
         {typeof document !== "undefined" &&
           createPortal(
-            <LiquidNav show={showNavbar} isReducedMotion={isReducedMotion} />,
+            <>
+              <BrandLogo isInHero={isInHero} />
+              <LiquidNav
+                show={showNavbar}
+                isReducedMotion={isReducedMotion}
+                isInHero={isInHero}
+              />
+            </>,
             document.body
           )}
 

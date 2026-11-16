@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface LiquidNavProps {
   show: boolean;
   isReducedMotion: boolean;
+  isInHero?: boolean;
 }
 
 interface NavItem {
@@ -17,7 +18,11 @@ interface NavItem {
   isActive: boolean;
 }
 
-export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) => {
+export const LiquidNav: React.FC<LiquidNavProps> = ({
+  show,
+  isReducedMotion,
+  isInHero = true,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -165,7 +170,11 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({ show, isReducedMotion }) =
           {/* Pill Kaca Translucent Frosted Glass (Sesuai Referensi Apple iOS Lockscreen Glass) */}
           <div
             onMouseLeave={() => setHoveredId(null)}
-            className="relative flex items-center justify-between p-2 sm:p-2.5 rounded-full w-full max-w-[800px] md:max-w-[890px] lg:max-w-[920px] bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)] select-none"
+            className={`relative flex items-center justify-between p-2 sm:p-2.5 rounded-full w-full max-w-[800px] md:max-w-[890px] lg:max-w-[920px] transition-all duration-300 select-none ${
+              isInHero
+                ? "bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)]"
+                : "bg-slate-900/80 backdrop-blur-3xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.35)]"
+            }`}
             style={{
               backdropFilter: "blur(32px) saturate(190%) contrast(95%)",
               WebkitBackdropFilter: "blur(32px) saturate(190%) contrast(95%)",

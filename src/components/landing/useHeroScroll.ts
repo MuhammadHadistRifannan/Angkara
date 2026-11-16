@@ -24,11 +24,16 @@ export function shouldShowNavbar(progress: number): boolean {
   return progress >= 0.30;
 }
 
+export function checkIfInHero(bottom: number, threshold = 70): boolean {
+  return bottom > threshold;
+}
+
 export interface HeroScrollState {
   progress: number;
   isTitleTriggered: boolean;
   showNavbar: boolean;
   isReducedMotion: boolean;
+  isInHero: boolean;
 }
 
 export function useHeroScroll(
@@ -39,6 +44,7 @@ export function useHeroScroll(
     isTitleTriggered: false,
     showNavbar: false,
     isReducedMotion: false,
+    isInHero: true,
   });
 
   useEffect(() => {
@@ -54,6 +60,7 @@ export function useHeroScroll(
         isTitleTriggered: true,
         showNavbar: true,
         isReducedMotion: true,
+        isInHero: true,
       });
       return;
     }
@@ -76,12 +83,14 @@ export function useHeroScroll(
         const triggered = shouldTriggerTitle(currentTriggered, p);
         currentTriggered = triggered;
         const nav = shouldShowNavbar(p);
+        const inHero = checkIfInHero(rect.bottom);
 
         setState({
           progress: p,
           isTitleTriggered: triggered,
           showNavbar: nav,
           isReducedMotion: false,
+          isInHero: inHero,
         });
       });
     };
