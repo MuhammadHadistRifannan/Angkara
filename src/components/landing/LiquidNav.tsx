@@ -167,10 +167,10 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           aria-label="Navigasi Utama Angkara"
           className="fixed top-5 left-0 right-0 z-50 flex justify-center px-3 sm:px-4 pointer-events-auto origin-center"
         >
-          {/* Pill Kaca Translucent Frosted Glass (Sesuai Referensi Apple iOS Lockscreen Glass) */}
+          {/* Pill Kaca Translucent Frosted Glass (Unified Floating Glass Bar) */}
           <div
             onMouseLeave={() => setHoveredId(null)}
-            className={`relative flex items-center justify-between p-2 sm:p-2.5 rounded-full w-full max-w-[800px] md:max-w-[890px] lg:max-w-[920px] transition-all duration-300 select-none ${
+            className={`relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
               isInHero
                 ? "bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)]"
                 : "bg-slate-900/80 backdrop-blur-3xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.35)]"
@@ -184,46 +184,84 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/30 via-white/5 to-white/10 pointer-events-none" />
             <div className="absolute inset-x-10 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/95 to-transparent pointer-events-none" />
 
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isHighlighted = currentHighlightedId === item.id;
+            {/* Brand Anchor (Logo & Nama) Terintegrasi di Sisi Kiri Pill */}
+            <motion.button
+              type="button"
+              variants={navItemVariants}
+              onClick={() => {
+                if (location.pathname === "/") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  navigate("/");
+                }
+              }}
+              aria-label="Kembali ke Beranda Angkara"
+              className="relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-white/70 min-h-[48px] sm:min-h-[54px] select-none hover:bg-white/10 group"
+            >
+              <img
+                src="/logo.png"
+                alt="Logo Angkara"
+                className={`h-6 w-6 sm:h-7 sm:w-7 object-contain transition-all duration-300 group-hover:scale-105 ${
+                  isInHero
+                    ? "brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                    : "brightness-100 invert-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)]"
+                }`}
+              />
+              <span className="hidden sm:inline text-[13.5px] sm:text-[15px] font-bold tracking-tight font-display text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+                Angkara
+              </span>
+            </motion.button>
 
-              return (
-                <motion.div
-                  key={item.id}
-                  variants={navItemVariants}
-                  className="relative flex-1 flex items-center justify-center min-w-0"
-                >
-                  <button
-                    type="button"
-                    onClick={item.action}
-                    onMouseEnter={() => setHoveredId(item.id)}
-                    onFocus={() => setHoveredId(item.id)}
-                    onBlur={() => setHoveredId(null)}
-                    aria-label={item.label}
-                    className="group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/70 min-h-[52px] sm:min-h-[58px]"
+            {/* Garis Pemisah Halus antara Brand & Navigasi */}
+            <div
+              className={`h-6 w-[1px] my-auto transition-colors duration-300 ${
+                isInHero ? "bg-white/35" : "bg-white/20"
+              } mx-1`}
+            />
+
+            {/* Kelompok Menu Navigasi Utama */}
+            <div className="flex-1 flex items-center justify-between min-w-0">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isHighlighted = currentHighlightedId === item.id;
+
+                return (
+                  <motion.div
+                    key={item.id}
+                    variants={navItemVariants}
+                    className="relative flex-1 flex items-center justify-center min-w-0"
                   >
-                    <Icon className="w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
-                    <span className="text-[10.5px] sm:text-[12px] font-medium tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] whitespace-nowrap truncate max-w-full">
-                      {item.label}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={item.action}
+                      onMouseEnter={() => setHoveredId(item.id)}
+                      onFocus={() => setHoveredId(item.id)}
+                      onBlur={() => setHoveredId(null)}
+                      aria-label={item.label}
+                      className="group relative z-10 flex flex-col items-center justify-center w-full py-2 sm:py-2.5 px-2 rounded-full text-white transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/70 min-h-[50px] sm:min-h-[56px]"
+                    >
+                      <Icon className="w-5 h-5 sm:w-5 sm:h-5 mb-1 transition-transform duration-200 group-hover:scale-110 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
+                      <span className="text-[10px] sm:text-[11.5px] font-medium tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] whitespace-nowrap truncate max-w-full">
+                        {item.label}
+                      </span>
+                    </button>
 
-                  {/* Highlight kapsul kaca putih transparan (Apple Liquid Glass) yang bergeser mengikuti hover/aktif */}
-                  {isHighlighted && (
-                    <motion.div
-                      layoutId="liquid-nav-highlight"
-                      transition={{
-                        type: "spring",
-                        stiffness: 380,
-                        damping: 28,
-                      }}
-                      className="absolute inset-0 z-0 rounded-full bg-white/30 border border-white/70 shadow-[0_4px_18px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)] backdrop-blur-md"
-                    />
-                  )}
-                </motion.div>
-              );
-            })}
+                    {/* Highlight kapsul kaca putih transparan (Apple Liquid Glass) yang bergeser mengikuti hover/aktif */}
+                    {isHighlighted && (
+                      <motion.div
+                        layoutId="liquid-nav-highlight"
+                        transition={{
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 28,
+                        }}
+                        className="absolute inset-0 z-0 rounded-full bg-white/30 border border-white/70 shadow-[0_4px_18px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)] backdrop-blur-md"
+                      />
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </motion.nav>
       )}

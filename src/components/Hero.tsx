@@ -4,7 +4,6 @@ import { useHeroScroll } from "./landing/useHeroScroll";
 import { HeroVideo } from "./landing/HeroVideo";
 import { HeroTitle } from "./landing/HeroTitle";
 import { LiquidNav } from "./landing/LiquidNav";
-import { BrandLogo } from "./landing/BrandLogo";
 import { ChevronDown } from "lucide-react";
 
 const Hero: React.FC = () => {
@@ -51,17 +50,14 @@ const Hero: React.FC = () => {
           isReducedMotion={isReducedMotion}
         />
 
-        {/* Brand Logo & Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
+        {/* Unified Liquid Glass Navbar (termasuk Logo) dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
         {typeof document !== "undefined" &&
           createPortal(
-            <>
-              <BrandLogo isInHero={isInHero} />
-              <LiquidNav
-                show={showNavbar}
-                isReducedMotion={isReducedMotion}
-                isInHero={isInHero}
-              />
-            </>,
+            <LiquidNav
+              show={showNavbar}
+              isReducedMotion={isReducedMotion}
+              isInHero={isInHero}
+            />,
             document.body
           )}
 
