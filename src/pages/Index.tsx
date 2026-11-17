@@ -54,9 +54,6 @@ const Index: React.FC = () => {
             className="max-w-6xl mx-auto"
           >
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800 shadow-sm">
-                Peta & Telemetri Maritim
-              </span>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mt-3">
                 Pemantauan Kondisi Cuaca Perairan Cilacap
               </h2>

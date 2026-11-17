@@ -72,10 +72,6 @@ const HowItWorks: React.FC = () => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-4"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs sm:text-sm font-semibold shadow-sm">
-            <Sparkles className="h-4 w-4 text-sky-700 animate-pulse" />
-            <span>Alur Pemesanan Sederhana</span>
-          </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Cara Kerja{" "}

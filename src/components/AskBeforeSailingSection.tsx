@@ -98,9 +98,6 @@ export const AskBeforeSailingSection: React.FC = () => {
                     <Zap className="h-4 w-4 text-cyan-400" />
                   </div>
                   <span className="font-bold text-sm tracking-tight">SUAR AI Navigator</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
-                    BMKG SYNCED
-                  </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
