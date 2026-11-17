@@ -64,6 +64,9 @@ export const FeaturesStage = () => {
   const [scrollProgress, setScrollProgress] = useState(0.5);
   const [exitProgress, setExitProgress] = useState(0);
 
+  // Posisi horizontal spotlight beam & glow yang adaptif mengikuti model 3D
+  const [featureSlotCenterX, setFeatureSlotCenterX] = useState<number>(38.5);
+
   // 1. Single State Machine untuk Fitur 3D via useSectionStep (7 sentinel termasuk sentinel keluar)
   const { step: currentStep } = useSectionStep(containerRef, FEATURES_STEP_COUNT, {
     hysteresisRatio: 0.08,
@@ -138,6 +141,29 @@ export const FeaturesStage = () => {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // 5.5 Ukur posisi horizontal slot fitur DOM untuk melaraskan Spotlight Beam
+  useEffect(() => {
+    const updateSlotPos = () => {
+      if (typeof window === "undefined") return;
+      if (slotFeatureRef.current) {
+        const rect = slotFeatureRef.current.getBoundingClientRect();
+        if (rect.width > 0) {
+          const centerX = rect.left + rect.width / 2;
+          const pct = (centerX / window.innerWidth) * 100;
+          setFeatureSlotCenterX(Math.round(pct * 10) / 10);
+        }
+      }
+    };
+
+    updateSlotPos();
+    window.addEventListener("resize", updateSlotPos);
+    const raf = requestAnimationFrame(updateSlotPos);
+    return () => {
+      window.removeEventListener("resize", updateSlotPos);
+      cancelAnimationFrame(raf);
+    };
+  }, [currentStep, isMobile]);
 
   // 6. Pelacakan scroll progress & deteksi exit sentinel
   useEffect(() => {
@@ -231,10 +257,9 @@ export const FeaturesStage = () => {
         {/* 
           KONTEN STICKY SINEMATIK (H-[100SVH]):
           Ter-pin di layar selama pengguna menggulir ke-7 langkah.
-          Padding atas 140px menjamin bebas tabrakan dengan Liquid Glass Navbar.
         */}
         <div
-          className="sticky top-0 h-[100svh] w-full overflow-hidden flex flex-col justify-between pt-[130px] sm:pt-[140px] pb-6 px-4 sm:px-6 select-none transition-opacity duration-300"
+          className="sticky top-0 h-[100svh] w-full overflow-hidden select-none transition-opacity duration-300"
           style={{
             opacity: sceneState.isExit ? Math.max(0, 1 - exitProgress * 1.5) : 1,
           }}
@@ -243,11 +268,11 @@ export const FeaturesStage = () => {
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
             <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--features-bg-top))] via-[#041d2f] via-45% to-[#020b17]" />
 
-            {/* Spotlight Beam Sinematik */}
+            {/* Spotlight Beam Sinematik - Melaraskan presisi ke titik tengah model 3D */}
             <div
               className="absolute -top-24 w-[950px] h-[1100px] pointer-events-none transition-all duration-700 ease-out"
               style={{
-                left: isMobile ? "50%" : isIntro ? "50%" : "28%",
+                left: isMobile || isIntro ? "50%" : `${featureSlotCenterX}%`,
                 transform: "translateX(-50%)",
                 opacity: isEntered ? Math.max(0, 0.9 * (1 - exitProgress)) : 0,
                 background:
@@ -258,6 +283,21 @@ export const FeaturesStage = () => {
                   "radial-gradient(ellipse 70% 90% at 50% 0%, black 20%, rgba(0,0,0,0.65) 55%, transparent 85%)",
                 mixBlendMode: "screen",
                 filter: "blur(18px)",
+              }}
+            />
+
+            {/* Spotlight Glow Pool di Belakang Model 3D */}
+            <div
+              className="absolute w-[680px] h-[680px] rounded-full pointer-events-none transition-all duration-700 ease-out"
+              style={{
+                left: isMobile || isIntro ? "50%" : `${featureSlotCenterX}%`,
+                top: isMobile ? "40%" : isIntro ? "62%" : "50%",
+                transform: "translate(-50%, -50%)",
+                opacity: isEntered ? (isIntro ? 0.35 : 0.55) * (1 - exitProgress) : 0,
+                background:
+                  "radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(254, 243, 199, 0.12) 32%, rgba(2, 6, 23, 0) 70%)",
+                mixBlendMode: "screen",
+                filter: "blur(40px)",
               }}
             />
 
@@ -283,21 +323,35 @@ export const FeaturesStage = () => {
           </div>
 
           {/* 
-            ZONA KONTEN UTAMA DENGAN DOM SLOTS (Perbaikan F1, F2):
-            Slot Intro dan Slot Fitur berada dalam satu hierarki DOM yang terukur.
+            KANVAS 3D SELEBAR PANGGUNG PENUH (ABSOLUTE INSET-0):
+            Menampung model 3D yang diproyeksikan langsung ke koordinat slot DOM.
           */}
-          <div className="relative z-10 w-full h-full max-w-7xl mx-auto flex flex-col justify-between">
-            {/* 
-              A. BLOK JUDUL INTRO BESAR (Step 0):
-              Ukuran adaptif min(8vw, 14svh, 6.5rem) agar muat di layar pendek (1064x671).
-            */}
-            <div
-              className={`text-center px-4 max-w-6xl xl:max-w-7xl mx-auto transition-all duration-500 ease-out ${
-                isIntro
-                  ? "opacity-100 blur-0 translate-y-0"
-                  : "opacity-0 blur-[10px] -translate-y-8 pointer-events-none"
-              }`}
-            >
+          <CanvasStage
+            activeFeature={activeFeature}
+            step={currentStep}
+            isVisible={isVisible}
+            isEntered={isEntered}
+            pulseTrigger={currentStep}
+            isMobile={isMobile}
+            isReducedMotion={prefersReducedMotion}
+            scrollProgress={scrollProgress}
+            slotIntroRef={slotIntroRef}
+            slotFeatureRef={slotFeatureRef}
+          />
+
+          {/* 
+            A. ZONA INTRO (STEP 0):
+            Judul besar di atas + DOM Slot Intro di bawah tengah.
+          */}
+          <div
+            className={`absolute inset-0 flex flex-col justify-between pt-[120px] sm:pt-[130px] pb-16 px-4 sm:px-6 pointer-events-none transition-all duration-500 ease-out z-20 ${
+              isIntro
+                ? "opacity-100 blur-0 translate-y-0"
+                : "opacity-0 blur-[10px] -translate-y-8 pointer-events-none"
+            }`}
+          >
+            {/* Blok Judul Intro Besar */}
+            <div className="text-center px-4 max-w-6xl xl:max-w-7xl mx-auto">
               <h2 className="font-display font-semibold tracking-[-0.04em] leading-[1.04] text-[clamp(2.5rem,min(8vw,14svh),6.5rem)] drop-shadow-[0_4px_40px_rgba(0,0,0,0.35)]">
                 {/* Baris 1: Putih Penuh */}
                 <div className="text-white flex items-center justify-center flex-wrap gap-x-3.5 sm:gap-x-5">
@@ -398,33 +452,33 @@ export const FeaturesStage = () => {
             */}
             <div
               ref={slotIntroRef}
-              className={`w-full max-w-md mx-auto h-[40svh] max-h-[360px] pointer-events-none transition-opacity duration-300 ${
-                isIntro ? "opacity-100" : "opacity-0"
-              }`}
+              className="w-full max-w-sm sm:max-w-md mx-auto h-[38svh] max-h-[340px] pointer-events-none"
             />
+          </div>
 
-            {/* 
-              B. GRID KONTEN FITUR 1-5 (DUA KOLOM SEJAJAR):
-              Kolom Kiri = Slot DOM Model 3D. Kolom Kanan = Panel Deskripsi Teks.
-              Menjamin model dan teks SELALU sejajar vertikal tanpa meleset.
-            */}
-            <div
-              className={`absolute inset-x-0 bottom-12 top-28 sm:top-36 grid grid-cols-1 md:grid-cols-2 items-center px-4 sm:px-8 transition-opacity duration-500 ${
-                !isIntro && !sceneState.isExit
-                  ? "opacity-100 pointer-events-auto"
-                  : "opacity-0 pointer-events-none"
-              }`}
-            >
-              {/* Kolom Kiri: DOM Slot Model Fitur */}
-              <div className="flex items-center justify-center h-full max-h-[500px]">
+          {/* 
+            B. GRID KONTEN FITUR 1-5 (DIPUSATKAN DI TENGAH LAYAR / MIDDLE):
+            Kolom Kiri = Slot DOM Model 3D (ditarik lebih ke tengah/middle).
+            Kolom Kanan = Panel Deskripsi Teks (sejajar vertikal di tengah/middle).
+          */}
+          <div
+            className={`absolute inset-0 flex items-center justify-center pt-16 sm:pt-20 pb-12 sm:pb-14 px-4 sm:px-8 pointer-events-none transition-opacity duration-500 z-20 ${
+              !isIntro && !sceneState.isExit
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            }`}
+          >
+            <div className="w-full max-w-5xl lg:max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-6 sm:gap-10 lg:gap-14">
+              {/* Kolom Kiri: DOM Slot Model Fitur (Lebih ke tengah) */}
+              <div className="flex items-center justify-center md:justify-end">
                 <div
                   ref={slotFeatureRef}
-                  className="w-full max-w-sm sm:max-w-md h-[55svh] max-h-[440px] pointer-events-none"
+                  className="w-full max-w-xs sm:max-w-sm md:max-w-[380px] h-[45svh] max-h-[400px] pointer-events-none"
                 />
               </div>
 
               {/* Kolom Kanan: Panel Deskripsi */}
-              <div className="flex items-center justify-center md:justify-start h-full">
+              <div className="flex items-center justify-center md:justify-start">
                 <FeatureDescriptionPanel
                   key={activeFeature.id}
                   feature={activeFeature}
@@ -434,29 +488,12 @@ export const FeaturesStage = () => {
                 />
               </div>
             </div>
-
-            {/* 
-              C. KANVAS 3D SELEBAR PANGGUNG:
-              Menampung model 3D yang diproyeksikan langsung ke koordinat slot DOM.
-            */}
-            <CanvasStage
-              activeFeature={activeFeature}
-              step={currentStep}
-              isVisible={isVisible}
-              isEntered={isEntered}
-              pulseTrigger={currentStep}
-              isMobile={isMobile}
-              isReducedMotion={prefersReducedMotion}
-              scrollProgress={scrollProgress}
-              slotIntroRef={slotIntroRef}
-              slotFeatureRef={slotFeatureRef}
-            />
           </div>
 
           {/* 
-            D. 5 TITIK INDIKATOR PROGRES DI BAWAH PANGGUNG
+            C. 5 TITIK INDIKATOR PROGRES DI BAWAH PANGGUNG
           */}
-          <div className="relative z-30 flex flex-col items-center justify-center pb-2">
+          <div className="absolute bottom-3 sm:bottom-4 inset-x-0 z-30 flex flex-col items-center justify-center pointer-events-auto">
             <div
               role="tablist"
               aria-label="Progres Fitur 3D"

@@ -124,8 +124,8 @@ const MovingStage = ({
     const activeSlot = isIntro ? slotIntroRef?.current : slotFeatureRef?.current;
 
     // Nilai dasar default jika slot belum terukur
-    let targetX = isMobile ? 0 : isIntro ? 0 : -viewport.width * 0.22;
-    let targetY = isMobile ? (isIntro ? -0.28 : 0.38) : (isIntro ? -0.38 : 0);
+    let targetX = isMobile ? 0 : isIntro ? 0 : -viewport.width * 0.14;
+    let targetY = isMobile ? (isIntro ? -0.28 : 0.25) : (isIntro ? -0.38 : 0);
     let targetScale = isMobile ? (isIntro ? 0.75 : 0.88) : (isIntro ? 0.85 : 1.0);
 
     if (activeSlot && typeof window !== "undefined") {
@@ -232,14 +232,13 @@ const MovingStage = ({
       {/* 2. Cahaya Isi (Fill Light) Hangat Redup */}
       <directionalLight position={[-3, 2.0, 2.5]} intensity={0.5} color="#fed7aa" />
 
-      {/* 3. Rim Light Cool-Cyan Tipis dari Belakang */}
-      <pointLight position={[0, 2.0, -2.8]} intensity={0.9} color="#38bdf8" distance={8} />
-
-      {/* 4. Cahaya Ambien Rendah */}
+      {/* 3. Cahaya Ambien Rendah */}
       <ambientLight intensity={0.4} />
 
       {/* Grup Panggung Bergerak */}
       <group ref={stageGroupRef}>
+        {/* Rim Light Cool-Cyan yang selalu menempel di belakang model */}
+        <pointLight position={[0, 1.2, -2.2]} intensity={1.1} color="#38bdf8" distance={6} />
         <StageLightPool />
         <DustParticles isMobile={isMobile} isReducedMotion={isReducedMotion} />
         <FeatureModel
