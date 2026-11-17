@@ -16,7 +16,7 @@ export interface ModelConfigItem {
 }
 
 /**
- * Tabel konfigurasi model 3D panggung fitur Angkara.
+ * Tabel konfigurasi model 3D panggung fitur Suar.
  * Rotasi ditetapkan dalam satuan derajat (deg), yang dikonversi ke radian
  * sebelum dihitung ulang bounding box dan dipusatkan ke pivot tengah.
  */

@@ -60,7 +60,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
     <>
       {/* Aksesibilitas: Satu-satunya h1 semantik di hero untuk SEO/Screen Reader */}
       <h1 className="sr-only">
-        Angkara: reservasi kapal wisata Cilacap-Nusakambangan dengan asisten keselamatan AI
+        Suar: reservasi kapal wisata Cilacap-Nusakambangan dengan asisten keselamatan AI
       </h1>
 
       {/* Pengumuman live region saat judul aktif berganti */}

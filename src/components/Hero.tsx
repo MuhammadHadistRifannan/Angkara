@@ -124,7 +124,7 @@ const Hero: React.FC = () => {
     <section
       ref={containerRef}
       className="relative w-full h-[450svh] md:h-[500vh] bg-slate-950"
-      aria-label="Hero Pelayaran Angkara"
+      aria-label="Hero Pelayaran Suar"
     >
       {/* 
         5 Scroll Sentinels:

@@ -72,7 +72,7 @@
       },
       {
         "type": "text_matches",
-        "pattern": "(pelayaran|kapal|angkara|cilacap|wisata|bahari)"
+        "pattern": "(pelayaran|kapal|angkara|suar|cilacap|wisata|bahari)"
       }
     ]
   },

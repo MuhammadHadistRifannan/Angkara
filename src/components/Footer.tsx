@@ -8,8 +8,8 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-lg items-center justify-center">
-                <img src="logo.png" width="100px" ></img>
+              <div className="p-1 rounded-lg items-center justify-center">
+                <img src="/logo_suar.png" alt="Logo Suar" className="h-10 w-auto object-contain brightness-100" />
               </div>
             </div>
             <p className="text-white/80 mb-4">
@@ -64,14 +64,14 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-5 w-5 shrink-0" />
-                <span>info@Angkara.id</span>
+                <span>info@suar.id</span>
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-          <p>&copy; 2025 Angkara App. Semua hak cipta dilindungi.</p>
+          <p>&copy; 2025 Suar. Semua hak cipta dilindungi.</p>
         </div>
       </div>
     </footer>

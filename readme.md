@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛥️ ANGKARA (Angkutan Segara)
+# 🛥️ SUAR
 ### *Platform Reservasi Wisata Maritim Terpadu & Asisten Keselamatan Berlayar Cerdas*
 
 [![CI](https://github.com/MuhammadHadistRifannan/Angkara/actions/workflows/ci.yml/badge.svg)](https://github.com/MuhammadHadistRifannan/Angkara/actions/workflows/ci.yml)
@@ -23,7 +23,7 @@
 
 ## 📌 Daftar Isi
 1. [Latar Belakang & Masalah](#-latar-belakang--masalah)
-2. [Solusi Inovatif: ANGKARA](#-solusi-inovatif-angkara)
+2. [Solusi Inovatif: SUAR](#-solusi-inovatif-suar)
 3. [Tampilan Antarmuka & Ilustrasi](#-tampilan-antarmuka--ilustrasi)
 4. [Fitur Unggulan](#-fitur-unggulan)
 5. [Arsitektur Sistem & Alur Kerja](#-arsitektur-sistem--alur-kerja)
@@ -50,9 +50,9 @@ Kawasan perairan pesisir Cilacap dan pulau Nusakambangan (seperti Teluk Penyu, K
 
 ---
 
-## 💡 Solusi Inovatif: ANGKARA
+## 💡 Solusi Inovatif: SUAR
 
-**ANGKARA (Angkutan Segara)** mentransformasi ekosistem wisata maritim pesisir menjadi platform digital modern berbasis *Safety-First*. Aplikasi ini menyatukan:
+**SUAR** mentransformasi ekosistem wisata maritim pesisir menjadi platform digital modern berbasis *Safety-First*. Aplikasi ini menyatukan:
 
 - 🤖 **Juru Mudi AI**: Asisten pintar berbasis **Google Gemini 2.0 Flash** yang beroperasi secara *grounded* terhadap database kapal dan mesin keselamatan deterministik.
 - 🌊 **Mesin Keselamatan Cuaca Maritim**: Penggabungan data resmi cuaca BMKG dan model maritim gelombang resolusi tinggi Open-Meteo.
@@ -66,7 +66,7 @@ Kawasan perairan pesisir Cilacap dan pulau Nusakambangan (seperti Teluk Penyu, K
 ### 1. Peta Maritim Interaktif & Pemantau Keselamatan Titik Keberangkatan
 Peta geografis resolusi tinggi berbasis Leaflet yang memetakan titik-titik dermaga (Teluk Penyu & Pelabuhan Tanjung Intan), disertai panel ringkasan kondisi maritim dan status keselamatan pelayaran.
 
-![Peta Cuaca Maritim ANGKARA](docs/assets/weather-map.png)
+![Peta Cuaca Maritim SUAR](docs/assets/weather-map.png)
 
 > [!TIP]
 > **Status Keselamatan Deterministik**: Sistem mengevaluasi kondisi gelombang (ambang batas kapal nelayan: 1,25 m), angin (15 knot), hujan lebat, dan petir untuk menghasilkan status **Aman**, **Waspada**, atau **Tunda**. Jika data gelombang tidak tersedia (*unavailable*), status maksimal adalah **Waspada** dan tidak pernah mengizinkan status Aman.
@@ -106,7 +106,7 @@ Peta geografis resolusi tinggi berbasis Leaflet yang memetakan titik-titik derma
 
 ## 🏗️ Arsitektur Sistem & Alur Kerja
 
-Berikut adalah arsitektur aliran data menyeluruh aplikasi ANGKARA:
+Berikut adalah arsitektur aliran data menyeluruh aplikasi SUAR:
 
 ```mermaid
 flowchart TD

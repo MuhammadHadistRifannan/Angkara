@@ -5,7 +5,7 @@ export interface StoredBookingDraft {
   savedAt: number;
 }
 
-const STORAGE_KEY = "angkara_booking_draft";
+const STORAGE_KEY = "suar_booking_draft";
 const DRAFT_EXPIRY_MS = 30 * 60 * 1000; // 30 menit
 
 function getStorage(storage?: Storage): Storage | null {

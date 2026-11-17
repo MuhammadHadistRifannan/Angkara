@@ -28,16 +28,21 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20        ">
           {/* Logo */}
-          <div className="flex items-center ">
-    {/* Hapus kelas background untuk membuat div ini transparan */}
-    <div className="p-2 rounded-lg"> 
-        <img src="logo.png" className="w-30 h-20"></img>
-    </div>
-    <span className="text-xl font-bold bg-gradient-to-r from-blue-500 to-accent bg-clip-text text-transparent">
-  Angkara
-</span>
-
-</div>
+          <div
+            onClick={() => navigate("/")}
+            className="flex items-center cursor-pointer select-none"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") navigate("/");
+            }}
+            aria-label="Kembali ke Beranda Suar"
+          >
+            <div className="p-2 rounded-lg"> 
+              <img src="/logo_suar.png" alt="Logo Suar" className="h-10 w-auto object-contain brightness-0 dark:brightness-100" />
+            </div>
+            <span className="sr-only">Suar</span>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">

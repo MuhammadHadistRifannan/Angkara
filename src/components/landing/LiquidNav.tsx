@@ -221,7 +221,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           animate="visible"
           exit="exit"
           role="navigation"
-          aria-label="Navigasi Utama Angkara"
+          aria-label="Navigasi Utama Suar"
           className="fixed top-5 left-0 right-0 z-50 flex justify-center px-3 sm:px-4 pointer-events-auto origin-center"
         >
           {/* Pill Kaca Translucent Frosted Glass (Unified Floating Glass Bar) */}
@@ -257,29 +257,21 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                   navigate("/");
                 }
               }}
-              aria-label="Kembali ke Beranda Angkara"
+              aria-label="Kembali ke Beranda Suar"
               className={`relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[46px] sm:min-h-[52px] select-none group ${
                 isInHero ? "hover:bg-white/10" : "hover:bg-black/5"
               }`}
             >
               <img
-                src="/logo.png"
-                alt="Logo Angkara"
-                className={`h-6 w-6 sm:h-7 sm:w-7 object-contain transition-all duration-300 group-hover:scale-105 ${
+                src="/logo_suar.png"
+                alt="Logo Suar"
+                className={`h-7 sm:h-8 w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
                   isInHero
-                    ? "brightness-0 invert drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
-                    : "brightness-100 invert-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+                    ? "brightness-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
+                    : "brightness-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
                 }`}
               />
-              <span
-                className={`hidden sm:inline text-[13.5px] sm:text-[15px] font-bold tracking-tight font-display transition-colors duration-300 ${
-                  isInHero
-                    ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
-                    : "text-slate-900 drop-shadow-none"
-                }`}
-              >
-                Angkara
-              </span>
+              <span className="sr-only">Suar</span>
             </button>
 
             {/* Garis Pemisah Halus antara Brand & Navigasi */}

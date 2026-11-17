@@ -179,7 +179,7 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
           <div>
             <h3 className="font-semibold text-sm">Halo! Saya Juru Mudi</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-[260px] leading-relaxed">
-              Asisten pintar pelayaran dan wisata bahari Angkara di perairan Cilacap & Nusakambangan.
+              Asisten pintar pelayaran dan wisata bahari Suar di perairan Cilacap & Nusakambangan.
             </p>
           </div>
 

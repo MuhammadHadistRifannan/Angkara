@@ -22,7 +22,7 @@ export const Features2DFallback = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 mb-4 tracking-[0.18em] uppercase">
-            Fitur Utama Angkara
+            Fitur Utama Suar
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-semibold tracking-[-0.03em] leading-[1.12] mb-4 text-white">
             <span>Lima alasan </span>
