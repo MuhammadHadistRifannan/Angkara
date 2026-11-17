@@ -1,7 +1,7 @@
 import shieldGlb from "@/assets/3model/shield_protection_icon.glb?url";
 import calendarGlb from "@/assets/3model/calendar.glb?url";
 import paymentCardGlb from "@/assets/3model/payment_card.glb?url";
-import whiteboardGlb from "@/assets/3model/whiteboard.glb?url";
+import analitikGlb from "@/assets/3model/analitik.glb?url";
 import anchorGlb from "@/assets/3model/anchor.glb?url";
 
 export interface ModelConfigItem {
@@ -50,12 +50,12 @@ export const MODEL_CONFIG: Record<string, ModelConfigItem> = {
   },
   "dashboard-analitik": {
     id: "dashboard-analitik",
-    name: "Dashboard Whiteboard",
-    url: whiteboardGlb,
+    name: "Dashboard Analitik",
+    url: analitikGlb,
     rotation: [0, 0, 0],
     targetHeight: 1.45,
     offsetY: 0,
-    envMapIntensity: 1.0,
+    envMapIntensity: 1.1,
   },
   "paket-wisata": {
     id: "paket-wisata",

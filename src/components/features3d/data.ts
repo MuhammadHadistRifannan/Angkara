@@ -18,7 +18,7 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
     id: "listing-terverifikasi",
     title: "Listing Terverifikasi",
     description:
-      "Semua operator kapal terverifikasi KSOP Cilacap dengan dokumen resmi, kelaikan armada, dan sertifikasi nakhoda.",
+      "Operator terverifikasi KSOP Cilacap dengan kelaikan armada, dokumen resmi, dan sertifikasi nakhoda.",
     modelUrl: MODEL_CONFIG["listing-terverifikasi"].url,
     icon: Shield,
     targetHeight: MODEL_CONFIG["listing-terverifikasi"].targetHeight,

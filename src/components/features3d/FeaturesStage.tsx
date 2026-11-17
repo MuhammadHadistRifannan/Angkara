@@ -5,17 +5,20 @@ import {
   useCallback,
   Component,
   type ReactNode,
-  type TouchEvent,
 } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useGLTF } from "@react-three/drei";
 import { MAIN_FEATURES_3D, SECONDARY_FEATURES } from "./data";
 import { CanvasStage } from "./CanvasStage";
 import { SecondaryFeatures } from "./SecondaryFeatures";
 import { Features2DFallback } from "./Features2DFallback";
-
-// Keterangan nama fitur di bawah panggung
-const SHOW_CAPTION = true;
+import { FeatureDescriptionPanel } from "./FeatureDescriptionPanel";
+import {
+  calculateStepFromSentinel,
+  getFeatureIndexForStep,
+  isIntroStep,
+  STEP_COUNT,
+  TOTAL_FEATURES,
+} from "./scrollStep";
 
 // WebGL Error Boundary Fallback
 class WebGLErrorBoundary extends Component<
@@ -43,24 +46,23 @@ class WebGLErrorBoundary extends Component<
   }
 }
 
-// Salinan judul sinematik dua baris (mudah disesuaikan lewat konstanta)
-const TITLE_LINE_1 = ["Lima", "alasan"];
-const TITLE_LINE_2 = ["berlayar", "tanpa", "ragu."];
+// Salinan judul intro diperbesar sinematik (clamp 3.25rem - 8rem)
+const INTRO_TITLE_LINE_1 = ["Lima", "alasan"];
+const INTRO_TITLE_LINE_2 = ["berlayar", "tanpa", "ragu."];
 const SUBTITLE_TEXT = "Dari verifikasi sampai pembayaran, semuanya terjaga.";
 
 export const FeaturesStage = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0); // 0 (Intro) s.d. 5 (Fitur 5)
   const [isMobile, setIsMobile] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isEntered, setIsEntered] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0.5);
-  const [titleExitProgress, setTitleExitProgress] = useState(0);
+  const [exitProgress, setExitProgress] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const isTransitioningRef = useRef(false);
-  const touchStartXRef = useRef<number | null>(null);
+  const sentinelRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // 1. Cek kapabilitas browser: WebGL, Mobile, & Reduced Motion
   useEffect(() => {
@@ -77,7 +79,7 @@ export const FeaturesStage = () => {
 
     setHasWebGL(checkWebGL());
 
-    const mediaQueryMobile = window.matchMedia("(max-width: 1023px)");
+    const mediaQueryMobile = window.matchMedia("(max-width: 767px)");
     const mediaQueryMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     );
@@ -98,21 +100,42 @@ export const FeaturesStage = () => {
     };
   }, []);
 
-  // 2. Preload model aktif + model tetangga
+  // 2. Preload semua 5 model GLTF agar siap saat scroll
   useEffect(() => {
     if (!hasWebGL) return;
-    useGLTF.preload(MAIN_FEATURES_3D[activeIndex].modelUrl);
-    useGLTF.preload(
-      MAIN_FEATURES_3D[(activeIndex + 1) % MAIN_FEATURES_3D.length].modelUrl
-    );
-    useGLTF.preload(
-      MAIN_FEATURES_3D[
-        (activeIndex - 1 + MAIN_FEATURES_3D.length) % MAIN_FEATURES_3D.length
-      ].modelUrl
-    );
-  }, [activeIndex, hasWebGL]);
+    MAIN_FEATURES_3D.forEach((feature) => {
+      useGLTF.preload(feature.modelUrl);
+    });
+  }, [hasWebGL]);
 
-  // 3. Scrollcraft: IntersectionObserver untuk visibilitas dan entrance ~30% viewport
+  // 3. IntersectionObserver pada 6 Sentinel dengan trigger garis tengah viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const stepAttr = entry.target.getAttribute("data-step");
+            if (stepAttr !== null) {
+              const step = calculateStepFromSentinel(parseInt(stepAttr, 10));
+              setCurrentStep(step);
+              setIsEntered(true);
+            }
+          }
+        });
+      },
+      { rootMargin: "-48% 0px -48% 0px" }
+    );
+
+    sentinelRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // 4. Observer Visibilitas Section Panggung untuk mematikan render 3D saat di luar layar
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -120,18 +143,18 @@ export const FeaturesStage = () => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
-        if (entry.intersectionRatio >= 0.25 || entry.isIntersecting) {
+        if (entry.isIntersecting) {
           setIsEntered(true);
         }
       },
-      { threshold: [0.1, 0.25, 0.35], rootMargin: "100px" }
+      { threshold: 0.05, rootMargin: "100px" }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  // 4. Parallax Scroll Tracker untuk Dolly Kamera dan Exit Parallax Judul
+  // 5. Parallax Scroll & Exit Detection saat mendekati akhir pembungkus 600vh
   useEffect(() => {
     let ticking = false;
     const handleScroll = () => {
@@ -141,17 +164,18 @@ export const FeaturesStage = () => {
           if (el) {
             const rect = el.getBoundingClientRect();
             const vh = window.innerHeight;
-            const totalDist = rect.height + vh;
-            const currentDist = vh - rect.top;
-            const progress = Math.max(0, Math.min(1, currentDist / totalDist));
+            const totalDist = rect.height - vh;
+            const scrolledDist = -rect.top;
+            const progress = Math.max(0, Math.min(1, scrolledDist / Math.max(1, totalDist)));
             setScrollProgress(progress);
 
-            // Parallax keluar judul saat section mulai bergerak lewat atas layar
-            if (rect.top < 0) {
-              const exit = Math.min(1, Math.abs(rect.top) / (rect.height * 0.45));
-              setTitleExitProgress(exit);
+            // Deteksi keluar section (setelah sentinel terakhir terlewati)
+            const remaining = rect.bottom - vh;
+            if (remaining < vh * 0.5) {
+              const exit = Math.max(0, Math.min(1, 1 - remaining / (vh * 0.5)));
+              setExitProgress(exit);
             } else {
-              setTitleExitProgress(0);
+              setExitProgress(0);
             }
           }
           ticking = false;
@@ -165,339 +189,309 @@ export const FeaturesStage = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 5. Handler Navigasi Panah (throttling transisi ±220ms)
-  const handlePrev = useCallback(() => {
-    if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
-    setActiveIndex((prev) => (prev - 1 + MAIN_FEATURES_3D.length) % MAIN_FEATURES_3D.length);
-    setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 220);
-  }, []);
-
-  const handleNext = useCallback(() => {
-    if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
-    setActiveIndex((prev) => (prev + 1) % MAIN_FEATURES_3D.length);
-    setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 220);
-  }, []);
-
-  const handleSelect = useCallback((index: number) => {
-    if (isTransitioningRef.current) return;
-    isTransitioningRef.current = true;
-    setActiveIndex(index);
-    setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 220);
-  }, []);
-
-  // 6. Dukungan Keyboard (ArrowLeft / ArrowRight) saat section terlihat
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isVisible) return;
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        handlePrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        handleNext();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isVisible, handlePrev, handleNext]);
-
-  // 7. Dukungan Gesture Touch Swipe Mobile
-  const handleTouchStart = (e: TouchEvent) => {
-    touchStartXRef.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    if (touchStartXRef.current === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartXRef.current - touchEndX;
-    touchStartXRef.current = null;
-
-    if (Math.abs(diff) > 40) {
-      if (diff > 0) {
-        handleNext();
-      } else {
-        handlePrev();
-      }
+  // 6. Lompat ke Sentinel saat Titik Indikator Diklik
+  const handleSelectFeature = useCallback((featureIndex: number) => {
+    const targetSentinel = sentinelRefs.current[featureIndex + 1];
+    if (targetSentinel) {
+      targetSentinel.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
   if (!hasWebGL) {
     return <Features2DFallback />;
   }
 
-  const activeFeature = MAIN_FEATURES_3D[activeIndex];
+  const activeFeatureIndex = getFeatureIndexForStep(currentStep);
+  const activeFeature = MAIN_FEATURES_3D[activeFeatureIndex];
+  const isIntro = isIntroStep(currentStep);
 
-  // Hitung stagger delay untuk tiap kata
   let wordCounter = 0;
 
   return (
     <WebGLErrorBoundary fallback={<Features2DFallback />}>
       {/* 
-        Section Panggung Fitur 3D Sinematik:
-        Semua cahaya diletakkan di level latar root section (tanpa kotak / overflow pembatas).
+        PEMBUNGKUS SCROLL (SCROLLCRAFT):
+        Setinggi ~600vh (atau 600svh di mobile) untuk menampung 6 sentinel (1 intro + 5 fitur).
       */}
-      <section
+      <div
         ref={containerRef}
-        id="features-stage-section"
-        className="relative w-full pt-36 sm:pt-40 pb-16 overflow-hidden flex flex-col items-center bg-[hsl(var(--features-bg-top))]"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        id="features"
+        className="relative w-full bg-[hsl(var(--features-bg-top))]"
+        style={{ height: isMobile ? "480svh" : "600vh" }}
       >
-        {/* LAPISAN LATAR SECTION: Menyatu tanpa batas kotak atau garis potong */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-          {/* 1. Base Gradient: Dari --features-bg-top ke kedalaman teal laut #020b17 */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--features-bg-top))] via-[#041d2f] via-45% to-[#020b17]" />
-
-          {/* 2. Spotlight Beam: Kerucut cahaya lembut bermula dari atas area judul melebar ke bawah */}
-          <div
-            className="absolute -top-24 left-1/2 -translate-x-1/2 w-[950px] h-[1100px] transition-opacity duration-1000 ease-out pointer-events-none"
-            style={{
-              opacity: isEntered ? 0.9 : 0,
-              background:
-                "conic-gradient(from 180deg at 50% 0%, transparent 66deg, rgba(255,251,235,0.09) 78deg, rgba(255,251,235,0.16) 90deg, rgba(255,251,235,0.09) 102deg, transparent 114deg)",
-              maskImage:
-                "radial-gradient(ellipse 75% 82% at 50% 32%, black 20%, transparent 80%)",
-              WebkitMaskImage:
-                "radial-gradient(ellipse 75% 82% at 50% 32%, black 20%, transparent 80%)",
-              mixBlendMode: "screen",
-            }}
-          />
-
-          {/* 3. Anamorphic Horizontal Lens Streak di Titik Lampu Atas (Hanya Desktop) */}
-          {!isMobile && (
+        {/* 
+          6 SENTINEL TIDAK TERLIHAT (H-SCREEN / 100SVH TIAP LANGKAH):
+          Dideteksi oleh IntersectionObserver dengan rootMargin: "-50% 0px -50% 0px".
+        */}
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: STEP_COUNT }).map((_, idx) => (
             <div
-              className="absolute top-6 left-1/2 -translate-x-1/2 w-[460px] h-[2px] bg-gradient-to-r from-transparent via-cyan-300/50 via-50% to-transparent pointer-events-none blur-[0.8px] transition-opacity duration-1000"
-              style={{ opacity: isEntered ? 0.35 : 0 }}
+              key={idx}
+              ref={(el) => {
+                sentinelRefs.current[idx] = el;
+              }}
+              data-step={idx}
+              className="w-full"
+              style={{ height: isMobile ? "80svh" : "100vh" }}
             />
-          )}
-
-          {/* 4. Kolam Cahaya Lembut Elips di Sekitar Bawah Model (Memudar ke 0 sebelum tepi) */}
-          <div
-            className="absolute top-[65%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[480px] bg-sky-500/[0.07] rounded-full blur-[140px] pointer-events-none transition-opacity duration-1000"
-            style={{ opacity: isEntered ? 1 : 0 }}
-          />
-
-          {/* 5. Micro-dither grain tipis (opacity 0.02) untuk meniadakan color banding */}
-          <svg
-            className="absolute inset-0 w-full h-full opacity-[0.02] pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <filter id="features-stage-dither">
-              <feTurbulence
-                type="fractalNoise"
-                baseFrequency="0.8"
-                numOctaves="3"
-                stitchTiles="stitch"
-              />
-            </filter>
-            <rect width="100%" height="100%" filter="url(#features-stage-dither)" />
-          </svg>
+          ))}
         </div>
 
-        {/* 1. BLOK JUDUL SINEMATIK SEPERTI HERO (Z-Index 20, di atas beam, bebas tabrakan) */}
-        <div
-          className="relative z-20 text-center max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 mb-3 sm:mb-5 transition-transform duration-300 ease-out"
-          style={{
-            transform: prefersReducedMotion
-              ? "none"
-              : `translateY(-${titleExitProgress * 40}px)`,
-            opacity: prefersReducedMotion ? 1 : Math.max(0.2, 1 - titleExitProgress * 0.7),
-          }}
-        >
-          {/* Eyebrow Kapsul Halus */}
-          <div
-            className="transition-all duration-700 ease-out mb-3.5"
-            style={{
-              opacity: isEntered || prefersReducedMotion ? 0.85 : 0,
-              transform:
-                isEntered || prefersReducedMotion ? "translateY(0)" : "translateY(12px)",
-              transitionDelay: "450ms",
-            }}
-          >
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 tracking-[0.18em] uppercase drop-shadow-sm">
-              Fitur Utama Angkara
-            </span>
+        {/* 
+          KONTEN STICKY SINEMATIK (H-[100SVH]):
+          Ter-pin di layar selama pengguna menggulir ke-6 langkah.
+          Padding atas 140px menjamin bebas tabrakan dengan Liquid Glass Navbar.
+        */}
+        <div className="sticky top-0 h-[100svh] w-full overflow-hidden flex flex-col justify-between pt-[140px] pb-6 px-4 sm:px-6 select-none">
+          {/* LAPISAN LATAR SECTION: Menyatu tanpa batas kotak atau garis potong */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+            {/* 1. Base Gradient: Dari --features-bg-top ke kedalaman teal laut #020b17 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--features-bg-top))] via-[#041d2f] via-45% to-[#020b17]" />
+
+            {/* 
+              2. Spotlight Beam Sinematik:
+              Bergeser mulus mengikuti model: di Intro di tengah (50%), di Fitur 1-5 di kiri (28% di desktop).
+            */}
+            <div
+              className="absolute -top-24 w-[950px] h-[1100px] pointer-events-none transition-all duration-700 ease-out"
+              style={{
+                left: isMobile ? "50%" : isIntro ? "50%" : "28%",
+                transform: "translateX(-50%)",
+                opacity: isEntered ? Math.max(0, 0.9 * (1 - exitProgress)) : 0,
+                background:
+                  "conic-gradient(from 180deg at 50% 0%, transparent 66deg, rgba(255,251,235,0.09) 78deg, rgba(255,251,235,0.16) 90deg, rgba(255,251,235,0.09) 102deg, transparent 114deg)",
+                maskImage:
+                  "radial-gradient(ellipse 75% 82% at 50% 32%, black 20%, transparent 80%)",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 75% 82% at 50% 32%, black 20%, transparent 80%)",
+                mixBlendMode: "screen",
+              }}
+            />
+
+            {/* 3. Anamorphic Horizontal Lens Streak di Titik Lampu Atas (Hanya Desktop) */}
+            {!isMobile && (
+              <div
+                className="absolute top-6 left-1/2 -translate-x-1/2 w-[460px] h-[2px] bg-gradient-to-r from-transparent via-cyan-300/50 via-50% to-transparent pointer-events-none blur-[0.8px] transition-opacity duration-1000"
+                style={{ opacity: isEntered ? 0.35 * (1 - exitProgress) : 0 }}
+              />
+            )}
+
+            {/* 4. Kolam Cahaya Lembut Elips di Sekitar Bawah Model */}
+            <div
+              className="absolute top-[65%] w-[720px] h-[480px] bg-sky-500/[0.07] rounded-full blur-[140px] pointer-events-none transition-all duration-700 ease-out"
+              style={{
+                left: isMobile ? "50%" : isIntro ? "50%" : "28%",
+                transform: "translate(-50%, -50%)",
+                opacity: isEntered ? Math.max(0, 1 - exitProgress) : 0,
+              }}
+            />
+
+            {/* 5. Micro-dither grain tipis (opacity 0.02) untuk meniadakan color banding */}
+            <svg
+              className="absolute inset-0 w-full h-full opacity-[0.02] pointer-events-none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <filter id="features-stage-dither">
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency="0.8"
+                  numOctaves="3"
+                  stitchTiles="stitch"
+                />
+              </filter>
+              <rect width="100%" height="100%" filter="url(#features-stage-dither)" />
+            </svg>
           </div>
 
-          {/* Judul Utama Lebar dengan Per-Word Reveal & Kontras Sinematik */}
-          <h2
-            className="font-display font-semibold tracking-[-0.03em] leading-[1.12] text-[clamp(1.75rem,3.6vw,3.5rem)] drop-shadow-[0_4px_40px_rgba(0,0,0,0.35)]"
-          >
-            <div className="flex items-center justify-center flex-wrap gap-x-3.5 sm:gap-x-4 gap-y-1">
-              {/* Frasa 1: Solid Pure White */}
-              <span className="inline-flex items-center gap-x-2 sm:gap-x-2.5 text-white whitespace-nowrap">
-                {TITLE_LINE_1.map((word) => {
-                  const delay = prefersReducedMotion ? 0 : wordCounter++ * 70;
-                  return (
-                    <span
-                      key={word}
-                      className="inline-block overflow-hidden pb-1 align-bottom"
-                    >
-                      <span
-                        className="inline-block transition-all"
-                        style={{
-                          transitionDuration: "900ms",
-                          transform:
-                            isEntered || prefersReducedMotion
-                              ? "translateY(0)"
-                              : "translateY(110%)",
-                          filter:
-                            isEntered || prefersReducedMotion
-                              ? "blur(0px)"
-                              : "blur(12px)",
-                          letterSpacing:
-                            isEntered || prefersReducedMotion
-                              ? "-0.03em"
-                              : "0.06em",
-                          opacity: isEntered || prefersReducedMotion ? 1 : 0,
-                          transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-                          transitionDelay: `${delay}ms`,
-                        }}
-                      >
-                        {word}
-                      </span>
-                    </span>
-                  );
-                })}
-              </span>
+          {/* 
+            ZONA KONTEN UTAMA:
+            Intro (Step 0) vs Fitur (Step 1-5)
+          */}
+          <div className="relative z-10 w-full h-full max-w-7xl mx-auto flex items-center justify-center">
+            {/* 
+              A. BLOK JUDUL INTRO BESAR (Step 0):
+              Menempati zona atas (14% s.d. 46% tinggi layar).
+              Memudar ke atas (translateY -40px, blur 10px, opacity 0) saat beralih ke Fitur 1 (step >= 1).
+            */}
+            <div
+              className="absolute top-4 sm:top-6 inset-x-0 z-20 text-center px-4 max-w-6xl xl:max-w-7xl mx-auto transition-all duration-500 ease-out"
+              style={{
+                transform: prefersReducedMotion
+                  ? "none"
+                  : isIntro
+                  ? "translateY(0)"
+                  : "translateY(-40px)",
+                opacity: isIntro ? 1 : 0,
+                filter: prefersReducedMotion ? "none" : isIntro ? "blur(0px)" : "blur(10px)",
+                pointerEvents: isIntro ? "auto" : "none",
+              }}
+            >
+              {/* Judul Utama Raksasa Diperbesar Sesuai Prompt Revisi 4 */}
+              <h2 className="font-display font-semibold tracking-[-0.04em] leading-[1.04] text-[clamp(2.75rem,6.8vw,6.25rem)] drop-shadow-[0_4px_40px_rgba(0,0,0,0.35)]">
+                {/* Baris 1: Putih Penuh */}
+                <div className="text-white flex items-center justify-center flex-wrap gap-x-3.5 sm:gap-x-5">
+                  <span className="inline-flex items-center gap-x-2.5 sm:gap-x-3.5 whitespace-nowrap">
+                    {INTRO_TITLE_LINE_1.map((word) => {
+                      const delay = prefersReducedMotion ? 0 : wordCounter++ * 70;
+                      return (
+                        <span
+                          key={word}
+                          className="inline-block overflow-hidden pb-1 align-bottom"
+                        >
+                          <span
+                            className="inline-block transition-all"
+                            style={{
+                              transitionDuration: "900ms",
+                              transform:
+                                isEntered || prefersReducedMotion
+                                  ? "translateY(0)"
+                                  : "translateY(110%)",
+                              filter:
+                                isEntered || prefersReducedMotion
+                                  ? "blur(0px)"
+                                  : "blur(12px)",
+                              letterSpacing:
+                                isEntered || prefersReducedMotion
+                                  ? "-0.04em"
+                                  : "0.06em",
+                              opacity: isEntered || prefersReducedMotion ? 1 : 0,
+                              transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+                              transitionDelay: `${delay}ms`,
+                            }}
+                          >
+                            {word}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </span>
+                </div>
 
-              {/* Frasa 2: Muted White (70% Opacity) */}
-              <span className="inline-flex items-center gap-x-2 sm:gap-x-2.5 text-white/70 whitespace-nowrap">
-                {TITLE_LINE_2.map((word) => {
-                  const delay = prefersReducedMotion ? 0 : wordCounter++ * 70;
-                  return (
-                    <span
-                      key={word}
-                      className="inline-block overflow-hidden pb-1 align-bottom"
-                    >
-                      <span
-                        className="inline-block transition-all"
-                        style={{
-                          transitionDuration: "900ms",
-                          transform:
-                            isEntered || prefersReducedMotion
-                              ? "translateY(0)"
-                              : "translateY(110%)",
-                          filter:
-                            isEntered || prefersReducedMotion
-                              ? "blur(0px)"
-                              : "blur(12px)",
-                          letterSpacing:
-                            isEntered || prefersReducedMotion
-                              ? "-0.03em"
-                              : "0.06em",
-                          opacity: isEntered || prefersReducedMotion ? 1 : 0,
-                          transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-                          transitionDelay: `${delay}ms`,
-                        }}
-                      >
-                        {word}
-                      </span>
-                    </span>
-                  );
-                })}
-              </span>
+                {/* Baris 2: Putih Opacity 0.7 */}
+                <div className="text-white/70 flex items-center justify-center flex-wrap gap-x-3.5 sm:gap-x-5 mt-1 sm:mt-2">
+                  <span className="inline-flex items-center gap-x-2.5 sm:gap-x-3.5 whitespace-nowrap">
+                    {INTRO_TITLE_LINE_2.map((word) => {
+                      const delay = prefersReducedMotion ? 0 : wordCounter++ * 70;
+                      return (
+                        <span
+                          key={word}
+                          className="inline-block overflow-hidden pb-1 align-bottom"
+                        >
+                          <span
+                            className="inline-block transition-all"
+                            style={{
+                              transitionDuration: "900ms",
+                              transform:
+                                isEntered || prefersReducedMotion
+                                  ? "translateY(0)"
+                                  : "translateY(110%)",
+                              filter:
+                                isEntered || prefersReducedMotion
+                                  ? "blur(0px)"
+                                  : "blur(12px)",
+                              letterSpacing:
+                                isEntered || prefersReducedMotion
+                                  ? "-0.04em"
+                                  : "0.06em",
+                              opacity: isEntered || prefersReducedMotion ? 1 : 0,
+                              transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+                              transitionDelay: `${delay}ms`,
+                            }}
+                          >
+                            {word}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </span>
+                </div>
+              </h2>
+
+              {/* Subteks Satu Baris Kecil (Hanya di Intro) */}
+              <p
+                className="mt-4 sm:mt-6 text-sm sm:text-base md:text-lg text-slate-300 max-w-xl mx-auto transition-all duration-700 ease-out"
+                style={{
+                  opacity: isEntered || prefersReducedMotion ? 1 : 0,
+                  transform:
+                    isEntered || prefersReducedMotion ? "translateY(0)" : "translateY(12px)",
+                  transitionDelay: "600ms",
+                }}
+              >
+                {SUBTITLE_TEXT}
+              </p>
             </div>
-          </h2>
 
-          {/* Subteks Sinkron 5 Model Panggung */}
-          <p
-            className="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-slate-300 max-w-xl mx-auto transition-all duration-700 ease-out"
-            style={{
-              opacity: isEntered || prefersReducedMotion ? 1 : 0,
-              transform:
-                isEntered || prefersReducedMotion ? "translateY(0)" : "translateY(12px)",
-              transitionDelay: "600ms",
-            }}
-          >
-            {SUBTITLE_TEXT}
-          </p>
-        </div>
-
-        {/* 2. PANGGUNG 3D SELEBAR LAYAR (Tanpa Overflow-Hidden yang Memotong Berkas Cahaya) */}
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 flex items-center justify-center">
-          {/* Tombol Panah Kiri (Liquid Glass) */}
-          <button
-            onClick={handlePrev}
-            aria-label="Fitur sebelumnya"
-            className="absolute left-2 sm:left-4 md:left-8 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-900/40 hover:bg-slate-900/70 active:scale-95 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex items-center justify-center text-white transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 group"
-          >
-            <ChevronLeft className="w-6 h-6 transition-transform group-hover:-translate-x-0.5" />
-          </button>
-
-          {/* Kontainer Kanvas WebGL (Transparan, Mask-Image Vertikal & Radial di CanvasStage) */}
-          <div className="relative w-full flex items-center justify-center">
+            {/* 
+              B. KANVAS 3D SELEBAR PANGGUNG:
+              Menampung model 3D yang berpindah dari tengah ke kiri dengan spring physics.
+            */}
             <CanvasStage
               activeFeature={activeFeature}
+              step={currentStep}
               isVisible={isVisible}
               isEntered={isEntered}
-              pulseTrigger={activeFeature.id}
+              pulseTrigger={currentStep}
               isMobile={isMobile}
               isReducedMotion={prefersReducedMotion}
               scrollProgress={scrollProgress}
             />
-          </div>
 
-          {/* Tombol Panah Kanan (Liquid Glass) */}
-          <button
-            onClick={handleNext}
-            aria-label="Fitur berikutnya"
-            className="absolute right-2 sm:right-4 md:right-8 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-900/40 hover:bg-slate-900/70 active:scale-95 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex items-center justify-center text-white transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 group"
-          >
-            <ChevronRight className="w-6 h-6 transition-transform group-hover:translate-x-0.5" />
-          </button>
-        </div>
-
-        {/* 3. Keterangan Nama Fitur & 5 Titik Indikator di Bawah Panggung */}
-        <div className="relative z-20 text-center mt-2 mb-2">
-          {SHOW_CAPTION && (
-            <div className="mb-2.5">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-                {activeFeature.title}
-              </h3>
+            {/* 
+              C. PANEL DESKRIPSI DI KANAN (Step 1-5):
+              Mulai sekitar 55% lebar layar di desktop, tengah vertikal, lebar maks 520px.
+              Di mobile berada di separuh bawah panggung, rata tengah.
+            */}
+            <div
+              className={`absolute z-20 transition-all duration-500 ease-out ${
+                isMobile
+                  ? "bottom-12 inset-x-0 flex justify-center"
+                  : "top-1/2 -translate-y-1/2 left-[54%] xl:left-[56%] flex items-center"
+              }`}
+            >
+              <FeatureDescriptionPanel
+                key={activeFeature.id}
+                feature={activeFeature}
+                isActive={!isIntro}
+                step={currentStep}
+                isMobile={isMobile}
+                isReducedMotion={prefersReducedMotion}
+              />
             </div>
-          )}
-
-          {/* 5 Titik Indikator Rata Tengah */}
-          <div
-            role="tablist"
-            aria-label="Indikator fitur 3D"
-            className="flex items-center justify-center gap-2"
-          >
-            {MAIN_FEATURES_3D.map((item, idx) => {
-              const isActive = idx === activeIndex;
-              return (
-                <button
-                  key={item.id}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`Pilih fitur ${item.title}`}
-                  onClick={() => handleSelect(idx)}
-                  className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                    isActive
-                      ? "w-7 bg-cyan-400 shadow-[0_0_12px_rgba(14,165,233,0.8)]"
-                      : "w-2 bg-white/25 hover:bg-white/50"
-                  }`}
-                />
-              );
-            })}
           </div>
 
-          {/* Pengumuman Aksesibilitas Pembaca Layar */}
-          <div aria-live="polite" className="sr-only">
-            Fitur aktif: {activeFeature.title}
+          {/* 
+            D. 5 TITIK INDIKATOR PROGRES DI BAWAH PANGGUNG:
+            Bisa diklik atau navigasi keyboard untuk melompat langsung ke sentinel fitur terkait.
+          */}
+          <div className="relative z-30 flex flex-col items-center justify-center pb-2">
+            <div
+              role="tablist"
+              aria-label="Progres Fitur 3D"
+              className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/40 backdrop-blur-md border border-white/10 transition-opacity duration-500 ${
+                isIntro ? "opacity-40 hover:opacity-80" : "opacity-90"
+              }`}
+            >
+              {MAIN_FEATURES_3D.map((item, idx) => {
+                const isActive = !isIntro && idx === activeFeatureIndex;
+                return (
+                  <button
+                    key={item.id}
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-label={`Lompat ke fitur ${item.title}`}
+                    onClick={() => handleSelectFeature(idx)}
+                    className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                      isActive
+                        ? "w-7 bg-cyan-400 shadow-[0_0_12px_rgba(14,165,233,0.8)]"
+                        : "w-2 bg-white/25 hover:bg-white/50"
+                    }`}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* 
         Section Fitur Pendukung (Dan Masih Banyak Lagi):
@@ -505,7 +499,7 @@ export const FeaturesStage = () => {
       */}
       <section
         id="secondary-features"
-        className="relative z-10 bg-[#020b17] text-white py-14"
+        className="relative z-10 bg-[#020b17] text-white py-16"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <SecondaryFeatures features={SECONDARY_FEATURES} />
