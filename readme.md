@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/logo_suar.png" alt="Logo SUAR" width="220" />
+
 # 🛥️ SUAR
 ### *Platform Reservasi Wisata Maritim Terpadu & Asisten Keselamatan Berlayar Cerdas*
 
@@ -8,12 +10,14 @@
 [![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Three.js](https://img.shields.io/badge/Three.js-R3F-black?logo=three.js&logoColor=white)](https://threejs.org/)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-14.1-EA4C89?logo=framer&logoColor=white)](https://motion.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database%20%26%20Auth-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Gemini AI](https://img.shields.io/badge/Gemini_2.0_Flash-AI_Agent-8E75C2?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Gemini AI](https://img.shields.io/badge/Gemini_2.5_Flash-AI_Agent-8E75C2?logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 
 **Karya Inovasi Teknologi Maritim untuk Kompetisi IT RUSH 2026**  
-*“Menghubungkan laut, memberdayakan nelayan pesisir, dan mengawal keselamatan wisatawan dalam satu gerakan digital terintegrasi.”*
+*“Menghubungkan laut, memberdayakan armada rakyat, dan mengawal keselamatan wisatawan dalam satu gerakan digital terintegrasi.”*
 
 [Demo Aplikasi](https://angkara-wia.netlify.app) • [Dokumentasi Deployment](docs/DEPLOYMENT.md) • [Laporan Arsitektur](2026-11-08-juru-mudi-design.md)
 
@@ -24,14 +28,15 @@
 ## 📌 Daftar Isi
 1. [Latar Belakang & Masalah](#-latar-belakang--masalah)
 2. [Solusi Inovatif: SUAR](#-solusi-inovatif-suar)
-3. [Tampilan Antarmuka & Ilustrasi](#-tampilan-antarmuka--ilustrasi)
+3. [Tampilan Antarmuka Landing Page Terkini](#-tampilan-antarmuka-landing-page-terkini)
 4. [Fitur Unggulan](#-fitur-unggulan)
 5. [Arsitektur Sistem & Alur Kerja](#-arsitektur-sistem--alur-kerja)
 6. [Tech Stack](#-tech-stack)
 7. [Panduan Instalasi & Menjalankan Lokal](#-panduan-instalasi--menjalankan-lokal)
-8. [Pengujian & Verifikasi Kualitas](#-pengujian--verifikasi-kualitas)
-9. [Profil Tim Pengembang](#-profil-tim-pengembang)
-10. [Lisensi & Penafian](#-lisensi--penafian)
+8. [Pengujian & Verifikasi Kualitas (TDD)](#-pengujian--verifikasi-kualitas-tdd)
+9. [Daftar Aset & Lisensi](#-daftar-aset--lisensi)
+10. [Profil Tim Pengembang](#-profil-tim-pengembang)
+11. [Lisensi & Penafian](#-lisensi--penafian)
 
 ---
 
@@ -54,36 +59,79 @@ Kawasan perairan pesisir Cilacap dan pulau Nusakambangan (seperti Teluk Penyu, K
 
 **SUAR** mentransformasi ekosistem wisata maritim pesisir menjadi platform digital modern berbasis *Safety-First*. Aplikasi ini menyatukan:
 
-- 🤖 **Juru Mudi AI**: Asisten pintar berbasis **Google Gemini 2.0 Flash** yang beroperasi secara *grounded* terhadap database kapal dan mesin keselamatan deterministik.
-- 🌊 **Mesin Keselamatan Cuaca Maritim**: Penggabungan data resmi cuaca BMKG dan model maritim gelombang resolusi tinggi Open-Meteo.
-- 🗺️ **Peta Interaktif Pesisir Cilacap**: Visualisasi geografis titik keberangkatan, kondisi gelombang per jam, dan rekomendasi jendela waktu pelayaran teraman.
+- 🤖 **Juru Mudi AI**: Asisten pintar berbasis **Google Gemini 2.5 Flash** yang beroperasi secara *grounded* terhadap database kapal dan mesin keselamatan deterministik.
+- 🌊 **Mesin Keselamatan Cuaca Maritim Deterministik**: Penggabungan data resmi cuaca BMKG dan model maritim gelombang resolusi tinggi Open-Meteo dengan batas konservatif perahu nelayan (angin 15 knot, gelombang 1,25 m).
+- 🗺️ **Peta Interaktif Pesisir Cilacap**: Visualisasi geografis dermaga, kondisi gelombang per jam, dan rekomendasi jendela waktu pelayaran teraman (07.00–15.00 WIB).
 - ⚓ **Reservasi Aman & Transparan**: Mesin booking berbasis transaksi atomik PostgreSQL RPC dengan proteksi kelebihan muatan (*anti-overbooking*) dan kontrol akses ketat (*Row Level Security*).
+- 🌐 **Pengalaman Visual Imersif**: Landing page interaktif dengan Three.js / React Three Fiber panggung 3D, efek zoom sinematik, dan karusel kartu geser interaktif.
 
 ---
 
-## 🖼️ Tampilan Antarmuka & Ilustrasi
+## 🖼️ Tampilan Antarmuka Landing Page Terkini
 
-### 1. Peta Maritim Interaktif & Pemantau Keselamatan Titik Keberangkatan
-Peta geografis resolusi tinggi berbasis Leaflet yang memetakan titik-titik dermaga (Teluk Penyu & Pelabuhan Tanjung Intan), disertai panel ringkasan kondisi maritim dan status keselamatan pelayaran.
+### 1. Hero Section Sinematik & Liquid Navigation
+- **Deep Zoom-Out Effect**: Saat pertama kali halaman dibuka, viewport menampilkan sudut pandang laut yang tenang, lalu melakukan transisi zoom halus saat digulir ke bawah.
+- **Scroll-Driven Typewriter dengan Garansi Keterbacaan**: Judul hero berganti seiring scroll dengan proteksi keterbacaan (judul saat ini otomatis ditampilkan utuh sebelum berganti ke judul berikutnya).
+- **LiquidNav Floating Navbar**: Bilah navigasi melayang transparan berkaca buram (*glassmorphism*) dengan logo SUAR bernuansa biru bahari, indikator highlight aktif, serta animasi bounce entrance & exit yang responsif terhadap scroll kembali ke atas layar.
+
+![Hero Section SUAR](docs/assets/hero-section.png)
+
+---
+
+### 2. Panggung 3D Interaktif: “Lima Alasan Berlayar Tanpa Ragu”
+Panggung visual 3D berbasis **React Three Fiber (@react-three/fiber)** dan **Drei** yang terhubung langsung ke mesin scroll sentry, dilengkapi spotlight terpusat dan pelacakan koordinat dinamis ke slot DOM:
+
+1. **🛡️ Listing Terverifikasi** (*3D Shield Model*): Verifikasi resmi KSOP Cilacap, kelaikan armada, dan lisensi nakhoda.
+2. **📅 Kalender Booking** (*3D Calendar Model*): Sistem kuota otomatis dan sharing trip pintar demi efisiensi biaya.
+3. **💳 Pembayaran Online** (*3D Credit Card Model*): Uang muka fleksibel via QRIS dan sistem penampungan dana aman (*escrow*).
+4. **📊 Dashboard Analitik** (*3D Bar Chart Model*): Pemantauan performa armada bahari dan okupansi rute wisata.
+5. **⚓ Paket Wisata Bahari** (*3D Anchor Model*): Kurasi paket sunset cruise Teluk Penyu dan susur mangrove Kampung Laut.
+
+> [!NOTE]
+> Dilengkapi **WebGL Error Boundary Fallback** otomatis: jika browser pengguna tidak mendukung akselerasi 3D WebGL, tampilan otomatis beralih ke grid 2D yang elegan tanpa memutus alur browsing pengguna.
+
+![Panggung 3D SUAR](docs/assets/features-3d.png)
+
+---
+
+### 3. Karusel Kartu Geser Interaktif: “Dan Masih Banyak Lagi”
+Mengadopsi mekanika visual interaktif modern dengan gestur drag / sentuh layar dan fisika pegas (*spring physics*):
+- **Watermark Angka Raksasa**: Tipografi mono berani (`01`, `02`, `03`, `04`) pada setiap kartu.
+- **Kontrol Navigasi & Counter**: Penunjuk langkah numerik aktif (`01 / 04`), tombol melingkar *Prev/Next*, serta tab progress bersegmen di bagian bawah.
+- **Widget Visual Eksklusif per Kartu**:
+  - **01. Kalkulator Tarif Transparan**: Simulasi sewa Teluk Penyu (sewa kapal, konsumsi BBM, jasa nakhoda, total bersih nol mark-up).
+  - **02. Peringatan Cuaca BMKG**: Telemetri sensor maritim Cilacap (gelombang 0,8 m, angin 11 knot, jendela 07–15 WIB, status *AMAN BERLAYAR*).
+  - **03. Rating Terverifikasi**: Ulasan otentik rating 4.9/5.0 dengan validasi GPS dan foto tiket fisik asli.
+  - **04. Asisten AI Juru Mudi**: Simulasi percakapan rekomendasi waktu berlayar dan pemilihan perahu 24/7.
+
+![Karusel Kartu Geser SUAR](docs/assets/cards-slider.png)
+
+---
+
+### 4. Peta Maritim Interaktif & Pemantau Keselamatan Titik Keberangkatan
+Peta geografis resolusi tinggi berbasis Leaflet yang memetakan titik dermaga utama (Teluk Penyu, Pelabuhan Tanjung Intan, Kampung Laut), disertai status keselamatan deterministik.
 
 ![Peta Cuaca Maritim SUAR](docs/assets/weather-map.png)
-
-> [!TIP]
-> **Status Keselamatan Deterministik**: Sistem mengevaluasi kondisi gelombang (ambang batas kapal nelayan: 1,25 m), angin (15 knot), hujan lebat, dan petir untuk menghasilkan status **Aman**, **Waspada**, atau **Tunda**. Jika data gelombang tidak tersedia (*unavailable*), status maksimal adalah **Waspada** dan tidak pernah mengizinkan status Aman.
 
 ---
 
 ## 🚀 Fitur Unggulan
 
-### 1. 🤖 Asisten Pintar “Juru Mudi” (Gemini 2.0 Flash + Tool Calling)
+### 1. 🤖 Asisten Pintar “Juru Mudi” (Gemini 2.5 Flash + Tool Calling)
 - **Domain Khusus Maritim Cilacap**: Melayani pertanyaan rekomendasi kapal, jadwal pelayaran, estimasi tarif, perizinan KSOP, dan kondisi cuaca.
-- **Keselamatan Deterministik**: Asisten dilarang mengarang atau melunakkan status cuaca. Semua status keselamatan dihitung murni oleh aturan matematis sistem.
+- **Keselamatan Deterministik**: Asisten dilarang mengarang atau melunakkan status cuaca. Semua status keselamatan dihitung murni oleh aturan matematis sistem di `rules.ts`.
 - **Kartu UI Interaktif Terstruktur**: Agen mengembalikan kartu interaktif kaya (*Boat Options*, *Weather Verdict*, *Safest Window*, dan *Booking Draft*) yang diverifikasi skema Zod.
-- **Pertahanan Anti-Injeksi Prompt**: Dilindungi dari upaya manipulasi pengguna (misal: memaksa asisten menyatakan kondisi aman saat cuaca berbahaya).
+- **Pertahanan Anti-Injeksi Prompt**: Dilindungi dari manipulasi pengguna (misal: memaksa asisten menyatakan kondisi aman saat cuaca berbahaya).
 
-### 2. 🗺️ Pemantauan Cuaca Maritim Multi-Sumber
-- **Integrasi BMKG**: Memanfaatkan data resmi cuaca berbasis kode wilayah kelurahan/desa pesisir (`adm4`).
-- **Model Gelombang Open-Meteo Marine**: Mengambil parameter tinggi gelombang laut (*wave height*) dan kecepatan angin maritim.
+### 2. 🌊 Mesin Keselamatan Deterministik Cuaca Maritim
+- **Aturan Batas Konservatif Perahu Nelayan** (mengacu `thresholds.json`):
+  - Batas kecepatan angin: **15 knot** ($\approx 27,78\text{ km/jam}$).
+  - Batas tinggi gelombang signifikan: **1,25 meter**.
+- **Logika Verdict**:
+  - **Tunda**: Melebihi ambang batas, terdapat petir (*thunderstorm*), atau hujan lebat ekstrem.
+  - **Waspada**: Kondisi mencapai $\ge 80\%$ batas ambang atau curah hujan $\ge 5\text{ mm/jam}$.
+  - **Aman**: Seluruh parameter berada di bawah batas waspada.
+  - **Fallback Unavailable**: Jika data gelombang `null`, status maksimal adalah **Waspada** dan **tidak pernah Aman**.
 - **Jendela Pelayaran Teraman (*Safest Departure Window*)**: Menganalisis rentang jam operasional optimal (07.00–15.00 WIB) untuk menentukan hari dan jam terbaik berlayar.
 
 ### 3. 💰 Kalkulator Tarif Transparan (Fare Calculator)
@@ -112,8 +160,10 @@ Berikut adalah arsitektur aliran data menyeluruh aplikasi SUAR:
 flowchart TD
     subgraph Client["💻 Frontend Client (Vite + React 18 + TS)"]
         UI["Antarmuka Pengguna (Tailwind + shadcn/ui)"]
+        Canvas3D["Panggung 3D (React Three Fiber / Drei)"]
+        Slider["Karusel Kartu Geser (Framer Motion)"]
         Map["Peta Interaktif (Leaflet / React-Leaflet)"]
-        Chat["Panel Chat Juru Mudi"]
+        Chat["Panel Chat Juru Mudi (Streaming UI)"]
         Calc["Kalkulator Tarif (Deterministic)"]
     end
 
@@ -124,7 +174,7 @@ flowchart TD
     end
 
     subgraph External["🌐 Layanan Eksternal & Upstream"]
-        Gemini["Google Gemini 2.0 Flash API"]
+        Gemini["Google Gemini 2.5 Flash API"]
         BMKG["API Publik BMKG (adm4)"]
         OpenMeteo["Open-Meteo Marine API"]
     end
@@ -161,15 +211,17 @@ flowchart TD
 
 | Kategori | Teknologi yang Digunakan | Keterangan & Peran |
 | :--- | :--- | :--- |
-| **Frontend Framework** | **Vite 5 + React 18** | *Single Page Application* (SPA) dengan performa tinggi |
-| **Bahasa Pemrograman** | **TypeScript 5.8** | *Type safety* penuh dari antarmuka hingga kontrak backend |
-| **UI & Styling** | **Tailwind CSS + shadcn/ui** | Desain responsif, modern, dan aksesibel |
-| **Peta & Visualisasi** | **Leaflet + React-Leaflet + Recharts** | Peta interaktif maritim dan grafik prakiraan cuaca |
-| **Backend & BaaS** | **Supabase (PostgreSQL 15)** | Relasional DB, RLS, Storage, Auth, dan RPC atomik |
+| **Frontend Framework** | **Vite 5 + React 18** | *Single Page Application* (SPA) dengan rendering cepat dan modular |
+| **Bahasa Pemrograman** | **TypeScript 5.8** | *Type safety* menyeluruh dari kontrak UI hingga payload backend |
+| **3D Graphics & Canvas** | **Three.js + React Three Fiber + Drei** | Render model 3D interaktif GLTF dengan spotlight beam dan fallback 2D |
+| **Motion & Animation** | **Framer Motion 14** | Animasi pegas karusel kartu geser, liquid navigation bar, dan gestur drag |
+| **UI & Styling** | **Tailwind CSS + shadcn/ui** | Desain responsif, modern, glassmorphic, dan aksesibel |
+| **Peta & Visualisasi** | **Leaflet + React-Leaflet + Recharts** | Peta interaktif dermaga Cilacap dan grafik prakiraan cuaca per jam |
+| **Backend & BaaS** | **Supabase (PostgreSQL 15)** | Relasional DB, RLS, Storage, Auth OAuth Google, dan RPC atomik |
 | **Serverless Runtime** | **Deno (Supabase Edge Functions)** | Menjalankan *microservices* `juru-mudi` & `marine-conditions` |
-| **Kecerdasan Buatan (AI)** | **Google Gemini 2.0 Flash** | Model LLM cerdas untuk penalaran agen dan pemanggilan tool |
-| **Data Cuaca Eksternal** | **BMKG & Open-Meteo API** | Sumber data cuaca resmi kelurahan dan model gelombang laut |
-| **Unit Testing** | **Vitest 2.1 + Testing Library** | Disiplin *Test-Driven Development* (TDD) dengan 146+ unit test |
+| **Kecerdasan Buatan (AI)** | **Google Gemini 2.5 Flash** | Model LLM penalaran agen maritim dengan pemanggilan tool terstruktur |
+| **Data Cuaca Eksternal** | **BMKG & Open-Meteo API** | Sumber cuaca resmi tingkat kelurahan (`adm4`) dan model gelombang laut |
+| **Unit Testing** | **Vitest 2.1 + Testing Library** | Disiplin *Test-Driven Development* (TDD) dengan 197 unit test (100% PASS) |
 | **CI/CD & Hosting** | **GitHub Actions + Netlify** | Otomatisasi pengujian, *typecheck*, *build*, dan *zero-downtime deployment* |
 
 ---
@@ -208,7 +260,7 @@ VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
 ```bash
 npm run dev
 ```
-Buka browser Anda di `http://localhost:5173`.
+Buka browser Anda di `http://localhost:5174` (atau `http://localhost:5173`).
 
 ### 5️⃣ Menjalankan Menggunakan Docker (Opsional)
 Proyek telah dilengkapi dengan multi-stage Dockerfile yang mengoptimalkan image lokal (`node:22` dan `nginx:alpine`) tanpa perlu mengunduh image besar berulang kali:
@@ -230,7 +282,7 @@ npm run docker:down
 
 ---
 
-## 🧪 Pengujian & Verifikasi Kualitas
+## 🧪 Pengujian & Verifikasi Kualitas (TDD)
 
 Proyek ini dibangun dengan komitmen kualitas tinggi dan disiplin **Test-Driven Development (TDD)** yang ketat:
 
@@ -247,12 +299,30 @@ npm run lint
 # Menjalankan build bundle produksi
 npm run build
 
-# Menjalankan suite evaluasi agen juru-mudi (Task 12)
+# Menjalankan suite evaluasi agen juru-mudi
 EVAL_URL=https://<project-ref>.supabase.co/functions/v1/juru-mudi EVAL_ANON_KEY=<anon-key> npm run eval
 ```
 
 > [!NOTE]
-> Proyek memiliki **23 berkas tes dengan 146 unit test** yang mencakup mesin keselamatan maritim, format perizinan KSOP, perhitungan tarif, penanganan galat RPC booking, komponen UI peta, dan mesin assertion evaluasi AI.
+> Proyek memiliki **33 berkas tes dengan 197 unit test (100% lulus / PASS)** yang mencakup mesin keselamatan maritim, format perizinan KSOP, perhitungan tarif, penanganan galat RPC booking, karusel kartu geser sekunder, komponen UI peta, dan mesin assertion evaluasi AI.
+
+---
+
+## 🎨 Daftar Aset & Lisensi
+
+Seluruh aset eksternal yang digunakan dalam proyek SUAR dipilih dengan cermat demi kepatuhan hak cipta dan lisensi terbuka:
+
+| Aset | Tipe / Format | Sumber / Penggunaan | Lisensi |
+| :--- | :--- | :--- | :--- |
+| **Logo SUAR** | PNG / Vektor | Identitas resmi platform SUAR (desain orisinal tim) | Proprietary (Hak Cipta Tim SUAR) |
+| **Video Hero Latar** | MP4 Video | Footage kapal wisata pesisir Cilacap & laut lepas | Dokumentasi Tim / Bebas Lisensi Komersial |
+| **Model 3D Shield** | GLTF/GLB (`shield_protection_icon.glb`) | Model tameng verifikasi KSOP pada panggung 3D | CC Attribution / CC0 |
+| **Model 3D Calendar** | GLTF/GLB (`calendar.glb`) | Model kalender booking sharing trip | CC Attribution / CC0 |
+| **Model 3D Payment Card** | GLTF/GLB (`payment_card.glb`) | Model kartu pembayaran online escrow | CC Attribution / CC0 |
+| **Model 3D Bar Chart** | GLTF/GLB (`analitik.glb`) | Model grafik analitik performa operator | CC Attribution / CC0 |
+| **Model 3D Anchor** | GLTF/GLB (`anchor.glb`) | Model jangkar paket wisata bahari | CC Attribution / CC0 |
+| **Ikon Antarmuka** | SVG / React Component | Koleksi ikon Lucide React | ISC License |
+| **Peta Pesisir** | Map Tiles Leaflet | OpenStreetMap CartoDB Tiles | ODbL / OpenStreetMap Contributors |
 
 ---
 

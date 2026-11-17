@@ -194,7 +194,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           transition: {
             duration: 0.35,
             times: [0, 0.25, 1],
-            ease: "easeInOut",
+            ease: "easeInOut" as const,
           },
         },
   };
