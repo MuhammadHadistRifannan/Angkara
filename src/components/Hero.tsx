@@ -55,7 +55,7 @@ const Hero: React.FC = () => {
 
         {/* Gradasi kabut laut halus di bagian bawah yang melebur mulus ke latar section berikutnya */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-96 bg-gradient-to-t from-background via-background/70 via-background/20 to-transparent transition-opacity duration-200 ease-out z-10"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-96 bg-gradient-to-t from-[hsl(var(--features-bg-top))] via-[hsl(var(--features-bg-top))]/75 via-[hsl(var(--features-bg-top))]/20 to-transparent transition-opacity duration-200 ease-out z-10"
           style={{ opacity: bottomFadeOpacity }}
         />
 

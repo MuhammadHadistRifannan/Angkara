@@ -43,6 +43,9 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
+    /* Seamless Section Transition (Dark Ocean Navy Token) */
+    --features-bg-top: 215 35% 10%;
+
     /* Gradients */
     --gradient-ocean: linear-gradient(135deg, hsl(211 85% 35%), hsl(211 75% 55%), hsl(182 65% 55%));
     --gradient-sunset: linear-gradient(135deg, hsl(16 85% 60%), hsl(25 95% 65%));
