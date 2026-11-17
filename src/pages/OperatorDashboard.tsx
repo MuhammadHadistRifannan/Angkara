@@ -28,15 +28,57 @@ const OperatorDashboard = () => {
         return;
       }
 
-      const { data: operatorData } = await supabase
+      // 1. Cari berdasarkan user_id
+      let { data: operatorData } = await supabase
         .from("operators")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
+
+      // 2. Fallback: Cari berdasarkan email dan otomatis tautkan user_id jika ada
+      if (!operatorData && user.email) {
+        const { data: opByEmail } = await supabase
+          .from("operators")
+          .select("*")
+          .eq("email", user.email.trim().toLowerCase())
+          .maybeSingle();
+
+        if (opByEmail) {
+          operatorData = opByEmail;
+          if (!opByEmail.user_id) {
+            await supabase
+              .from("operators")
+              .update({ user_id: user.id })
+              .eq("id", opByEmail.id);
+          }
+        }
+      }
+
+      // 3. Fallback: Jika metadata akun bertipe operator, buatkan record baru
+      if (!operatorData && user.user_metadata?.role === "operator") {
+        const { data: newOp } = await supabase
+          .from("operators")
+          .insert({
+            user_id: user.id,
+            company_name:
+              (user.user_metadata?.company_name as string) ||
+              (user.user_metadata?.full_name as string) ||
+              "Operator Mandiri",
+            email: user.email || "",
+            phone: (user.user_metadata?.phone as string) || "-",
+            verified: true,
+          })
+          .select()
+          .single();
+
+        if (newOp) {
+          operatorData = newOp;
+        }
+      }
 
       if (!operatorData) {
-        toast.error("Anda belum terdaftar sebagai operator");
-        navigate("/");
+        toast.error("Anda belum terdaftar sebagai operator kapal");
+        navigate("/dashboard");
         return;
       }
 

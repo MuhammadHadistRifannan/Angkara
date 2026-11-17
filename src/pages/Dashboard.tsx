@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Ship, DollarSign, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { checkIsOperator } from "@/lib/authRoles";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +21,14 @@ const Dashboard = () => {
         navigate("/auth");
         return;
       }
+
+      // Bila terdeteksi sebagai operator kapal, otomatis arahkan ke dashboard operator
+      const isOp = await checkIsOperator(user.id, user.email, user.user_metadata);
+      if (isOp) {
+        navigate("/operator-dashboard", { replace: true });
+        return;
+      }
+
       setUser(user);
       fetchBookings(user.id);
     };

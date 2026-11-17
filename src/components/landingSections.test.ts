@@ -151,7 +151,7 @@ describe("Landing Page Components (SUAR Platform)", () => {
       screen.getByRole("heading", { name: /Tanya Apa Saja Sebelum Berlayar ke Laut Selatan/i })
     ).toBeDefined();
     expect(screen.getAllByText(/SUAR AI Navigator/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/BMKG SYNCED/i)).toBeDefined();
+    expect(screen.getByText(/BMKG Stasiun Tunggul Wulung/i)).toBeDefined();
     expect(screen.getByText(/1,1 meter \(Tenang\)/i)).toBeDefined();
   });
 });

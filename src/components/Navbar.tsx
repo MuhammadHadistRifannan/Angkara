@@ -4,23 +4,39 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { checkIsOperator } from "@/lib/authRoles";
 import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isOperator, setIsOperator] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    const updateUserRole = async (currentUser: User | null) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const isOp = await checkIsOperator(
+          currentUser.id,
+          currentUser.email,
+          currentUser.user_metadata
+        );
+        setIsOperator(isOp);
+      } else {
+        setIsOperator(false);
+      }
+    };
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+      updateUserRole(user);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      updateUserRole(session?.user ?? null);
     });
 
     const handleScroll = () => {
@@ -34,6 +50,9 @@ const Navbar = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  const dashboardPath = isOperator ? "/operator-dashboard" : "/dashboard";
+  const dashboardLabel = isOperator ? "Dashboard Operator" : "Dashboard";
 
   return (
     <nav
@@ -99,10 +118,10 @@ const Navbar = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate(dashboardPath)}
                   className="bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-cyan-200 rounded-xl text-sm font-semibold transition-all"
                 >
-                  Dashboard
+                  {dashboardLabel}
                 </Button>
                 <Button
                   variant="outline"
@@ -196,10 +215,10 @@ const Navbar = () => {
                     className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 rounded-xl"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      navigate("/dashboard");
+                      navigate(dashboardPath);
                     }}
                   >
-                    Dashboard
+                    {dashboardLabel}
                   </Button>
                   <Button
                     variant="outline"

@@ -4,22 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Anchor } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/auth";
+import { getDashboardRedirectPath } from "@/lib/authRoles";
 import googleLogo from "@/assets/google.svg";
+import { Ship, User } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [signupRole, setSignupRole] = useState<"tourist" | "operator">("tourist");
 
-  // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard
+  // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard sesuai perannya
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/dashboard");
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const targetPath = await getDashboardRedirectPath(session.user);
+        navigate(targetPath, { replace: true });
       }
     });
   }, [navigate]);
@@ -31,23 +34,49 @@ const Auth = () => {
     const email = formData.get("signup-email") as string;
     const password = formData.get("signup-password") as string;
     const fullName = formData.get("full-name") as string;
+    const companyName = (formData.get("company-name") as string) || fullName;
+    const phone = (formData.get("operator-phone") as string) || "-";
 
-    const { error } = await supabase.auth.signUp({
+    const isOperator = signupRole === "operator";
+
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
           full_name: fullName,
+          role: isOperator ? "operator" : "tourist",
+          company_name: isOperator ? companyName : undefined,
+          phone: isOperator ? phone : undefined,
         },
       },
     });
+
+    // Jika akun operator berhasil dibuat dan session langsung aktif, masukkan ke tabel operators
+    if (!error && isOperator && authData.user) {
+      try {
+        await supabase.from("operators").insert({
+          user_id: authData.user.id,
+          company_name: companyName,
+          email: email.trim().toLowerCase(),
+          phone: phone,
+          verified: true,
+        });
+      } catch (opErr) {
+        console.warn("Operator auto-insert info:", opErr);
+      }
+    }
 
     setLoading(false);
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Akun berhasil dibuat! Silakan login.");
+      toast.success(
+        isOperator
+          ? "Akun operator berhasil dibuat! Silakan masuk untuk mengelola armada kapal Anda."
+          : "Akun berhasil dibuat! Silakan login."
+      );
     }
   };
 
@@ -58,7 +87,7 @@ const Auth = () => {
     const email = formData.get("signin-email") as string;
     const password = formData.get("signin-password") as string;
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -66,9 +95,10 @@ const Auth = () => {
     setLoading(false);
     if (error) {
       toast.error(error.message);
-    } else {
+    } else if (data.user) {
       toast.success("Login berhasil!");
-      navigate("/dashboard");
+      const targetPath = await getDashboardRedirectPath(data.user);
+      navigate(targetPath);
     }
   };
 
@@ -79,7 +109,7 @@ const Auth = () => {
       toast.error(error.message);
       setLoading(false);
     }
-    // Jika tidak error, Supabase akan mengarahkan browser ke alur login Google lalu ke /dashboard
+    // Jika tidak error, Supabase akan mengarahkan browser ke alur login Google lalu ke dashboard
   };
 
   return (
@@ -149,6 +179,38 @@ const Auth = () => {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
+                {/* Pilihan Peran Pendaftaran */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-slate-700">Tipe Akun Pendaftaran</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSignupRole("tourist")}
+                      className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                        signupRole === "tourist"
+                          ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Wisatawan</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSignupRole("operator")}
+                      className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                        signupRole === "operator"
+                          ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <Ship className="h-4 w-4" />
+                      <span>Operator Kapal</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="full-name">Nama Lengkap</Label>
                   <Input
@@ -159,6 +221,32 @@ const Auth = () => {
                     required
                   />
                 </div>
+
+                {signupRole === "operator" && (
+                  <>
+                    <div className="space-y-2 animate-in fade-in duration-200">
+                      <Label htmlFor="company-name">Nama Perusahaan / Usaha Kapal</Label>
+                      <Input
+                        id="company-name"
+                        name="company-name"
+                        type="text"
+                        placeholder="Contoh: CV Samudra Jaya"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2 animate-in fade-in duration-200">
+                      <Label htmlFor="operator-phone">Nomor Telepon / WhatsApp</Label>
+                      <Input
+                        id="operator-phone"
+                        name="operator-phone"
+                        type="tel"
+                        placeholder="081234567890"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input

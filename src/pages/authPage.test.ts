@@ -7,6 +7,16 @@ import Auth from "./Auth";
 import * as authLib from "@/lib/auth";
 import { toast } from "sonner";
 
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
@@ -15,6 +25,14 @@ vi.mock("@/integrations/supabase/client", () => ({
       signInWithOAuth: vi.fn(),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
     },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    })),
   },
 }));
 
@@ -24,6 +42,8 @@ vi.mock("sonner", () => ({
     success: vi.fn(),
   },
 }));
+
+import { supabase } from "@/integrations/supabase/client";
 
 describe("Auth Page - Google Sign-In", () => {
   beforeEach(() => {
@@ -92,6 +112,58 @@ describe("Auth Page - Google Sign-In", () => {
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Gagal login dengan akun Google");
+    });
+  });
+
+  it("mengarahkan user dengan sesi aktif operator ke /operator-dashboard", async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
+      data: {
+        session: {
+          user: {
+            id: "op-active-user",
+            email: "operator@angkara.id",
+            user_metadata: { role: "operator" },
+          },
+        },
+      },
+    } as unknown as { data: { session: null }; error: null });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Auth)
+      )
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/operator-dashboard", { replace: true });
+    });
+  });
+
+  it("mengarahkan user dengan sesi aktif wisatawan ke /dashboard", async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValueOnce({
+      data: {
+        session: {
+          user: {
+            id: "tourist-active-user",
+            email: "wisatawan@angkara.id",
+            user_metadata: { role: "tourist" },
+          },
+        },
+      },
+    } as unknown as { data: { session: null }; error: null });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Auth)
+      )
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
     });
   });
 });
