@@ -9,7 +9,7 @@ const reasons = [
     icon: Brain,
     title: "Analisis AI & BMKG Terpadu",
     description:
-      "Sistem kami memadukan data telemetri gelombang BMKG Tunggul Wulung dengan riwayat arus batimetri Teluk Penyu. Jadwal penyeberangan dikunci otomatis demi pencegahan insiden laut.",
+      "Sistem kami memadukan prakiraan gelombang dan angin. Status pelayaran Aman, Waspada, atau Tunda mengikuti data terbaru, supaya nahkoda dan wisatawan bisa memutuskan sebelum berangkat.",
     linkText: "Pelajari model keselamatan",
     action: "scroll-weather",
   },
@@ -18,7 +18,7 @@ const reasons = [
     icon: Handshake,
     title: "Ekonomi Nelayan Berkelanjutan",
     description:
-      "Tanpa perantara dan tanpa spekulasi calo dermaga. 100% biaya sewa tertera transparan dan masuk ke rekening nelayan tradisional Pandanarang Cilacap yang bertugas saat Anda berlayar.",
+    "Tanpa perantara dan tanpa calo di dermaga. Harga tertera di depan, dan biaya sewa dibayar langsung kepada nelayan yang bertugas saat Anda berlayar.",
     linkText: "Transparansi bagi hasil",
     action: "scroll-boats",
   },
