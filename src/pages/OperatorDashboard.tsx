@@ -21,6 +21,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BoatModal, type OperatorBoatData } from "@/components/BoatModal";
 
 interface OperatorData {
   id: string;
@@ -72,6 +73,9 @@ const OperatorDashboard = () => {
   const [bookings, setBookings] = useState<OperatorBooking[]>([]);
   const [bookingFilter, setBookingFilter] = useState<BookingFilterType>("all");
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [isBoatModalOpen, setIsBoatModalOpen] = useState(false);
+  const [selectedBoatToEdit, setSelectedBoatToEdit] = useState<OperatorBoat | null>(null);
+  const [isTogglingBoat, setIsTogglingBoat] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalBoats: 0,
     totalBookings: 0,
@@ -188,6 +192,60 @@ const OperatorDashboard = () => {
         totalRevenue,
         pendingBookings: pending,
       }));
+    }
+  };
+
+  // Aksi Manajemen Armada Kapal (Tambah / Edit / Toggle Kelaikan)
+  const handleOpenAddBoat = () => {
+    setSelectedBoatToEdit(null);
+    setIsBoatModalOpen(true);
+  };
+
+  const handleOpenEditBoat = (boat: OperatorBoat) => {
+    setSelectedBoatToEdit(boat);
+    setIsBoatModalOpen(true);
+  };
+
+  const handleBoatSaved = (savedBoat: OperatorBoatData) => {
+    setBoats((prev) => {
+      const exists = prev.some((b) => b.id === savedBoat.id);
+      if (exists) {
+        return prev.map((b) => (b.id === savedBoat.id ? ({ ...b, ...savedBoat } as OperatorBoat) : b));
+      } else {
+        return [...prev, savedBoat as OperatorBoat];
+      }
+    });
+    setStats((prev) => ({
+      ...prev,
+      totalBoats: boats.some((b) => b.id === savedBoat.id) ? prev.totalBoats : prev.totalBoats + 1,
+    }));
+  };
+
+  const handleToggleBoatAvailability = async (boat: OperatorBoat) => {
+    const newStatus = !boat.available;
+    try {
+      setIsTogglingBoat(boat.id);
+      const { error } = await supabase
+        .from("boats")
+        .update({ available: newStatus })
+        .eq("id", boat.id);
+
+      if (error) throw error;
+
+      setBoats((prev) =>
+        prev.map((b) => (b.id === boat.id ? { ...b, available: newStatus } : b))
+      );
+
+      toast.success(
+        `Status kelaikan ${boat.name} diubah menjadi: ${
+          newStatus ? "Tersedia Berlayar" : "Docking / Perawatan"
+        }`
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal mengubah status kelaikan kapal";
+      toast.error(msg);
+    } finally {
+      setIsTogglingBoat(null);
     }
   };
 
@@ -408,7 +466,11 @@ const OperatorDashboard = () => {
                 <h2 className="text-xl font-black tracking-tight text-slate-900">Daftar Armada Kapal</h2>
                 <p className="text-xs text-slate-500">Kelola spesifikasi, kapasitas, dan tarif sewa kapal Anda.</p>
               </div>
-              <Button variant="hero" className="rounded-xl text-xs font-bold gap-2">
+              <Button
+                variant="hero"
+                onClick={handleOpenAddBoat}
+                className="rounded-xl text-xs font-bold gap-2"
+              >
                 <Plus className="h-4 w-4" />
                 Tambah Kapal
               </Button>
@@ -447,11 +509,26 @@ const OperatorDashboard = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl text-xs font-bold border-slate-200">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenEditBoat(boat)}
+                        className="flex-1 rounded-xl text-xs font-bold border-slate-200"
+                      >
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl text-xs font-bold border-slate-200">
-                        Detail
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isTogglingBoat === boat.id}
+                        onClick={() => handleToggleBoatAvailability(boat)}
+                        className={`flex-1 rounded-xl text-xs font-bold ${
+                          boat.available
+                            ? "border-amber-200 text-amber-700 hover:bg-amber-50"
+                            : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        }`}
+                      >
+                        {boat.available ? "Set Docking" : "Set Tersedia"}
                       </Button>
                     </div>
                   </CardContent>
@@ -742,6 +819,15 @@ const OperatorDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal Tambah / Edit Armada Kapal */}
+      <BoatModal
+        open={isBoatModalOpen}
+        onOpenChange={setIsBoatModalOpen}
+        operatorId={operator?.id || ""}
+        boatToEdit={selectedBoatToEdit}
+        onSaveSuccess={handleBoatSaved}
+      />
     </div>
   );
 };
