@@ -19,9 +19,11 @@ import {
   Anchor,
   ShieldCheck,
   Ticket,
+  FileCheck2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BoatModal, type OperatorBoatData } from "@/components/BoatModal";
+import { ManifestModal } from "@/components/ManifestModal";
 
 interface OperatorData {
   id: string;
@@ -76,6 +78,8 @@ const OperatorDashboard = () => {
   const [isBoatModalOpen, setIsBoatModalOpen] = useState(false);
   const [selectedBoatToEdit, setSelectedBoatToEdit] = useState<OperatorBoat | null>(null);
   const [isTogglingBoat, setIsTogglingBoat] = useState<string | null>(null);
+  const [isManifestModalOpen, setIsManifestModalOpen] = useState(false);
+  const [selectedBookingForManifest, setSelectedBookingForManifest] = useState<OperatorBooking | null>(null);
   const [stats, setStats] = useState({
     totalBoats: 0,
     totalBookings: 0,
@@ -305,6 +309,12 @@ const OperatorDashboard = () => {
       )} WIB (${booking.passengers} penumpang). Ada yang bisa kami bantu informasikan sebelum keberangkatan?`
     );
     window.open(`https://wa.me/?text=${message}`, "_blank");
+  };
+
+  // Buka dialog lembar manifes penumpang & checklist KSOP
+  const handleOpenManifest = (booking: OperatorBooking) => {
+    setSelectedBookingForManifest(booking);
+    setIsManifestModalOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -763,8 +773,18 @@ const OperatorDashboard = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => handleOpenManifest(booking)}
+                            className="rounded-xl text-xs font-semibold border-slate-200 text-slate-800 hover:bg-cyan-50 hover:text-cyan-800 hover:border-cyan-300 gap-1.5 ml-auto"
+                          >
+                            <FileCheck2 className="h-4 w-4 text-cyan-600" />
+                            <span>Manifes KSOP</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleChatCustomer(booking)}
-                            className="rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 gap-1.5 ml-auto"
+                            className="rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 gap-1.5"
                           >
                             <MessageCircle className="h-4 w-4 text-emerald-600" />
                             <span>Chat Wisatawan</span>
@@ -827,6 +847,14 @@ const OperatorDashboard = () => {
         operatorId={operator?.id || ""}
         boatToEdit={selectedBoatToEdit}
         onSaveSuccess={handleBoatSaved}
+      />
+
+      {/* Modal Lembar Manifes & Checklist KSOP */}
+      <ManifestModal
+        open={isManifestModalOpen}
+        onOpenChange={setIsManifestModalOpen}
+        booking={selectedBookingForManifest}
+        operatorName={operator?.company_name}
       />
     </div>
   );
