@@ -226,7 +226,6 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         >
           {/* Pill Kaca Translucent Frosted Glass (Unified Floating Glass Bar) */}
           <div
-            ref={containerRef}
             onMouseLeave={() => setHoveredId(null)}
             className={`relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
               isInHero
