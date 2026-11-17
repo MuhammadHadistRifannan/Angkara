@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
 import imgTourMangrove from "@/assets/tour-mangrove-anakan.png";
 import imgTourMancing from "@/assets/tour-mancing-mercusuar.png";
@@ -67,6 +66,81 @@ const defaultTourPackages: TourPackageItem[] = [
     unit: "/ paket",
     image_url: imgTourMancing,
   },
+  {
+    id: "pkg-sunset-karang-bolong",
+    title: "Sunset Teluk Penyu – Karang Bolong",
+    category: "keluarga",
+    badge: "Wisata Keluarga",
+    duration: "2 Jam",
+    distance: "4 km",
+    description:
+      "Berlayar sore dari Teluk Penyu menuju Karang Bolong, pulang saat matahari terbenam di Laut Selatan.",
+    tags: ["Perairan Tenang", "Spot Foto Sunset"],
+    pricingType: "Mulai dari",
+    price: 75000,
+    unit: "/ orang",
+    image_url: imgTourTelukPenyu,
+  },
+  {
+    id: "pkg-snorkeling-karang-bolong",
+    title: "Snorkeling Karang Bolong & Benteng Pendem",
+    category: "keluarga",
+    badge: "Wisata Keluarga",
+    duration: "3 Jam",
+    distance: "6 km",
+    description:
+      "Snorkeling di perairan jernih Karang Bolong lalu singgah melihat Benteng Pendem dari laut.",
+    tags: ["Alat Snorkeling", "Pemandu Lokal"],
+    pricingType: "Mulai dari",
+    price: 150000,
+    unit: "/ orang",
+    image_url: imgTourTelukPenyu,
+  },
+  {
+    id: "pkg-susur-tambak",
+    title: "Susur Sungai & Tambak Kepiting Segara Anakan",
+    category: "mangrove",
+    badge: "Ekowisata Edukasi",
+    duration: "3 Jam",
+    distance: "10 km",
+    description:
+      "Menyusuri sungai dan tambak kepiting bakau di Segara Anakan bersama pemandu lokal.",
+    tags: ["Pemandu Lokal", "Edukasi Mangrove"],
+    pricingType: "Charter Kapal",
+    price: 275000,
+    unit: "/ group",
+    image_url: imgTourMangrove,
+  },
+  {
+    id: "pkg-mancing-malam",
+    title: "Mancing Malam & Sunrise Mercusuar Cimiring",
+    category: "mancing",
+    badge: "Trip Petualangan & Mancing",
+    duration: "6 Jam",
+    distance: "14 km",
+    description:
+      "Mancing malam di spot karang, lalu menunggu matahari terbit dengan latar Mercusuar Cimiring 1870.",
+    tags: ["Alat Pancing Lengkap", "Fishfinder Sonar"],
+    pricingType: "Charter Spesial",
+    price: 750000,
+    unit: "/ paket",
+    image_url: imgTourMancing,
+  },
+  {
+    id: "pkg-nusakambangan-sehari",
+    title: "Jelajah Nusakambangan Sehari – Permisan + Mercusuar",
+    category: "keluarga",
+    badge: "Terpopuler Keluarga",
+    duration: "6 Jam",
+    distance: "18 km",
+    description:
+      "Satu hari penuh: Pantai Pasir Putih Permisan, Karang Bolong, dan view Mercusuar Cimiring dari laut.",
+    tags: ["Perairan Tenang", "Pemandu Lokal"],
+    pricingType: "Mulai dari",
+    price: 250000,
+    unit: "/ orang",
+    image_url: imgTourTelukPenyu,
+  },
 ];
 
 const containerVariants = {
@@ -94,41 +168,12 @@ export const TourPackagesSection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [packages, setPackages] = useState<TourPackageItem[]>(defaultTourPackages);
 
-  useEffect(() => {
-    async function fetchPackages() {
-      try {
-        const { data, error } = await supabase
-          .from("tour_packages")
-          .select("*")
-          .order("price", { ascending: true });
+  // DEMO: pakai defaultTourPackages (8 paket) langsung.
+  // Fetch Supabase dimatikan sementara, dengan pola yang sama seperti
+  // armada: tabel tour_packages di Supabase tidak konsisten dengan data
+  // demo, dan halaman /tour-packages menampilkan "Gagal memuat paket tour"
+  // saat fetch gagal. Nyalakan lagi setelah tabel berisi 8 paket yang sama.
 
-        if (!error && data && data.length > 0) {
-          const mapped: TourPackageItem[] = (data as Array<Record<string, unknown>>).map((item, idx: number) => {
-            const fallback = defaultTourPackages[idx % defaultTourPackages.length];
-            return {
-              id: (item.id as string) || fallback.id,
-              title: (item.title as string) || (item.name as string) || fallback.title,
-              category: ((item.category as TourPackageItem["category"]) || fallback.category),
-              badge: (item.badge as string) || fallback.badge,
-              duration: (item.duration as string) || fallback.duration,
-              distance: (item.distance as string) || fallback.distance,
-              description: (item.description as string) || fallback.description,
-              tags: item.tags && Array.isArray(item.tags) ? (item.tags as string[]) : fallback.tags,
-              pricingType: (item.pricing_type as string) || fallback.pricingType,
-              price: (item.price as number) || fallback.price,
-              unit: (item.unit as string) || fallback.unit,
-              image_url: (item.image_url as string) || fallback.image_url,
-            };
-          });
-          setPackages(mapped);
-        }
-      } catch (err) {
-        console.warn("Using default tour packages fallback:", err);
-      }
-    }
-
-    fetchPackages();
-  }, []);
 
   const filteredPackages =
     activeTab === "all"
@@ -158,7 +203,7 @@ export const TourPackagesSection: React.FC = () => {
               Pilihan Paket Tour
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600">
-              Rute terpopuler dengan jaminan nakhoda berpengalaman dan standar keselamatan KSOP.
+              Rute terpopuler dengan nakhoda berpengalaman dari Teluk Penyu.
             </p>
           </div>
 
@@ -172,7 +217,12 @@ export const TourPackagesSection: React.FC = () => {
                   type="button"
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    document
+                      .getElementById("pilihan-paket-tour")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
                   className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
                     isActive
                       ? "bg-[#090D16] text-white shadow-md"
@@ -186,12 +236,16 @@ export const TourPackagesSection: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* 3 Tour Cards with Staggered Entrance */}
+        {/* 8 Tour Cards with Staggered Entrance */}
+        {/* key={activeTab}: tiap ganti tab, kartu di-mount ulang sehingga
+            animasi masuk jalan lagi dan hasil filter langsung terlihat.
+            Tanpa key ini, kartu lama bisa tetap tersembunyi (opacity 0)
+            setelah filter berubah. */}
         <motion.div
+          key={activeTab}
           variants={containerVariants}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-40px" }}
+          animate="visible"
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
         >
           {filteredPackages.map((pkg) => (
