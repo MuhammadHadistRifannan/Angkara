@@ -66,7 +66,7 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
   },
 ];
 
-// 4 fitur pelengkap di bawah panggung
+// 4 fitur pelengkap di bawah panggung (Card Slider interaktif)
 export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
   {
     id: "kalkulator-tarif",
@@ -75,6 +75,9 @@ export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
       "Estimasi biaya transparan dengan breakdown detail bahan bakar, jasa nakhoda, dan sewa kapal tanpa biaya tersembunyi.",
     icon: Calculator,
     href: "#armada",
+    tag: "Transparansi Biaya",
+    badge: "Nol Biaya Tersembunyi",
+    actionText: "Hitung Tarif Sekarang",
   },
   {
     id: "peringatan-cuaca",
@@ -83,6 +86,9 @@ export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
       "Integrasi data BMKG real-time dengan status keselamatan deterministik: tinggi gelombang, angin, dan rekomendasi aman berlayar.",
     icon: Cloud,
     href: "/cuaca",
+    tag: "Sensor & Radar Maritim",
+    badge: "Live Telemetri WIB",
+    actionText: "Pantau Cuaca Real-Time",
   },
   {
     id: "rating-terverifikasi",
@@ -91,6 +97,9 @@ export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
       "Ulasan otentik pasca-trip hanya dari penumpang yang telah menyelesaikan pelayaran dengan verifikasi GPS & foto trip.",
     icon: Star,
     href: "#armada",
+    tag: "Validasi Penumpang",
+    badge: "100% Penumpang Sah",
+    actionText: "Lihat Ulasan Armada",
   },
   {
     id: "asisten-juru-mudi",
@@ -99,5 +108,8 @@ export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
       "Konsultasi cerdas rekomendasi waktu berlayar, pencarian kapal terbaik, dan panduan keselamatan maritim 24/7.",
     icon: MessageCircle,
     href: "#",
+    tag: "Kecerdasan Buatan Bahari",
+    badge: "Gemini 2.5 Safe Window",
+    actionText: "Konsultasi Juru Mudi",
   },
 ];

@@ -16,4 +16,7 @@ export interface SecondaryFeatureItem {
   description: string;
   icon: ComponentType<{ className?: string }>;
   href?: string;
+  tag?: string;
+  badge?: string;
+  actionText?: string;
 }
