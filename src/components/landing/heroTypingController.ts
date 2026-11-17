@@ -5,6 +5,7 @@ export interface TypingAnimationOptions {
   lineDelay?: number;
   initialDelay?: number;
   onUpdate: (state: { line1: string; line2: string; isTyping: boolean }) => void;
+  onLine2Start?: () => void;
   onComplete?: () => void;
 }
 
@@ -18,11 +19,13 @@ export function runHeroTypingAnimation(options: TypingAnimationOptions): CancelA
     lineDelay = 120,
     initialDelay = 0,
     onUpdate,
+    onLine2Start,
     onComplete,
   } = options;
 
   let isCancelled = false;
   let timerId: ReturnType<typeof setTimeout> | null = null;
+  let hasTriggeredLine2Start = false;
 
   let currentLine1 = "";
   let currentLine2 = "";
@@ -34,6 +37,14 @@ export function runHeroTypingAnimation(options: TypingAnimationOptions): CancelA
 
   const typeLine2 = () => {
     if (isCancelled) return;
+
+    if (!hasTriggeredLine2Start) {
+      hasTriggeredLine2Start = true;
+      if (onLine2Start) {
+        onLine2Start();
+      }
+    }
+
     if (idx2 < line2.length) {
       idx2++;
       currentLine2 = line2.slice(0, idx2);

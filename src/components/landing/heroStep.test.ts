@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calculateHeroStep,
   getVideoScaleForStep,
+  calculateZoomOutScale,
   getOverlayOpacityForStep,
   getTitleIndexForStep,
   HERO_STEP_COUNT,
@@ -37,11 +38,29 @@ describe("heroStep logic", () => {
     expect(getTitleIndexForStep(3)).toBe(2);
   });
 
-  it("returns smooth video scales for each step", () => {
-    expect(getVideoScaleForStep(0)).toBe(1.00);
-    expect(getVideoScaleForStep(1)).toBe(1.03);
-    expect(getVideoScaleForStep(2)).toBe(1.06);
-    expect(getVideoScaleForStep(3)).toBe(1.09);
+  it("returns deep zoom-in on step 0 and zooms out to 1.00 on step 3", () => {
+    // Desktop: default 1.90 zoom in -> 1.00
+    expect(getVideoScaleForStep(0, false)).toBe(1.90);
+    expect(getVideoScaleForStep(1, false)).toBeLessThan(1.90);
+    expect(getVideoScaleForStep(2, false)).toBeLessThan(getVideoScaleForStep(1, false));
+    expect(getVideoScaleForStep(3, false)).toBe(1.00);
+
+    // Mobile: default 1.50 zoom in -> 1.00
+    expect(getVideoScaleForStep(0, true)).toBe(1.50);
+    expect(getVideoScaleForStep(3, true)).toBe(1.00);
+  });
+
+  it("calculates continuous zoom-out scale from scroll progress (1.90 down to 1.00)", () => {
+    expect(calculateZoomOutScale(0, false)).toBe(1.90);
+    expect(calculateZoomOutScale(0.5, false)).toBe(1.45);
+    expect(calculateZoomOutScale(1.0, false)).toBe(1.00);
+
+    // Mobile
+    expect(calculateZoomOutScale(0, true)).toBe(1.50);
+    expect(calculateZoomOutScale(1.0, true)).toBe(1.00);
+
+    // Reduced motion
+    expect(calculateZoomOutScale(0, false, true)).toBe(1.00);
   });
 
   it("returns dark overlay opacity preserving AA text contrast without exceeding 40%", () => {

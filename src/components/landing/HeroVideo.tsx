@@ -1,16 +1,42 @@
-import React, { useRef } from "react";
-import { getVideoScaleForStep } from "./heroStep";
+import React, { useRef, useState, useEffect } from "react";
+import { calculateZoomOutScale, getVideoScaleForStep } from "./heroStep";
 
 interface HeroVideoProps {
-  step: number;
+  progress?: number;
+  step?: number;
   isReducedMotion: boolean;
 }
 
-export const HeroVideo: React.FC<HeroVideoProps> = ({ step, isReducedMotion }) => {
+export const HeroVideo: React.FC<HeroVideoProps> = ({
+  progress,
+  step = 0,
+  isReducedMotion,
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Skala bertahap per step (1.00 -> 1.03 -> 1.06 -> 1.09)
-  const scale = isReducedMotion ? 1.0 : getVideoScaleForStep(step);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mql.matches);
+
+    const handler = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+    };
+
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  // Default saat buka halaman (progress 0 / step 0): DEEP ZOOM IN (1.90 desktop / 1.50 mobile)
+  // Saat digulir ke bawah: kamera mundur dramatis memperlihatkan bentang samudera luas hingga 1.00
+  const scale =
+    progress !== undefined
+      ? calculateZoomOutScale(progress, isMobile, isReducedMotion)
+      : isReducedMotion
+      ? 1.0
+      : getVideoScaleForStep(step, isMobile);
+
+  const origin = isMobile ? "50% 70%" : "50% 74%";
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-slate-900 select-none">
@@ -18,7 +44,8 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({ step, isReducedMotion }) =
         <img
           src="/hero/poster.webp"
           alt="Kapal Wisata di Perairan Cilacap"
-          className="w-full h-full object-cover object-[50%_75%]"
+          className="w-full h-full object-cover"
+          style={{ objectPosition: origin }}
           fetchPriority="high"
         />
       ) : (
@@ -32,10 +59,9 @@ export const HeroVideo: React.FC<HeroVideoProps> = ({ step, isReducedMotion }) =
           poster="/hero/poster.webp"
           style={{
             transform: `scale(${scale})`,
-            transformOrigin: "50% 75%",
-            transition: "transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transformOrigin: origin,
           }}
-          className="w-full h-full object-cover object-[50%_75%] will-change-transform"
+          className="w-full h-full object-cover will-change-transform transition-transform duration-100 ease-out"
         >
           <source src="/hero/hero.mp4" type="video/mp4" />
           <source src="/hero/hero.webm" type="video/webm" />

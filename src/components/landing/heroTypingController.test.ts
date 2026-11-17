@@ -40,6 +40,32 @@ describe("runHeroTypingAnimation", () => {
     cancel();
   });
 
+  it("calls onLine2Start right when line 2 starts typing (teks ke-2 pada title)", () => {
+    const onUpdate = vi.fn();
+    const onLine2Start = vi.fn();
+
+    const cancel = runHeroTypingAnimation({
+      line1: "Halo.",
+      line2: "Dunia.",
+      charDelay: 40,
+      lineDelay: 100,
+      onUpdate,
+      onLine2Start,
+    });
+
+    expect(onLine2Start).not.toHaveBeenCalled();
+
+    // Advance during line 1
+    vi.advanceTimersByTime(40 * 5);
+    expect(onLine2Start).not.toHaveBeenCalled();
+
+    // Line gap triggers line 2
+    vi.advanceTimersByTime(100);
+    expect(onLine2Start).toHaveBeenCalledTimes(1);
+
+    cancel();
+  });
+
   it("can be cancelled immediately without triggering further callbacks", () => {
     const onUpdate = vi.fn();
     const onComplete = vi.fn();

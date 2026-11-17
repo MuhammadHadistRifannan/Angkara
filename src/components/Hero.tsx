@@ -5,7 +5,6 @@ import { HeroTitle } from "./landing/HeroTitle";
 import { LiquidNav } from "./landing/LiquidNav";
 import {
   calculateHeroStep,
-  getOverlayOpacityForStep,
   HERO_STEP_COUNT,
 } from "./landing/heroStep";
 import { ChevronDown } from "lucide-react";
@@ -15,6 +14,7 @@ const Hero: React.FC = () => {
   const sentinelRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [activeStep, setActiveStep] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [showNavbar, setShowNavbar] = useState(false);
   const [isInHero, setIsInHero] = useState(true);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
@@ -63,75 +63,83 @@ const Hero: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Status isInHero untuk tampilan LiquidNav & deteksi kembali ke puncak (Step 0)
+  // Pelacakan progres scroll & status isInHero & reset Step 0 di puncak
   useEffect(() => {
-    const handleScroll = () => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      setIsInHero(rect.bottom > 70);
+    let rafId: number | null = null;
 
-      // Jika user scroll kembali ke paling atas halaman, reset ke step 0 & sembunyikan navbar
-      if (window.scrollY <= 15) {
-        setActiveStep(0);
-        setShowNavbar(false);
-      }
+    const handleScroll = () => {
+      if (rafId !== null) return;
+
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        if (!containerRef.current) return;
+
+        const rect = containerRef.current.getBoundingClientRect();
+        setIsInHero(rect.bottom > 70);
+
+        const totalScrollable = containerRef.current.offsetHeight - window.innerHeight;
+        const currentProgress =
+          totalScrollable > 0 ? Math.max(0, Math.min(1, window.scrollY / totalScrollable)) : 0;
+        setProgress(currentProgress);
+
+        // Jika user scroll kembali ke paling atas halaman (Step 0 / puncak)
+        if (window.scrollY <= 15) {
+          setActiveStep(0);
+          setShowNavbar(false);
+        }
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
-  // Kontrol tampilan LiquidNav:
-  // - Step 0: Hilang dengan bounce exit (kembali ke full screen nothing)
-  // - Step >= 1: Tampil bouncing setelah delay 800ms atau setelah pengetikan judul 1 selesai
-  useEffect(() => {
-    if (activeStep >= 1) {
-      if (isReducedMotion) {
-        setShowNavbar(true);
-        return;
-      }
-      const timer = setTimeout(() => {
-        setShowNavbar(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    } else {
-      setShowNavbar(false);
-    }
-  }, [activeStep, isReducedMotion]);
-
-  // Callback saat pengetikan judul pertama selesai sempurna
-  const handleFirstTitleComplete = useCallback(() => {
+  // Callback saat TEKS KE-2 pada Title ("Cuaca sudah dihitung.") mulai muncul
+  const handleLine2Start = useCallback(() => {
     if (activeStep >= 1) {
       setShowNavbar(true);
     }
   }, [activeStep]);
 
-  // Lapisan gradasi gelap adaptif di atas video (~15% di step 0 -> ~25% -> ~32% -> ~40%)
-  const overlayOpacity = isReducedMotion ? 0.35 : getOverlayOpacityForStep(activeStep);
+  // Jika user scroll ke Step 2 atau 3, pastikan navbar tetap tampil
+  useEffect(() => {
+    if (activeStep >= 2) {
+      setShowNavbar(true);
+    } else if (activeStep === 0) {
+      setShowNavbar(false);
+    }
+  }, [activeStep]);
+
+  // Lapisan gradasi gelap adaptif di atas video (~15% di step 0 -> ~40% di step akhir)
+  const overlayOpacity = isReducedMotion
+    ? 0.35
+    : Math.min(0.40, 0.15 + progress * 0.25);
 
   // Gradasi kabut laut halus di bagian bawah yang melebur mulus ke Section Fitur 3D
   const bottomFadeOpacity = isReducedMotion
     ? 1
-    : activeStep === 0
-    ? 0
-    : activeStep === 1
-    ? 0.25
-    : activeStep === 2
-    ? 0.65
-    : 1;
+    : progress > 0.65
+    ? Math.min(1, (progress - 0.65) / 0.30)
+    : 0;
 
-  // Petunjuk scroll: jelas di step 0, redup di step 1-3
-  const hintOpacity = isReducedMotion ? 0 : activeStep === 0 ? 1 : 0.35;
+  // Petunjuk scroll: jelas di awal pembukaan (Step 0), redup saat mulai scroll
+  const hintOpacity = isReducedMotion ? 0 : progress < 0.08 ? 1 : Math.max(0, 1 - (progress - 0.08) / 0.12);
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[280svh] md:h-[300vh] bg-slate-950"
+      className="relative w-full h-[400svh] md:h-[480vh] bg-slate-950"
       aria-label="Hero Pelayaran Angkara"
     >
-      {/* 4 Scroll Sentinels (Step 0: Video, Step 1-3: Judul 1-3) */}
-      <div className="absolute inset-x-0 top-0 bottom-0 pointer-events-none flex flex-col">
+      {/* 4 Scroll Sentinels dengan jarak cukup agar teks muncul & terbaca dengan nyaman */}
+      <div className="absolute inset-0 pointer-events-none flex flex-col">
         {Array.from({ length: HERO_STEP_COUNT }).map((_, stepIdx) => (
           <div
             key={stepIdx}
@@ -139,25 +147,29 @@ const Hero: React.FC = () => {
               sentinelRefs.current[stepIdx] = el;
             }}
             data-hero-step={stepIdx}
-            className="w-full flex-1 min-h-[70vh] md:min-h-[75vh]"
+            className="w-full flex-1 min-h-[100svh] md:min-h-[120vh]"
           />
         ))}
       </div>
 
       {/* Sticky Viewport 100svh */}
       <div className="sticky top-0 w-full h-[100svh] overflow-hidden">
-        {/* Background Video Laut & Kapal */}
-        <HeroVideo step={activeStep} isReducedMotion={isReducedMotion} />
+        {/* Background Video Laut & Kapal dengan Zoom-Out Dramatis yang Responsif */}
+        <HeroVideo
+          progress={progress}
+          step={activeStep}
+          isReducedMotion={isReducedMotion}
+        />
 
         {/* Gradasi gelap adaptif di area langit untuk kontras teks WCAG AA */}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent transition-opacity duration-500 ease-out z-10"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent transition-opacity duration-300 ease-out z-10"
           style={{ opacity: overlayOpacity }}
         />
 
         {/* Gradasi kabut laut halus di bagian bawah yang melebur mulus ke latar section berikutnya */}
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-96 bg-gradient-to-t from-[hsl(var(--features-bg-top))] via-[hsl(var(--features-bg-top))]/75 via-[hsl(var(--features-bg-top))]/20 to-transparent transition-opacity duration-500 ease-out z-10"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-64 sm:h-96 bg-gradient-to-t from-[hsl(var(--features-bg-top))] via-[hsl(var(--features-bg-top))]/75 via-[hsl(var(--features-bg-top))]/20 to-transparent transition-opacity duration-300 ease-out z-10"
           style={{ opacity: bottomFadeOpacity }}
         />
 
@@ -165,7 +177,10 @@ const Hero: React.FC = () => {
         <HeroTitle
           step={activeStep}
           isReducedMotion={isReducedMotion}
-          onFirstTitleComplete={handleFirstTitleComplete}
+          onLine2Start={handleLine2Start}
+          onFirstTitleComplete={() => {
+            if (activeStep >= 1) setShowNavbar(true);
+          }}
         />
 
         {/* Unified Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}

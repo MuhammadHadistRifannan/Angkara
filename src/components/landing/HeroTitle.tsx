@@ -5,12 +5,14 @@ import { runHeroTypingAnimation, CancelAnimation } from "./heroTypingController"
 interface HeroTitleProps {
   step: number;
   isReducedMotion: boolean;
+  onLine2Start?: () => void;
   onFirstTitleComplete?: () => void;
 }
 
 export const HeroTitle: React.FC<HeroTitleProps> = ({
   step,
   isReducedMotion,
+  onLine2Start,
   onFirstTitleComplete,
 }) => {
   const targetTitleIndex = getTitleIndexForStep(step);
@@ -64,8 +66,9 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
         setFadeState("visible");
         setShowCursor(false);
         setAnnouncedText(`${item.line1} ${item.line2}`);
-        if (targetTitleIndex === 0 && onFirstTitleComplete) {
-          onFirstTitleComplete();
+        if (targetTitleIndex === 0) {
+          if (onLine2Start) onLine2Start();
+          if (onFirstTitleComplete) onFirstTitleComplete();
         }
       } else {
         setTypedLine1("");
@@ -76,7 +79,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
       return;
     }
 
-    // Step 0: Kembali ke video bersih
+    // Step 0: Kembali ke video bersih tanpa judul
     if (targetTitleIndex === null) {
       if (activeTitleIndexRef.current !== null) {
         setFadeState("fading-out");
@@ -86,12 +89,12 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
           setTypedLine1("");
           setTypedLine2("");
           setFadeState("hidden");
-        }, 350);
+        }, 300);
       }
       return;
     }
 
-    // Fungsi untuk memulai fade in dan typing judul target
+    // Fungsi untuk memulai fade in dan pengetikan judul target
     const startNewTitle = (index: number) => {
       setActiveTitleIndex(index);
       setFadeState("fading-in");
@@ -101,19 +104,25 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
       const item = HERO_TITLES[index];
       setAnnouncedText(`${item.line1} ${item.line2}`);
 
-      // Kecepatan: Judul 1 (40ms), Judul 2 & 3 (32ms) agar total pergantian < 2.2 detik
-      const charDelay = index === 0 ? 40 : 32;
+      // Kecepatan: Judul 1 (34ms), Judul 2 & 3 (28ms) agar responsif langsung terlihat
+      const charDelay = index === 0 ? 34 : 28;
 
       cancelTypingRef.current = runHeroTypingAnimation({
         line1: item.line1,
         line2: item.line2,
         charDelay,
-        lineDelay: 100,
-        initialDelay: 120,
+        lineDelay: 90,
+        initialDelay: 20, // Langsung mulai ketik tanpa jeda lambat
         onUpdate: ({ line1, line2 }) => {
           setTypedLine1(line1);
           setTypedLine2(line2);
           setCursorLine(line2.length > 0 ? 2 : 1);
+        },
+        onLine2Start: () => {
+          // NAVBAR MUNCUL SAAT TEKS KE-2 PADA TITLE MULAI MUNCUL
+          if (index === 0 && onLine2Start) {
+            onLine2Start();
+          }
         },
         onComplete: () => {
           if (index === 0 && onFirstTitleComplete) {
@@ -133,7 +142,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
       setShowCursor(false);
       exitTimerRef.current = setTimeout(() => {
         startNewTitle(targetTitleIndex);
-      }, 350);
+      }, 300);
     } else {
       // Judul pertama kali muncul dari Step 0
       startNewTitle(targetTitleIndex);
@@ -153,7 +162,7 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
         cursorTimerRef.current = null;
       }
     };
-  }, [targetTitleIndex, isReducedMotion, onFirstTitleComplete]);
+  }, [targetTitleIndex, isReducedMotion, onLine2Start, onFirstTitleComplete]);
 
   // Styling transisi berbasis state
   let motionClasses = "opacity-0 blur-md translate-y-3 pointer-events-none";
@@ -161,9 +170,9 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
     motionClasses = activeTitleIndex !== null ? "opacity-100 transition-opacity duration-200" : "opacity-0 pointer-events-none";
   } else {
     if (fadeState === "visible" || fadeState === "fading-in") {
-      motionClasses = "opacity-100 blur-0 translate-y-0 transition-all duration-600 ease-out";
+      motionClasses = "opacity-100 blur-0 translate-y-0 transition-all duration-500 ease-out";
     } else if (fadeState === "fading-out") {
-      motionClasses = "opacity-0 blur-[10px] -translate-y-4 transition-all duration-350 ease-in pointer-events-none";
+      motionClasses = "opacity-0 blur-[10px] -translate-y-4 transition-all duration-300 ease-in pointer-events-none";
     } else {
       motionClasses = "opacity-0 blur-md translate-y-3 pointer-events-none";
     }
