@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence, type Transition } from "framer-motion";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Home, Ship, CloudSun, Bot, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,9 @@ interface NavItem {
   isActive: boolean;
 }
 
+// Flag modul tunggal agar animasi masuk hanya diputar satu kali per kunjungan halaman
+let globalHasEverEnteredNav = false;
+
 export const LiquidNav: React.FC<LiquidNavProps> = ({
   show,
   isReducedMotion,
@@ -27,6 +30,14 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
   const location = useLocation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [user, setUser] = useState<unknown>(null);
+
+  const navGroupRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [highlightStyle, setHighlightStyle] = useState<{ x: number; width: number; ready: boolean }>({
+    x: 0,
+    width: 0,
+    ready: false,
+  });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -54,7 +65,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           navigate("/");
         }
       },
-      isActive: location.pathname === "/" && window.scrollY < window.innerHeight * 1.5,
+      isActive: location.pathname === "/" && (typeof window !== "undefined" ? window.scrollY < window.innerHeight * 1.5 : true),
     },
     {
       id: "boats",
@@ -112,11 +123,62 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
   const activeItem = navItems.find((item) => item.isActive) || navItems[0];
   const currentHighlightedId = hoveredId || activeItem.id;
 
-  // Animasi ekspansi dari tengah: objek bulat muncul di tengah lalu melebar ke kiri-kanan dengan spring bouncy
+  // Ukur posisi tab aktif secara presisi menggunakan getBoundingClientRect relatif terhadap kelompok nav menu
+  const updateHighlightPosition = useCallback(() => {
+    const btn = buttonRefs.current.get(currentHighlightedId);
+    const navGroup = navGroupRef.current;
+    if (!btn || !navGroup) return;
+
+    const btnRect = btn.getBoundingClientRect();
+    const navGroupRect = navGroup.getBoundingClientRect();
+
+    if (btnRect.width > 0 && navGroupRect.width > 0) {
+      setHighlightStyle({
+        x: btnRect.left - navGroupRect.left,
+        width: btnRect.width,
+        ready: true,
+      });
+    }
+  }, [currentHighlightedId]);
+
+  // Pantau perubahan ukuran layar (ResizeObserver) agar kapsul selalu tepat menempel
+  useEffect(() => {
+    if (!show) return;
+
+    const timer = setTimeout(() => {
+      updateHighlightPosition();
+    }, 20);
+
+    const navGroup = navGroupRef.current;
+    if (!navGroup) return () => clearTimeout(timer);
+
+    const ro = new ResizeObserver(() => {
+      updateHighlightPosition();
+    });
+
+    ro.observe(navGroup);
+    return () => {
+      clearTimeout(timer);
+      ro.disconnect();
+    };
+  }, [show, updateHighlightPosition]);
+
+  // Tandai bahwa animasi masuk pertama kali sudah selesai
+  useEffect(() => {
+    if (show) {
+      globalHasEverEnteredNav = true;
+    }
+  }, [show]);
+
+  // Animasi ekspansi: hanya bouncy jika baru pertama kali muncul
+  const shouldPlayEntrance = !globalHasEverEnteredNav && !isReducedMotion;
+
   const navContainerVariants = {
     hidden: isReducedMotion
       ? { opacity: 0 }
-      : { opacity: 0, y: "18vh", scaleX: 0.18, scaleY: 0.65 },
+      : shouldPlayEntrance
+      ? { opacity: 0, y: 30, scaleX: 0.85, scaleY: 0.85 }
+      : { opacity: 0, y: -20 },
     visible: {
       opacity: 1,
       y: 0,
@@ -124,42 +186,30 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       scaleY: 1,
       transition: isReducedMotion
         ? { duration: 0 }
-        : {
+        : shouldPlayEntrance
+        ? {
             type: "spring" as const,
-            stiffness: 240,
-            damping: 20,
-            mass: 0.85,
-            staggerChildren: 0.04,
-            delayChildren: 0.06,
+            stiffness: 280,
+            damping: 22,
+            mass: 0.8,
+          }
+        : {
+            duration: 0.25,
+            ease: "easeOut",
           },
     },
     exit: isReducedMotion
       ? { opacity: 0, transition: { duration: 0.15 } }
       : {
           opacity: [1, 1, 0],
-          y: [0, 8, -36],
-          scaleX: [1, 1.03, 0.65],
-          scaleY: [1, 1.03, 0.65],
+          y: [0, 6, -30],
+          scaleX: [1, 1.02, 0.8],
+          scaleY: [1, 1.02, 0.8],
           transition: {
-            duration: 0.35,
-            times: [0, 0.25, 1],
+            duration: 0.3,
             ease: "easeInOut",
           },
         },
-  };
-
-  const navItemVariants = {
-    hidden: isReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.85 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: isReducedMotion
-        ? { duration: 0 }
-        : { type: "spring" as const, stiffness: 360, damping: 25 },
-    },
-    exit: isReducedMotion
-      ? { opacity: 0, transition: { duration: 0.15 } }
-      : { opacity: 0, scale: 0.85, transition: { duration: 0.2 } },
   };
 
   return (
@@ -176,11 +226,12 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         >
           {/* Pill Kaca Translucent Frosted Glass (Unified Floating Glass Bar) */}
           <div
+            ref={containerRef}
             onMouseLeave={() => setHoveredId(null)}
             className={`relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
               isInHero
                 ? "bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)]"
-                : "bg-white/75 backdrop-blur-3xl border border-white/80 shadow-[0_18px_45px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(0,0,0,0.04)]"
+                : "bg-white/80 backdrop-blur-3xl border border-white/80 shadow-[0_18px_45px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(0,0,0,0.04)]"
             }`}
             style={{
               backdropFilter: "blur(32px) saturate(190%) contrast(95%)",
@@ -198,9 +249,8 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             <div className="absolute inset-x-10 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/95 to-transparent pointer-events-none" />
 
             {/* Brand Anchor (Logo & Nama) Terintegrasi di Sisi Kiri Pill */}
-            <motion.button
+            <button
               type="button"
-              variants={navItemVariants}
               onClick={() => {
                 if (location.pathname === "/") {
                   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -209,7 +259,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                 }
               }}
               aria-label="Kembali ke Beranda Angkara"
-              className={`relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[48px] sm:min-h-[54px] select-none group ${
+              className={`relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[46px] sm:min-h-[52px] select-none group ${
                 isInHero ? "hover:bg-white/10" : "hover:bg-black/5"
               }`}
             >
@@ -231,7 +281,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
               >
                 Angkara
               </span>
-            </motion.button>
+            </button>
 
             {/* Garis Pemisah Halus antara Brand & Navigasi */}
             <div
@@ -241,73 +291,74 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             />
 
             {/* Kelompok Menu Navigasi Utama */}
-            <div className="flex-1 flex items-center justify-between min-w-0">
+            <div ref={navGroupRef} className="relative flex-1 flex items-center justify-between min-w-0">
+              {/* Highlight Kapsul Terukur (Measured Highlight, Tanpa layoutId detached bug N1) */}
+              <div
+                aria-hidden="true"
+                className={`absolute top-0 bottom-0 rounded-full pointer-events-none transition-all ease-out z-0 ${
+                  isReducedMotion ? "duration-0" : "duration-200"
+                } ${
+                  isInHero
+                    ? "bg-white/90 border border-white shadow-[0_4px_18px_rgba(0,0,0,0.18),inset_0_1.5px_2px_rgba(255,255,255,1)]"
+                    : "bg-white border border-slate-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1)]"
+                }`}
+                style={{
+                  left: `${highlightStyle.x}px`,
+                  width: `${highlightStyle.width}px`,
+                  opacity: highlightStyle.ready ? 1 : 0,
+                }}
+              />
+
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isHighlighted = currentHighlightedId === item.id;
 
                 return (
-                  <motion.div
+                  <div
                     key={item.id}
-                    variants={navItemVariants}
                     className="relative flex-1 flex items-center justify-center min-w-0"
                   >
                     <button
+                      ref={(el) => {
+                        if (el) buttonRefs.current.set(item.id, el);
+                        else buttonRefs.current.delete(item.id);
+                      }}
                       type="button"
                       onClick={item.action}
                       onMouseEnter={() => setHoveredId(item.id)}
                       onFocus={() => setHoveredId(item.id)}
                       onBlur={() => setHoveredId(null)}
                       aria-label={item.label}
-                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-1.5 sm:py-2.5 px-1 sm:px-2 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[46px] sm:min-h-[56px] ${
-                        isInHero
-                          ? "text-white"
-                          : isHighlighted
-                          ? "text-slate-950 font-semibold"
+                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-1 sm:py-2 px-1 sm:px-2 rounded-full transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[46px] sm:min-h-[52px] ${
+                        isHighlighted
+                          ? "text-slate-950 font-semibold" // Teks gelap kontras WCAG AA di atas kapsul putih terang (Perbaikan N2)
+                          : isInHero
+                          ? "text-white/90 hover:text-white"
                           : "text-slate-600 hover:text-slate-950"
                       }`}
                     >
                       <Icon
-                        className={`w-5 h-5 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-110 ${
-                          isHighlighted ? "mb-1" : "mb-0 sm:mb-1"
+                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-105 ${
+                          isHighlighted ? "mb-0.5 text-slate-950" : "mb-0.5"
                         } ${
-                          isInHero
+                          !isHighlighted && isInHero
                             ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
                             : "drop-shadow-none"
                         }`}
                       />
                       <span
                         className={`text-[10px] sm:text-[11.5px] tracking-wide whitespace-nowrap truncate max-w-full ${
-                          isHighlighted ? "inline" : "hidden sm:inline"
-                        } ${
-                          isInHero
-                            ? "font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
-                            : isHighlighted
-                            ? "font-semibold"
-                            : "font-medium"
+                          isHighlighted
+                            ? "inline font-bold text-slate-950"
+                            : isInHero
+                            ? "hidden sm:inline font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+                            : "hidden sm:inline font-medium"
                         }`}
                       >
                         {item.label}
                       </span>
                     </button>
-
-                    {/* Highlight kapsul kaca putih transparan (Apple Liquid Glass) yang bergeser mengikuti hover/aktif */}
-                    {isHighlighted && (
-                      <motion.div
-                        layoutId="liquid-nav-highlight"
-                        transition={{
-                          type: "spring",
-                          stiffness: 380,
-                          damping: 28,
-                        }}
-                        className={`absolute inset-0 z-0 rounded-full backdrop-blur-md ${
-                          isInHero
-                            ? "bg-white/30 border border-white/70 shadow-[0_4px_18px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)]"
-                            : "bg-white/95 border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1)]"
-                        }`}
-                      />
-                    )}
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>

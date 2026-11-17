@@ -1,20 +1,23 @@
 import { useRef, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import type { Group, SpotLight } from "three";
+import { Vector3, type Group, type SpotLight } from "three";
 import { FeatureModel } from "./FeatureModel";
 import { StageLightPool } from "./StageLightPool";
 import { DustParticles } from "./DustParticles";
 import type { Feature3DItem } from "./types";
+import { updateDebugOverlay } from "../landing/debugStore";
 
 interface CanvasStageProps {
   activeFeature: Feature3DItem;
-  step: number; // 0 (Intro) s.d. 5 (Fitur 5)
+  step: number; // 0 (Intro) s.d. 6 (Exit)
   isVisible?: boolean;
   isEntered?: boolean;
   pulseTrigger?: number | string;
   isMobile?: boolean;
   isReducedMotion?: boolean;
   scrollProgress?: number;
+  slotIntroRef?: React.RefObject<HTMLDivElement | null>;
+  slotFeatureRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -61,9 +64,8 @@ const CinematicCameraController = ({
 
 /**
  * Panggung Bergerak Sinematik (Moving Stage)
- * Mengontrol pergerakan posisi dan skala model dari Intro (tengah-bawah) ke Kiri (step 1-5).
- * Menggunakan spring physics (stiffness 170, damping 12) dengan overshoot yang membal.
- * Spotlight, kolam cahaya, dan partikel ikut bergerak menyatu bersama model.
+ * Posisi dan skala dihitung secara presisi dari slot DOM (getBoundingClientRect -> NDC -> Kamera Dunia z=0).
+ * Menjamin model SELALU sejajar sempurna dengan blok teks kanan dan tidak pernah terpotong di layar pendek.
  */
 interface MovingStageProps {
   activeFeature: Feature3DItem;
@@ -72,6 +74,8 @@ interface MovingStageProps {
   isReducedMotion: boolean;
   pulseTrigger?: number | string;
   isEntered?: boolean;
+  slotIntroRef?: React.RefObject<HTMLDivElement | null>;
+  slotFeatureRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const MovingStage = ({
@@ -81,19 +85,21 @@ const MovingStage = ({
   isReducedMotion,
   pulseTrigger,
   isEntered = true,
+  slotIntroRef,
+  slotFeatureRef,
 }: MovingStageProps) => {
-  const { viewport } = useThree();
+  const { viewport, camera } = useThree();
   const stageGroupRef = useRef<Group>(null);
   const spotRef = useRef<SpotLight>(null);
   const spotTargetRef = useRef<Group>(null);
 
-  // Fisika pegas transisi Intro <-> Fitur Kiri (stiffness 170, damping 12)
+  // Fisika pegas transisi Intro <-> Fitur Kiri (stiffness 170, damping 14)
   const motionRef = useRef({
     currentX: 0,
     velX: 0,
-    currentY: isMobile ? -0.28 : -0.38,
+    currentY: -0.35,
     velY: 0,
-    currentScale: isMobile ? 0.75 : 0.85,
+    currentScale: 0.85,
     velScale: 0,
   });
 
@@ -112,44 +118,69 @@ const MovingStage = ({
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
     const m = motionRef.current;
-
-    // 1. Target Posisi Responsif (dihitung dari useThree viewport)
-    // Desktop: Intro = tengah (x=0, y=-0.38, s=0.85); Fitur 1-5 = kiri 28% lebar layar (x=-0.22*width, y=0, s=1.0)
-    // Mobile: Intro = tengah-bawah (x=0, y=-0.28, s=0.75); Fitur 1-5 = tengah-atas (x=0, y=0.38, s=0.88)
     const isIntro = step === 0;
-    const targetX = isMobile ? 0 : isIntro ? 0 : -viewport.width * 0.22;
-    const targetY = isMobile
-      ? isIntro
-        ? -0.28
-        : 0.38
-      : isIntro
-      ? -0.38
-      : 0;
-    const targetScale = isMobile
-      ? isIntro
-        ? 0.75
-        : 0.88
-      : isIntro
-      ? 0.85
-      : 1.0;
+
+    // 1. Dapatkan posisi slot DOM aktual
+    const activeSlot = isIntro ? slotIntroRef?.current : slotFeatureRef?.current;
+
+    // Nilai dasar default jika slot belum terukur
+    let targetX = isMobile ? 0 : isIntro ? 0 : -viewport.width * 0.22;
+    let targetY = isMobile ? (isIntro ? -0.28 : 0.38) : (isIntro ? -0.38 : 0);
+    let targetScale = isMobile ? (isIntro ? 0.75 : 0.88) : (isIntro ? 0.85 : 1.0);
+
+    if (activeSlot && typeof window !== "undefined") {
+      const rect = activeSlot.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        // Hitung titik pusat slot dalam piksel viewport
+        const pxCenterX = rect.left + rect.width / 2;
+        const pxCenterY = rect.top + rect.height / 2;
+
+        // Konversi ke Normalized Device Coordinates (NDC) [-1, 1]
+        const ndcX = (pxCenterX / window.innerWidth) * 2 - 1;
+        const ndcY = -((pxCenterY / window.innerHeight) * 2 - 1);
+
+        // Proyeksi ke bidang 3D z=0 melalui kamera Three.js
+        const vec = new Vector3(ndcX, ndcY, 0.5);
+        vec.unproject(camera);
+        const dir = vec.sub(camera.position).normalize();
+        if (dir.z !== 0) {
+          const dist = -camera.position.z / dir.z;
+          const worldPos = camera.position.clone().add(dir.multiplyScalar(dist));
+          targetX = worldPos.x;
+          targetY = worldPos.y;
+        }
+
+        // Batasi ukuran model agar maksimal 82% dari tinggi slot DOM (Perbaikan F2: tidak terpotong)
+        const worldSlotHeight = (rect.height / window.innerHeight) * viewport.height;
+        const baseHeight = activeFeature.targetHeight || 1.45;
+        const maxScaleFromSlot = (worldSlotHeight * 0.82) / baseHeight;
+        targetScale = Math.min(isIntro ? 0.85 : 1.05, maxScaleFromSlot);
+      }
+    }
+
+    // Laporkan ke Debug Overlay
+    updateDebugOverlay("features", {
+      targetPos: { x: targetX, y: targetY, scale: targetScale },
+    });
 
     if (isReducedMotion) {
       m.currentX = targetX;
       m.currentY = targetY;
       m.currentScale = targetScale;
     } else {
-      // Spring X: stiffness 170, damping 12 (overshoot terlihat)
-      const forceX = -170 * (m.currentX - targetX) - 12 * m.velX;
+      // Spring retargeting yang halus tanpa reset (Perbaikan F1, F2)
+      const stiffness = 180;
+      const damping = 16;
+
+      const forceX = -stiffness * (m.currentX - targetX) - damping * m.velX;
       m.velX += forceX * dt;
       m.currentX += m.velX * dt;
 
-      // Spring Y: stiffness 170, damping 12
-      const forceY = -170 * (m.currentY - targetY) - 12 * m.velY;
+      const forceY = -stiffness * (m.currentY - targetY) - damping * m.velY;
       m.velY += forceY * dt;
       m.currentY += m.velY * dt;
 
-      // Spring Skala: stiffness 170, damping 12
-      const forceScale = -170 * (m.currentScale - targetScale) - 12 * m.velScale;
+      const forceScale = -stiffness * (m.currentScale - targetScale) - damping * m.velScale;
       m.velScale += forceScale * dt;
       m.currentScale += m.velScale * dt;
     }
@@ -168,7 +199,6 @@ const MovingStage = ({
         spotRef.current.target = spotTargetRef.current;
       }
 
-      // Intensitas fade-in 900ms saat masuk viewport
       if (isEntered && entranceProgressRef.current < 1) {
         entranceProgressRef.current = Math.min(1, entranceProgressRef.current + dt / 0.9);
       }
@@ -176,7 +206,7 @@ const MovingStage = ({
       let boost = 0;
       if (pulseTimerRef.current < 1) {
         pulseTimerRef.current = Math.min(1, pulseTimerRef.current + dt * 2.5);
-        boost = Math.sin(pulseTimerRef.current * Math.PI) * 0.15; // Denyut tipis +15%
+        boost = Math.sin(pulseTimerRef.current * Math.PI) * 0.15;
       }
 
       const baseIntensity = 2.4 * entranceProgressRef.current;
@@ -186,10 +216,9 @@ const MovingStage = ({
 
   return (
     <>
-      {/* Target spotlight 3D */}
       <group ref={spotTargetRef} />
 
-      {/* 1. Spotlight Utama Hangat Menyorot Model (Mengikuti posisi stageGroup) */}
+      {/* 1. Spotlight Utama Menyorot Model */}
       <spotLight
         ref={spotRef}
         position={[0, 5.0, 1.6]}
@@ -209,11 +238,7 @@ const MovingStage = ({
       {/* 4. Cahaya Ambien Rendah */}
       <ambientLight intensity={0.4} />
 
-      {/* 
-        Grup Panggung Bergerak:
-        Memuat model, kolam cahaya bawah, dan partikel debu halus sehingga
-        seluruh elemen panggung bergerak harmonis sebagai satu kesatuan.
-      */}
+      {/* Grup Panggung Bergerak */}
       <group ref={stageGroupRef}>
         <StageLightPool />
         <DustParticles isMobile={isMobile} isReducedMotion={isReducedMotion} />
@@ -239,38 +264,37 @@ export const CanvasStage = ({
   isMobile = false,
   isReducedMotion = false,
   scrollProgress = 0.5,
+  slotIntroRef,
+  slotFeatureRef,
 }: CanvasStageProps) => {
+  if (!isVisible) return null;
+
   return (
     <div
-      className="absolute inset-0 w-full h-full flex items-center justify-center select-none pointer-events-none"
-      aria-hidden="true"
+      className="absolute inset-0 pointer-events-none z-10 overflow-hidden"
       style={{
-        // Mask-image vertikal & radial agar partikel dan efek memudar halus tanpa garis/tepi kotak
         maskImage:
-          "linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%), radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, transparent 100%)",
+          "linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%), radial-gradient(ellipse 95% 85% at 50% 50%, black 65%, transparent 100%)",
         WebkitMaskImage:
-          "linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%), radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, transparent 100%)",
+          "linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%), radial-gradient(ellipse 95% 85% at 50% 50%, black 65%, transparent 100%)",
         maskComposite: "intersect",
-        WebkitMaskComposite: "destination-in",
+        WebkitMaskComposite: "source-in",
       }}
     >
       <Canvas
-        camera={{ position: [0, 0.15, 4.0], fov: 38 }}
-        dpr={isMobile ? [1, 1.25] : [1, 1.5]}
-        frameloop={isVisible ? "always" : "never"}
+        camera={{ position: [0, 0, 4.0], fov: 45 }}
         gl={{
           antialias: true,
           alpha: true,
           powerPreference: "high-performance",
         }}
-        className="w-full h-full pointer-events-auto"
+        dpr={isMobile ? [1, 1.5] : [1, 2]}
       >
         <CinematicCameraController
           scrollProgress={scrollProgress}
           isMobile={isMobile}
           isReducedMotion={isReducedMotion}
         />
-
         <MovingStage
           activeFeature={activeFeature}
           step={step}
@@ -278,6 +302,8 @@ export const CanvasStage = ({
           isReducedMotion={isReducedMotion}
           pulseTrigger={pulseTrigger}
           isEntered={isEntered}
+          slotIntroRef={slotIntroRef}
+          slotFeatureRef={slotFeatureRef}
         />
       </Canvas>
     </div>

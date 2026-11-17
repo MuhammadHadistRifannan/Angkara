@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
-import { HERO_TITLES, getTitleIndexForStep } from "./heroStep";
-import { runHeroTypingAnimation, CancelAnimation } from "./heroTypingController";
+import React from "react";
+import { HERO_TITLES } from "./heroStep";
+import { getHeroSceneState } from "./useSectionStep";
+import { useTypewriter } from "./useTypewriter";
 
 interface HeroTitleProps {
   step: number;
@@ -15,168 +16,45 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
   onLine2Start,
   onFirstTitleComplete,
 }) => {
-  const targetTitleIndex = getTitleIndexForStep(step);
+  const sceneState = getHeroSceneState(step);
+  const activeTitleIndex = sceneState.activeTitleIndex;
+  const isTitleActive = sceneState.titleVisible && activeTitleIndex !== null;
 
-  // Index judul yang sedang aktif dirender
-  const [activeTitleIndex, setActiveTitleIndex] = useState<number | null>(() => {
-    return isReducedMotion ? targetTitleIndex : null;
-  });
+  const currentItem =
+    activeTitleIndex !== null
+      ? HERO_TITLES[activeTitleIndex]
+      : HERO_TITLES[0];
 
-  // Animasi fade in/out state
-  const [fadeState, setFadeState] = useState<"visible" | "fading-in" | "fading-out" | "hidden">(
-    targetTitleIndex === null ? "hidden" : "visible"
+  const {
+    typedLine1,
+    typedLine2,
+    showCursor,
+    cursorLine,
+  } = useTypewriter(
+    {
+      line1: currentItem.line1,
+      line2: currentItem.line2,
+    },
+    {
+      active: isTitleActive,
+      msPerChar: isReducedMotion ? 0 : 30, // 30ms per char untuk Hero
+      lineDelay: 90,
+      fadeOutDuration: 300,
+      onLine2Start: () => {
+        if (activeTitleIndex === 0 && onLine2Start) {
+          onLine2Start();
+        }
+      },
+      onComplete: () => {
+        if (activeTitleIndex === 0 && onFirstTitleComplete) {
+          onFirstTitleComplete();
+        }
+      },
+    }
   );
 
-  const [typedLine1, setTypedLine1] = useState("");
-  const [typedLine2, setTypedLine2] = useState("");
-  const [showCursor, setShowCursor] = useState(false);
-  const [cursorLine, setCursorLine] = useState<1 | 2>(1);
-  const [announcedText, setAnnouncedText] = useState("");
-
-  const cancelTypingRef = useRef<CancelAnimation | null>(null);
-  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeTitleIndexRef = useRef<number | null>(activeTitleIndex);
-
-  useEffect(() => {
-    activeTitleIndexRef.current = activeTitleIndex;
-  }, [activeTitleIndex]);
-
-  useEffect(() => {
-    // Bersihkan semua animasi yang sedang berjalan saat step berubah
-    if (cancelTypingRef.current) {
-      cancelTypingRef.current();
-      cancelTypingRef.current = null;
-    }
-    if (exitTimerRef.current) {
-      clearTimeout(exitTimerRef.current);
-      exitTimerRef.current = null;
-    }
-    if (cursorTimerRef.current) {
-      clearTimeout(cursorTimerRef.current);
-      cursorTimerRef.current = null;
-    }
-
-    if (isReducedMotion) {
-      setActiveTitleIndex(targetTitleIndex);
-      if (targetTitleIndex !== null) {
-        const item = HERO_TITLES[targetTitleIndex];
-        setTypedLine1(item.line1);
-        setTypedLine2(item.line2);
-        setFadeState("visible");
-        setShowCursor(false);
-        setAnnouncedText(`${item.line1} ${item.line2}`);
-        if (targetTitleIndex === 0) {
-          if (onLine2Start) onLine2Start();
-          if (onFirstTitleComplete) onFirstTitleComplete();
-        }
-      } else {
-        setTypedLine1("");
-        setTypedLine2("");
-        setFadeState("hidden");
-        setShowCursor(false);
-      }
-      return;
-    }
-
-    // Step 0: Kembali ke video bersih tanpa judul
-    if (targetTitleIndex === null) {
-      if (activeTitleIndexRef.current !== null) {
-        setFadeState("fading-out");
-        setShowCursor(false);
-        exitTimerRef.current = setTimeout(() => {
-          setActiveTitleIndex(null);
-          setTypedLine1("");
-          setTypedLine2("");
-          setFadeState("hidden");
-        }, 300);
-      }
-      return;
-    }
-
-    // Fungsi untuk memulai fade in dan pengetikan judul target
-    const startNewTitle = (index: number) => {
-      setActiveTitleIndex(index);
-      setFadeState("fading-in");
-      setShowCursor(true);
-      setCursorLine(1);
-
-      const item = HERO_TITLES[index];
-      setAnnouncedText(`${item.line1} ${item.line2}`);
-
-      // Kecepatan: Judul 1 (34ms), Judul 2 & 3 (28ms) agar responsif langsung terlihat
-      const charDelay = index === 0 ? 34 : 28;
-
-      cancelTypingRef.current = runHeroTypingAnimation({
-        line1: item.line1,
-        line2: item.line2,
-        charDelay,
-        lineDelay: 90,
-        initialDelay: 20, // Langsung mulai ketik tanpa jeda lambat
-        onUpdate: ({ line1, line2 }) => {
-          setTypedLine1(line1);
-          setTypedLine2(line2);
-          setCursorLine(line2.length > 0 ? 2 : 1);
-        },
-        onLine2Start: () => {
-          // NAVBAR MUNCUL SAAT TEKS KE-2 PADA TITLE MULAI MUNCUL
-          if (index === 0 && onLine2Start) {
-            onLine2Start();
-          }
-        },
-        onComplete: () => {
-          if (index === 0 && onFirstTitleComplete) {
-            onFirstTitleComplete();
-          }
-          // Kursor berkedip 1.2 detik lalu menghilang halus
-          cursorTimerRef.current = setTimeout(() => {
-            setShowCursor(false);
-          }, 1200);
-        },
-      });
-    };
-
-    // Jika sudah ada judul yang tampil dan berbeda dengan target
-    if (activeTitleIndexRef.current !== null && activeTitleIndexRef.current !== targetTitleIndex) {
-      setFadeState("fading-out");
-      setShowCursor(false);
-      exitTimerRef.current = setTimeout(() => {
-        startNewTitle(targetTitleIndex);
-      }, 300);
-    } else {
-      // Judul pertama kali muncul dari Step 0
-      startNewTitle(targetTitleIndex);
-    }
-
-    return () => {
-      if (cancelTypingRef.current) {
-        cancelTypingRef.current();
-        cancelTypingRef.current = null;
-      }
-      if (exitTimerRef.current) {
-        clearTimeout(exitTimerRef.current);
-        exitTimerRef.current = null;
-      }
-      if (cursorTimerRef.current) {
-        clearTimeout(cursorTimerRef.current);
-        cursorTimerRef.current = null;
-      }
-    };
-  }, [targetTitleIndex, isReducedMotion, onLine2Start, onFirstTitleComplete]);
-
-  // Styling transisi berbasis state
-  let motionClasses = "opacity-0 blur-md translate-y-3 pointer-events-none";
-  if (isReducedMotion) {
-    motionClasses = activeTitleIndex !== null ? "opacity-100 transition-opacity duration-200" : "opacity-0 pointer-events-none";
-  } else {
-    if (fadeState === "visible" || fadeState === "fading-in") {
-      motionClasses = "opacity-100 blur-0 translate-y-0 transition-all duration-500 ease-out";
-    } else if (fadeState === "fading-out") {
-      motionClasses = "opacity-0 blur-[10px] -translate-y-4 transition-all duration-300 ease-in pointer-events-none";
-    } else {
-      motionClasses = "opacity-0 blur-md translate-y-3 pointer-events-none";
-    }
-  }
+  const displayLine1 = isReducedMotion ? (isTitleActive ? currentItem.line1 : "") : typedLine1;
+  const displayLine2 = isReducedMotion ? (isTitleActive ? currentItem.line2 : "") : typedLine2;
 
   return (
     <>
@@ -187,37 +65,41 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
 
       {/* Pengumuman live region saat judul aktif berganti */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {announcedText}
+        {isTitleActive ? `${currentItem.line1} ${currentItem.line2}` : ""}
       </div>
 
-      {/* Kontainer visual judul di area langit (30-34% tinggi layar) */}
+      {/* Kontainer visual judul di area langit (tepat di pusat 30-34% tinggi layar) */}
       <div
         aria-hidden="true"
-        className={`absolute left-0 right-0 top-[22%] sm:top-[26%] md:top-[30%] z-20 flex justify-center px-4 pointer-events-none ${motionClasses}`}
+        className={`absolute left-0 right-0 top-[32%] -translate-y-1/2 z-20 flex justify-center px-4 pointer-events-none transition-all duration-300 ease-out ${
+          isTitleActive
+            ? "opacity-100 blur-0 translate-y-[-50%]"
+            : "opacity-0 blur-[8px] translate-y-[-60%]"
+        }`}
       >
         <div className="relative text-center w-full max-w-5xl mx-auto">
           {/* Overlapping grid: Placeholder tak terlihat dari ketiga judul untuk menjamin ZERO layout shift */}
-          <div className="invisible select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] font-display">
+          <div className="invisible select-none leading-[1.08] tracking-[-0.035em] font-semibold text-[clamp(2.25rem,5.5vw,5rem)] font-display">
             <div className="sm:whitespace-nowrap">Berlayar lebih tenang.</div>
-            <div className="sm:whitespace-nowrap font-medium text-white/70 mt-1 sm:mt-1.5">
+            <div className="sm:whitespace-nowrap font-medium text-white/70 mt-1 sm:mt-2">
               Cuaca sudah dihitung.
             </div>
           </div>
 
           {/* Teks animasi aktual yang sedang diketik */}
-          <div className="absolute inset-0 select-none leading-[1.1] tracking-[-0.03em] font-semibold text-[clamp(2rem,5.2vw,4.8rem)] font-display drop-shadow-[0_2px_14px_rgba(0,0,0,0.6)]">
+          <div className="absolute inset-0 select-none leading-[1.08] tracking-[-0.035em] font-semibold text-[clamp(2.25rem,5.5vw,5rem)] font-display drop-shadow-[0_2px_18px_rgba(0,0,0,0.65)]">
             {/* Baris 1: Pure White Solid */}
             <div className="sm:whitespace-nowrap text-white">
-              {typedLine1}
-              {showCursor && cursorLine === 1 && (
+              {displayLine1}
+              {showCursor && cursorLine === 1 && displayLine1.length > 0 && (
                 <span className="inline-block w-[2.5px] sm:w-[3px] h-[0.85em] bg-cyan-300/95 shadow-[0_0_8px_rgba(34,211,238,0.7)] ml-1.5 align-middle animate-pulse" />
               )}
             </div>
 
             {/* Baris 2: White Opacity 0.7 */}
-            <div className="sm:whitespace-nowrap text-white/70 font-medium tracking-tight mt-1 sm:mt-1.5">
-              {typedLine2}
-              {showCursor && cursorLine === 2 && (
+            <div className="sm:whitespace-nowrap text-white/70 font-medium tracking-tight mt-1 sm:mt-2">
+              {displayLine2}
+              {showCursor && cursorLine === 2 && displayLine2.length > 0 && (
                 <span className="inline-block w-[2.5px] sm:w-[3px] h-[0.85em] bg-cyan-300/85 shadow-[0_0_8px_rgba(34,211,238,0.7)] ml-1.5 align-middle animate-pulse" />
               )}
             </div>

@@ -89,6 +89,7 @@ export const FitModel = ({
   }, [cloned, rotX, rotY, rotZ, targetHeight, activeId]);
 
   // Tingkatkan intensitas respon material PBR agar model gelap (shield, anchor) tidak pekat
+  // Pastikan material SELALU opak penuh (transparent = false, opacity = 1) untuk mencegah bug anchor pudar (F4)
   useEffect(() => {
     cloned.traverse((child) => {
       const mesh = child as Mesh;
@@ -96,10 +97,14 @@ export const FitModel = ({
         mesh.castShadow = false;
         mesh.receiveShadow = false;
         const mat = mesh.material as MeshStandardMaterial;
-        if (mat && "roughness" in mat) {
-          mat.roughness = Math.max(0.2, Math.min(0.85, mat.roughness ?? 0.5));
-          if (typeof envMapIntensity === "number") {
-            mat.envMapIntensity = envMapIntensity;
+        if (mat) {
+          mat.transparent = false;
+          mat.opacity = 1.0;
+          if ("roughness" in mat) {
+            mat.roughness = Math.max(0.2, Math.min(0.85, mat.roughness ?? 0.5));
+            if (typeof envMapIntensity === "number") {
+              mat.envMapIntensity = envMapIntensity;
+            }
           }
         }
       }

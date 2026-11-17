@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import FareCalculator from "@/components/FareCalculator";
 import { WeatherMapPanel } from "@/components/weather/WeatherMapPanel";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
+import { DebugOverlay } from "@/components/landing/DebugOverlay";
 
 const Index = () => {
   return (
@@ -27,6 +28,7 @@ const Index = () => {
       
       <Footer />
       <AssistantWidget hideFloatingTrigger={true} />
+      <DebugOverlay />
     </div>
   );
 };

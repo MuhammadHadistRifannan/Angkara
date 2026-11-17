@@ -6,7 +6,7 @@ const FeaturesStage = lazy(() => import("./features3d/FeaturesStage"));
 
 const Features = () => {
   return (
-    <div id="features">
+    <div>
       <Suspense fallback={<Features2DFallback />}>
         <FeaturesStage />
       </Suspense>
