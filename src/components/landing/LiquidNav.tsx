@@ -18,9 +18,6 @@ interface NavItem {
   isActive: boolean;
 }
 
-// Flag modul tunggal agar animasi masuk hanya diputar satu kali per kunjungan halaman
-let globalHasEverEnteredNav = false;
-
 export const LiquidNav: React.FC<LiquidNavProps> = ({
   show,
   isReducedMotion,
@@ -163,22 +160,16 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
     };
   }, [show, updateHighlightPosition]);
 
-  // Tandai bahwa animasi masuk pertama kali sudah selesai
-  useEffect(() => {
-    if (show) {
-      globalHasEverEnteredNav = true;
-    }
-  }, [show]);
-
-  // Animasi ekspansi: hanya bouncy jika baru pertama kali muncul
-  const shouldPlayEntrance = !globalHasEverEnteredNav && !isReducedMotion;
-
+  // Animasi ekspansi bouncy saat muncul dan dip-bounce saat menghilang
   const navContainerVariants = {
     hidden: isReducedMotion
       ? { opacity: 0 }
-      : shouldPlayEntrance
-      ? { opacity: 0, y: 30, scaleX: 0.85, scaleY: 0.85 }
-      : { opacity: 0, y: -20 },
+      : {
+          opacity: 0,
+          y: "14vh",
+          scaleX: 0.22,
+          scaleY: 0.65,
+        },
     visible: {
       opacity: 1,
       y: 0,
@@ -186,27 +177,23 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       scaleY: 1,
       transition: isReducedMotion
         ? { duration: 0 }
-        : shouldPlayEntrance
-        ? {
-            type: "spring" as const,
-            stiffness: 280,
-            damping: 22,
-            mass: 0.8,
-          }
         : {
-            duration: 0.25,
-            ease: "easeOut",
+            type: "spring" as const,
+            stiffness: 240,
+            damping: 18,
+            mass: 0.85,
           },
     },
     exit: isReducedMotion
       ? { opacity: 0, transition: { duration: 0.15 } }
       : {
           opacity: [1, 1, 0],
-          y: [0, 6, -30],
-          scaleX: [1, 1.02, 0.8],
-          scaleY: [1, 1.02, 0.8],
+          y: [0, 8, -40],
+          scaleX: [1, 1.03, 0.65],
+          scaleY: [1, 1.03, 0.65],
           transition: {
-            duration: 0.3,
+            duration: 0.35,
+            times: [0, 0.25, 1],
             ease: "easeInOut",
           },
         },

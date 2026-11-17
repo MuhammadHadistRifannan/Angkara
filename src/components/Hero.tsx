@@ -10,7 +10,6 @@ import {
 } from "./landing/useSectionStep";
 import { useSnapAssist } from "./landing/useSnapAssist";
 import { updateDebugOverlay } from "./landing/debugStore";
-import { ChevronDown } from "lucide-react";
 
 const Hero: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
@@ -117,9 +116,6 @@ const Hero: React.FC = () => {
     ? 0.35
     : sceneState.overlayDarkness;
 
-  // Petunjuk scroll: jelas di awal pembukaan (Step 0), redup saat mulai scroll
-  const hintOpacity = isReducedMotion ? 0 : activeStep === 0 ? 1 : 0;
-
   return (
     <section
       ref={containerRef}
@@ -212,21 +208,6 @@ const Hero: React.FC = () => {
             })}
           </div>
         </div>
-
-        {/* Petunjuk Gulir Mungil & Halus di Bagian Bawah Viewport (Hanya di Step 0) */}
-        {!isReducedMotion && (
-          <div
-            className="absolute bottom-5 sm:bottom-6 left-0 right-0 z-20 flex flex-col items-center justify-center pointer-events-none select-none transition-opacity duration-300"
-            style={{ opacity: hintOpacity }}
-          >
-            <div className="flex flex-col items-center justify-center bg-black/25 backdrop-blur-md px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.3)]">
-              <span className="text-[10px] sm:text-[11px] font-medium tracking-[0.22em] uppercase text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] mb-0.5">
-                Gulir
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-white/75 animate-bounce" />
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
