@@ -87,7 +87,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src="/logo_suar.png" alt="Logo Suar" className="h-12 w-auto object-contain brightness-0 dark:brightness-100" />
+            <img src="/LOGO SUAR HORIZONTAL-01.png" alt="Logo Suar" className="h-12 w-auto object-contain" />
           </div>
           <CardTitle className="text-2xl">Suar</CardTitle>
           <CardDescription>Platform booking kapal wisata terpercaya</CardDescription>

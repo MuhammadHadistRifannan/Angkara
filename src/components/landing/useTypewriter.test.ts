@@ -122,4 +122,34 @@ describe("useTypewriter", () => {
     });
     expect(result.current.showCursor).toBe(false);
   });
+
+  it("immediately renders full text and turns off typing and cursor when forceComplete is true", () => {
+    const onComplete = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ forceComplete }) =>
+        useTypewriter(
+          { line1: "Berlayar lebih tenang.", line2: "Cuaca sudah dihitung." },
+          { active: true, msPerChar: 40, forceComplete, onComplete }
+        ),
+      { initialProps: { forceComplete: false } }
+    );
+
+    // After 80ms, only 2 characters typed
+    act(() => {
+      vi.advanceTimersByTime(80);
+    });
+    expect(result.current.typedLine1).toBe("Be");
+    expect(result.current.isTyping).toBe(true);
+
+    // Now trigger forceComplete (user scrolled while typing in progress)
+    act(() => {
+      rerender({ forceComplete: true });
+    });
+
+    expect(result.current.typedLine1).toBe("Berlayar lebih tenang.");
+    expect(result.current.typedLine2).toBe("Cuaca sudah dihitung.");
+    expect(result.current.isTyping).toBe(false);
+    expect(result.current.showCursor).toBe(false);
+    expect(onComplete).toHaveBeenCalled();
+  });
 });

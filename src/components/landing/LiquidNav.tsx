@@ -263,12 +263,12 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
               }`}
             >
               <img
-                src="/logo_suar.png"
+                src={isInHero ? "/logo_suar.png" : "/LOGO SUAR HORIZONTAL-01.png"}
                 alt="Logo Suar"
                 className={`h-7 sm:h-8 w-auto object-contain transition-all duration-300 group-hover:scale-105 ${
                   isInHero
                     ? "brightness-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]"
-                    : "brightness-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+                    : "drop-shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
                 }`}
               />
               <span className="sr-only">Suar</span>

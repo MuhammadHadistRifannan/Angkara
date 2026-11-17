@@ -39,7 +39,7 @@ const Navbar = () => {
             aria-label="Kembali ke Beranda Suar"
           >
             <div className="p-2 rounded-lg"> 
-              <img src="/logo_suar.png" alt="Logo Suar" className="h-10 w-auto object-contain brightness-0 dark:brightness-100" />
+              <img src="/LOGO SUAR HORIZONTAL-01.png" alt="Logo Suar" className="h-10 w-auto object-contain" />
             </div>
             <span className="sr-only">Suar</span>
           </div>

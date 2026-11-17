@@ -10,6 +10,7 @@ export interface TypewriterOptions {
   msPerChar?: number;
   lineDelay?: number;
   fadeOutDuration?: number;
+  forceComplete?: boolean;
   onLine2Start?: () => void;
   onComplete?: () => void;
 }
@@ -40,6 +41,7 @@ export function useTypewriter(
     msPerChar = 30,
     lineDelay = 90,
     fadeOutDuration = 300,
+    forceComplete = false,
     onLine2Start,
     onComplete,
   } = options;
@@ -78,6 +80,20 @@ export function useTypewriter(
       return () => {
         isCancelled = true;
         if (timerId !== null) clearTimeout(timerId);
+      };
+    }
+
+    if (forceComplete) {
+      // Seketika tampilkan teks penuh dan matikan pengetikan serta kursor (untuk keterbacaan judul)
+      setIsTyping(false);
+      setTypedLine1(targetLine1);
+      setTypedLine2(targetLine2);
+      setShowCursor(false);
+      if (onCompleteRef.current) {
+        onCompleteRef.current();
+      }
+      return () => {
+        isCancelled = true;
       };
     }
 
@@ -144,7 +160,7 @@ export function useTypewriter(
       isCancelled = true;
       if (timerId !== null) clearTimeout(timerId);
     };
-  }, [active, targetLine1, targetLine2, msPerChar, lineDelay, fadeOutDuration]);
+  }, [active, forceComplete, targetLine1, targetLine2, msPerChar, lineDelay, fadeOutDuration]);
 
   return {
     typedLine1,

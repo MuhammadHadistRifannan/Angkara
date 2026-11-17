@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { HERO_TITLES } from "./heroStep";
 import { getHeroSceneState } from "./useSectionStep";
 import { useTypewriter } from "./useTypewriter";
@@ -17,17 +17,36 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
   onFirstTitleComplete,
 }) => {
   const sceneState = getHeroSceneState(step);
-  const activeTitleIndex = sceneState.activeTitleIndex;
-  const isTitleActive = sceneState.titleVisible && activeTitleIndex !== null;
+  const targetIndex = sceneState.activeTitleIndex;
+  const targetVisible = sceneState.titleVisible && targetIndex !== null;
+
+  // Title yang sedang ditampilkan di DOM
+  const [displayedIndex, setDisplayedIndex] = useState<number | null>(
+    targetVisible ? targetIndex : null
+  );
+  const [forceComplete, setForceComplete] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+
+  // Refs untuk tracking state dalam timer async tanpa closure stale
+  const targetIndexRef = useRef(targetIndex);
+  const targetVisibleRef = useRef(targetVisible);
+  const isTypingRef = useRef(false);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  targetIndexRef.current = targetIndex;
+  targetVisibleRef.current = targetVisible;
 
   const currentItem =
-    activeTitleIndex !== null
-      ? HERO_TITLES[activeTitleIndex]
+    displayedIndex !== null
+      ? HERO_TITLES[displayedIndex]
       : HERO_TITLES[0];
+
+  const isCurrentActive = displayedIndex !== null && !isFadingOut;
 
   const {
     typedLine1,
     typedLine2,
+    isTyping,
     showCursor,
     cursorLine,
   } = useTypewriter(
@@ -36,25 +55,92 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
       line2: currentItem.line2,
     },
     {
-      active: isTitleActive,
+      active: displayedIndex !== null,
+      forceComplete,
       msPerChar: isReducedMotion ? 0 : 30, // 30ms per char untuk Hero
       lineDelay: 90,
       fadeOutDuration: 300,
       onLine2Start: () => {
-        if (activeTitleIndex === 0 && onLine2Start) {
+        if (displayedIndex === 0 && onLine2Start) {
           onLine2Start();
         }
       },
       onComplete: () => {
-        if (activeTitleIndex === 0 && onFirstTitleComplete) {
+        if (displayedIndex === 0 && onFirstTitleComplete) {
           onFirstTitleComplete();
         }
       },
     }
   );
 
-  const displayLine1 = isReducedMotion ? (isTitleActive ? currentItem.line1 : "") : typedLine1;
-  const displayLine2 = isReducedMotion ? (isTitleActive ? currentItem.line2 : "") : typedLine2;
+  isTypingRef.current = isTyping;
+
+  // Watcher perubahan step scroll
+  useEffect(() => {
+    // Jika target sama dengan yang sedang ditampilkan, tidak perlu transisi
+    if (targetIndex === displayedIndex) {
+      return;
+    }
+
+    // Kasus 1: Belum ada title yang tampil (misal dari Step 0 -> Step 1)
+    if (displayedIndex === null) {
+      if (targetVisible && targetIndex !== null) {
+        setDisplayedIndex(targetIndex);
+        setForceComplete(false);
+        setIsFadingOut(false);
+      }
+      return;
+    }
+
+    // Kasus 2: Ada perpindahan step saat title sedang ditampilkan
+    // Batalkan timer transisi sebelumnya jika ada (agar langsung menuju step terbaru tanpa antrean)
+    if (transitionTimerRef.current !== null) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+
+    // Cek apakah animasi pengetikan title saat ini masih berjalan
+    const wasTyping = isTypingRef.current;
+
+    const performFadeAndSwitch = () => {
+      // 1. Fade out title saat ini
+      setIsFadingOut(true);
+
+      transitionTimerRef.current = setTimeout(() => {
+        const nextIndex = targetIndexRef.current;
+        const nextVisible = targetVisibleRef.current;
+
+        setDisplayedIndex(nextVisible ? nextIndex : null);
+        setForceComplete(false);
+        setIsFadingOut(false);
+        transitionTimerRef.current = null;
+      }, 300); // 300ms durasi fade-out
+    };
+
+    if (wasTyping) {
+      // Sesuai permintaan pengguna:
+      // "ketika discroll dan title teks belum muncul semua tetapi animasi typing masih berjalan,
+      // aku ingin agar munculkan full teks title, lalu baru berganti ke title selanjutnya"
+      setForceComplete(true);
+
+      // Tahan teks penuh selama 450ms agar pengguna sempat membaca title dengan nyaman
+      transitionTimerRef.current = setTimeout(() => {
+        performFadeAndSwitch();
+      }, 450);
+    } else {
+      // Jika pengetikan sudah selesai sebelumnya, langsung lakukan fade out dan ganti title
+      performFadeAndSwitch();
+    }
+
+    return () => {
+      if (transitionTimerRef.current !== null) {
+        clearTimeout(transitionTimerRef.current);
+      }
+    };
+  }, [targetIndex, targetVisible, displayedIndex]);
+
+  const displayLine1 = isReducedMotion ? (isCurrentActive ? currentItem.line1 : "") : typedLine1;
+  const displayLine2 = isReducedMotion ? (isCurrentActive ? currentItem.line2 : "") : typedLine2;
 
   return (
     <>
@@ -65,14 +151,14 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
 
       {/* Pengumuman live region saat judul aktif berganti */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {isTitleActive ? `${currentItem.line1} ${currentItem.line2}` : ""}
+        {isCurrentActive ? `${currentItem.line1} ${currentItem.line2}` : ""}
       </div>
 
       {/* Kontainer visual judul di area langit (tepat di pusat 30-34% tinggi layar) */}
       <div
         aria-hidden="true"
         className={`absolute left-0 right-0 top-[32%] -translate-y-1/2 z-20 flex justify-center px-4 pointer-events-none transition-all duration-300 ease-out ${
-          isTitleActive
+          isCurrentActive
             ? "opacity-100 blur-0 translate-y-[-50%]"
             : "opacity-0 blur-[8px] translate-y-[-60%]"
         }`}
