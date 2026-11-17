@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,6 +21,7 @@ import heroBgSea from "@/assets/hero-bg-sea.png";
 import heroBoatCard from "@/assets/hero-boat-card.png";
 
 export const HeroSection: React.FC = () => {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLElement>(null);
   const [departurePoint, setDeparturePoint] = useState("Teluk Penyu");
   const [departureDate, setDepartureDate] = useState("");
@@ -47,13 +49,20 @@ export const HeroSection: React.FC = () => {
   const cardY = useTransform(scrollYProgress, [0, 1], ["0%", "-15%"]);
 
   const handleAskJuruMudi = () => {
+    const prompt = `Halo Juru Mudi! Bagaimana rekomendasi jadwal dan kondisi cuaca maritim untuk perjalanan ke Nusakambangan dari ${departurePoint}?`;
+    try {
+      sessionStorage.setItem("pending_assistant_prompt", prompt);
+    } catch (e) {
+      console.warn("Gagal menyimpan prompt:", e);
+    }
     window.dispatchEvent(
       new CustomEvent("open-assistant", {
         detail: {
-          prompt: `Halo Juru Mudi! Bagaimana rekomendasi jadwal dan kondisi cuaca maritim untuk perjalanan ke Nusakambangan dari ${departurePoint}?`,
+          prompt,
         },
       })
     );
+    navigate("/dashboard");
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {

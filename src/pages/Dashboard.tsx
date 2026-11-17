@@ -8,11 +8,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Ship, DollarSign, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { checkIsOperator } from "@/lib/authRoles";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
+import type { User } from "@supabase/supabase-js";
+
+interface UserBooking {
+  id: string;
+  user_id: string;
+  boat_id: string;
+  booking_date: string;
+  departure_time: string;
+  passengers: number;
+  total_price: number;
+  booking_status: string;
+  payment_status: string;
+  notes?: string | null;
+  created_at?: string;
+  boats?: {
+    name: string;
+    type: string;
+    image_url?: string | null;
+  } | null;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [bookings, setBookings] = useState<UserBooking[]>([]);
+  const [, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -52,7 +73,7 @@ const Dashboard = () => {
     if (error) {
       toast.error("Gagal memuat booking");
     } else {
-      setBookings(data || []);
+      setBookings((data as unknown as UserBooking[]) || []);
     }
   };
 
@@ -160,6 +181,9 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Floating AI Assistant Widget eksklusif di dalam Dashboard Wisatawan */}
+      <AssistantWidget />
     </div>
   );
 };
