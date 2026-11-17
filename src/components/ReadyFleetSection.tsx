@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio } from "lucide-react";
+import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface FleetBoat {
   id: string;
@@ -30,20 +29,20 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "12 Jaket Pelampung SOLAS",
     engineSpecs: "Yamaha Marine 15PK",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 350000,
+    price: 350000
   },
   {
     id: "nusantara-express-01",
     name: "KM Nusantara Express 01",
     boatTypeTag: "Speedboat Fiber Cepat",
-    rating: 5.0,
+    rating: 4.8,
     tripsCount: 112,
     captainName: "Mas Budiarto (Sertifikasi KSOP)",
     capacityText: "Maks. 20 Penumpang",
     safetyGear: "24 Pelampung + Life Raft",
     engineSpecs: "Twin Yamaha 200HP",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 650000,
+    price: 650000
   },
   {
     id: "segara-anakan-07",
@@ -56,7 +55,124 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "Sound Guide + Binokular",
     engineSpecs: "Mesin Diesel Silent 40PK",
     fareLabel: "Tarif Trip Laguna:",
-    price: 400000,
+    price: 400000
+  },
+  {
+    id: "camar-laut-02",
+    name: "KM Camar Laut 02",
+    boatTypeTag: "Speedboat Fiber Cepat",
+    rating: 4.7,
+    tripsCount: 58,
+    captainName: "Pak Tarno",
+    capacityText: "Maks. 8 Penumpang",
+    safetyGear: "10 Jaket Pelampung SOLAS",
+    engineSpecs: "Yamaha 40PK",
+    fareLabel: "Tarif PP Teluk Penyu:",
+    price: 550000
+  },
+  {
+    id: "baruna-jaya-05",
+    name: "KM Baruna Jaya 05",
+    boatTypeTag: "Kapal Kayu Tradisional",
+    rating: 4.7,
+    tripsCount: 71,
+    captainName: "Pak Karso",
+    capacityText: "Maks. 15 Penumpang",
+    safetyGear: "18 Jaket Pelampung SOLAS",
+    engineSpecs: "Diesel 30PK",
+    fareLabel: "Tarif PP Teluk Penyu:",
+    price: 300000
+  },
+  {
+    id: "samudra-kilat-01",
+    name: "KM Samudra Kilat 01",
+    boatTypeTag: "Speedboat Fiber Cepat",
+    rating: 4.8,
+    tripsCount: 49,
+    captainName: "Mas Agus",
+    capacityText: "Maks. 12 Penumpang",
+    safetyGear: "14 Pelampung + Life Raft",
+    engineSpecs: "Twin Yamaha 115HP",
+    fareLabel: "Tarif PP Teluk Penyu:",
+    price: 600000
+  },
+  {
+    id: "lumba-lumba-04",
+    name: "KM Lumba-Lumba 04",
+    boatTypeTag: "Speedboat Fiber Cepat",
+    rating: 4.6,
+    tripsCount: 37,
+    captainName: "Pak Dedi",
+    capacityText: "Maks. 6 Penumpang",
+    safetyGear: "8 Jaket Pelampung SOLAS",
+    engineSpecs: "Yamaha 40PK",
+    fareLabel: "Tarif PP Teluk Penyu:",
+    price: 450000
+  },
+  {
+    id: "bahari-sejahtera-09",
+    name: "KM Bahari Sejahtera 09",
+    boatTypeTag: "Kapal Kayu Tradisional",
+    rating: 4.7,
+    tripsCount: 66,
+    captainName: "Pak Joko",
+    capacityText: "Maks. 20 Penumpang",
+    safetyGear: "22 Jaket Pelampung SOLAS",
+    engineSpecs: "Diesel 40PK",
+    fareLabel: "Tarif PP Tanjung Intan:",
+    price: 350000
+  },
+  {
+    id: "albatros-06",
+    name: "KM Albatros 06",
+    boatTypeTag: "Speedboat Fiber Cepat",
+    rating: 4.7,
+    tripsCount: 44,
+    captainName: "Mas Rian",
+    capacityText: "Maks. 10 Penumpang",
+    safetyGear: "12 Pelampung + Life Raft",
+    engineSpecs: "Yamaha 85HP",
+    fareLabel: "Tarif PP Tanjung Intan:",
+    price: 500000
+  },
+  {
+    id: "mangrove-explorer-02",
+    name: "KM Mangrove Explorer 02",
+    boatTypeTag: "Kapal Ekowisata",
+    rating: 4.8,
+    tripsCount: 52,
+    captainName: "Kang Udin",
+    capacityText: "Maks. 12 Penumpang",
+    safetyGear: "Sound Guide + Binokular",
+    engineSpecs: "Mesin Diesel Silent 40PK",
+    fareLabel: "Tarif Trip Laguna:",
+    price: 425000
+  },
+  {
+    id: "pesisir-indah-08",
+    name: "KM Pesisir Indah 08",
+    boatTypeTag: "Kapal Kayu Tradisional",
+    rating: 4.6,
+    tripsCount: 29,
+    captainName: "Pak Warto",
+    capacityText: "Maks. 14 Penumpang",
+    safetyGear: "16 Jaket Pelampung SOLAS",
+    engineSpecs: "Diesel 30PK",
+    fareLabel: "Tarif PP Teluk Penyu:",
+    price: 325000
+  },
+  {
+    id: "cahaya-selatan-10",
+    name: "KM Cahaya Selatan 10",
+    boatTypeTag: "Speedboat Fiber Cepat",
+    rating: 4.8,
+    tripsCount: 78,
+    captainName: "Mas Fajar",
+    capacityText: "Maks. 16 Penumpang",
+    safetyGear: "18 Pelampung + Life Raft",
+    engineSpecs: "Twin Yamaha 150HP",
+    fareLabel: "Tarif PP Teluk Penyu:",
+    price: 625000
   },
 ];
 
@@ -82,50 +198,28 @@ const cardVariants = {
 
 export const ReadyFleetSection: React.FC = () => {
   const navigate = useNavigate();
-  const [fleet, setFleet] = useState<FleetBoat[]>(defaultFleet);
+  const [fleet] = useState<FleetBoat[]>(defaultFleet);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
 
-  useEffect(() => {
-    async function fetchFleet() {
-      try {
-        const { data, error } = await supabase
-          .from("boats")
-          .select("*")
-          .eq("available", true)
-          .limit(3);
+  const updateArrows = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 10);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  };
 
-        if (!error && data && data.length > 0) {
-          const mapped: FleetBoat[] = (data as Array<Record<string, unknown>>).map((b, idx: number) => {
-            const fallback = defaultFleet[idx % defaultFleet.length];
-            return {
-              id: (b.id as string) || fallback.id,
-              name: (b.name as string) || fallback.name,
-              boatTypeTag:
-                b.boat_type === "speedboat"
-                  ? "Speedboat Fiber Cepat"
-                  : b.boat_type === "kapal_kayu"
-                  ? "Jukung Tradisional"
-                  : fallback.boatTypeTag,
-              rating: (b.rating as number) || fallback.rating,
-              tripsCount: (b.total_trips as number) || fallback.tripsCount,
-              captainName: b.captain_name
-                ? `${b.captain_name} (Terlisensi KSOP)`
-                : fallback.captainName,
-              capacityText: `Maks. ${(b.capacity as number) || 10} Penumpang`,
-              safetyGear: (b.safety_equipment as string) || fallback.safetyGear,
-              engineSpecs: (b.engine_power as string) || fallback.engineSpecs,
-              fareLabel: fallback.fareLabel,
-              price: (b.price_per_hour as number) || (b.base_fare as number) || fallback.price,
-            };
-          });
-          setFleet(mapped);
-        }
-      } catch (err) {
-        console.warn("Using fallback fleet data:", err);
-      }
-    }
+  const scrollFleet = (dir: 1 | -1) => {
+    scrollRef.current?.scrollBy({ left: dir * 440, behavior: "smooth" });
+  };
 
-    fetchFleet();
-  }, []);
+  // DEMO: pakai defaultFleet (12 kapal) langsung.
+  // Fetch Supabase dimatikan sementara, karena tabel boats di Supabase
+  // hanya berisi 3 kapal dengan nama/kapasitas berbeda, dan query lama
+  // memakai .limit(3) sehingga menimpa 12 kapal di atas.
+  // Nyalakan lagi setelah tabel boats berisi 12 kapal yang sama.
+
 
   const handleChatCaptain = (boat: FleetBoat) => {
     const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
@@ -179,29 +273,56 @@ export const ReadyFleetSection: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tight leading-none text-sky-950">
-                42 Kapal
+                12 Kapal
               </span>
               <span className="text-xs font-semibold text-sky-800">
-                Terverifikasi KSOP Hari Ini
+                Siap Berlayar Hari Ini
               </span>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* 3 Fleet Cards matching Image 4 */}
+        {/* Slider armada: 12 kapal, geser untuk melihat semuanya */}
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <span className="text-xs font-semibold text-slate-500 mr-auto">
+            Geser untuk melihat {fleet.length} kapal
+          </span>
+          <button
+            type="button"
+            onClick={() => scrollFleet(-1)}
+            disabled={!canPrev}
+            aria-label="Kapal sebelumnya"
+            className="p-2.5 rounded-full border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollFleet(1)}
+            disabled={!canNext}
+            aria-label="Kapal berikutnya"
+            className="p-2.5 rounded-full border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10"
+        >
+        <div
+          ref={scrollRef}
+          onScroll={updateArrows}
+          className="flex gap-6 sm:gap-8 overflow-x-auto snap-x snap-mandatory pb-4 mb-6 [scrollbar-width:thin] [-ms-overflow-style:auto]"
         >
           {fleet.map((boat) => (
             <motion.div
               key={boat.id}
               variants={cardVariants}
               whileHover={{ y: -8, transition: { duration: 0.25 } }}
-              className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-2xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between"
+              className="snap-start shrink-0 w-[85%] sm:w-[400px] lg:w-[calc(33.333%-22px)] bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-2xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 {/* Header: Tag & Rating */}
@@ -276,6 +397,7 @@ export const ReadyFleetSection: React.FC = () => {
               </div>
             </motion.div>
           ))}
+        </div>
         </motion.div>
 
         {/* Emergency SAR Quick-Response Banner matching Image 4 */}
