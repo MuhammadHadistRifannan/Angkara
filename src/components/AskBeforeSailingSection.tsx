@@ -13,6 +13,12 @@ export const AskBeforeSailingSection: React.FC = () => {
       questionInput.trim() ||
       "Apakah besok pagi aman menyeberang ke Nusakambangan naik kapal kayu untuk 8 orang?";
 
+    try {
+      sessionStorage.setItem("pending_assistant_prompt", promptToSend);
+    } catch (err) {
+      console.warn("Gagal menyimpan prompt:", err);
+    }
+
     window.dispatchEvent(
       new CustomEvent("open-assistant", {
         detail: {
@@ -20,6 +26,7 @@ export const AskBeforeSailingSection: React.FC = () => {
         },
       })
     );
+    navigate("/dashboard");
     setQuestionInput("");
   };
 

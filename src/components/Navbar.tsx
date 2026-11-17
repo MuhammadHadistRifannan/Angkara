@@ -1,26 +1,54 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { checkIsOperator } from "@/lib/authRoles";
 import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLandingPage = location.pathname === "/";
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isOperator, setIsOperator] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const handleLogout = async () => {
+    setIsMenuOpen(false);
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   useEffect(() => {
+    const updateUserRole = async (currentUser: User | null) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const isOp = await checkIsOperator(
+          currentUser.id,
+          currentUser.email,
+          currentUser.user_metadata
+        );
+        setIsOperator(isOp);
+      } else {
+        setIsOperator(false);
+      }
+    };
+
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+      updateUserRole(user);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      updateUserRole(session?.user ?? null);
+      if (event === "SIGNED_OUT") {
+        navigate("/");
+      }
     });
 
     const handleScroll = () => {
@@ -33,12 +61,17 @@ const Navbar = () => {
       subscription.unsubscribe();
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [navigate]);
+
+  const dashboardPath = isOperator ? "/operator-dashboard" : "/dashboard";
+  const dashboardLabel = isOperator ? "Dashboard Operator" : "Dashboard";
 
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
+        !isLandingPage
+          ? "bg-[#090D16] border-b border-white/10 shadow-xl shadow-black/20"
+          : isScrolled
           ? "bg-[#090D16]/85 backdrop-blur-xl border-b border-white/10 shadow-xl shadow-black/20"
           : "bg-[#090D16]/40 backdrop-blur-md border-b border-white/5"
       }`}
@@ -99,15 +132,15 @@ const Navbar = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate(dashboardPath)}
                   className="bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-cyan-200 rounded-xl text-sm font-semibold transition-all"
                 >
-                  Dashboard
+                  {dashboardLabel}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => supabase.auth.signOut()}
+                  onClick={handleLogout}
                   className="bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20 rounded-xl text-sm font-semibold transition-all"
                 >
                   Keluar
@@ -196,18 +229,15 @@ const Navbar = () => {
                     className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 rounded-xl"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      navigate("/dashboard");
+                      navigate(dashboardPath);
                     }}
                   >
-                    Dashboard
+                    {dashboardLabel}
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20 rounded-xl"
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      supabase.auth.signOut();
-                    }}
+                    onClick={handleLogout}
                   >
                     Keluar
                   </Button>

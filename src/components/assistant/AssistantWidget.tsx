@@ -38,6 +38,17 @@ export const AssistantWidget: React.FC = () => {
       ]);
       setIsOpen(true);
     }
+
+    try {
+      const pendingPrompt = sessionStorage.getItem("pending_assistant_prompt");
+      if (pendingPrompt) {
+        sessionStorage.removeItem("pending_assistant_prompt");
+        setInputText(pendingPrompt);
+        setIsOpen(true);
+      }
+    } catch (e) {
+      console.warn("Gagal membaca pending_assistant_prompt:", e);
+    }
   }, []);
 
   // Dengarkan event eksternal "open-assistant" (misal dari tombol "Tanya Juru Mudi" di peta)

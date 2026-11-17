@@ -128,13 +128,20 @@ export const ReadyFleetSection: React.FC = () => {
   }, []);
 
   const handleChatCaptain = (boat: FleetBoat) => {
+    const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
+    try {
+      sessionStorage.setItem("pending_assistant_prompt", prompt);
+    } catch (e) {
+      console.warn("Gagal menyimpan prompt:", e);
+    }
     window.dispatchEvent(
       new CustomEvent("open-assistant", {
         detail: {
-          prompt: `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`,
+          prompt,
         },
       })
     );
+    navigate("/dashboard");
   };
 
   const handleBookNow = (boatId: string) => {

@@ -11,7 +11,6 @@ import ReadyFleetSection from "@/components/ReadyFleetSection";
 import AskBeforeSailingSection from "@/components/AskBeforeSailingSection";
 import Footer from "@/components/Footer";
 import { WeatherMapPanel } from "@/components/weather/WeatherMapPanel";
-import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 const Index: React.FC = () => {
   return (
@@ -68,9 +67,6 @@ const Index: React.FC = () => {
 
       {/* 11. Footer with SUAR Oceanic Theme */}
       <Footer />
-
-      {/* 12. Floating AI Assistant Widget */}
-      <AssistantWidget />
     </div>
   );
 };
