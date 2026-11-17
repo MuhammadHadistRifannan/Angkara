@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Check, Zap, Send, ShieldCheck, Ship } from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, Zap, Send, Ship } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const AskBeforeSailingSection: React.FC = () => {
@@ -27,13 +28,19 @@ export const AskBeforeSailingSection: React.FC = () => {
   };
 
   return (
-    <section id="tanya-sebelum-berlayar" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative">
+    <section id="tanya-sebelum-berlayar" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Descriptive info & Key Points matching Image 5 */}
-          <div className="lg:col-span-5 space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="lg:col-span-5 space-y-6"
+          >
             {/* Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold shadow-sm">
               <span className="h-2 w-2 rounded-full bg-sky-600 animate-pulse" />
               <span>Asisten Cerdas Navigasi & Cuaca</span>
             </div>
@@ -51,37 +58,38 @@ export const AskBeforeSailingSection: React.FC = () => {
 
             {/* 3 Checklist Items */}
             <div className="space-y-3.5 pt-2">
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
-                  <Check className="h-3 w-3 stroke-[3]" />
-                </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-800">
-                  Rekomendasi jenis lambung kapal (Kayu vs Speedboat)
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
-                  <Check className="h-3 w-3 stroke-[3]" />
-                </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-800">
-                  Prediksi jam tenang bebas gelombang pecah
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
-                  <Check className="h-3 w-3 stroke-[3]" />
-                </div>
-                <span className="text-xs sm:text-sm font-semibold text-slate-800">
-                  Kontak siaga darurat SAR Pos Cilacap 115
-                </span>
-              </div>
+              {[
+                "Rekomendasi jenis lambung kapal (Kayu vs Speedboat)",
+                "Prediksi jam tenang bebas gelombang pecah",
+                "Kontak siaga darurat SAR Pos Cilacap 115",
+              ].map((text, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -15 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.2 + idx * 0.12 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Check className="h-3 w-3 stroke-[3]" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800">
+                    {text}
+                  </span>
+                </motion.div>
+              ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column: AI Navigator Window Mockup matching Image 5 */}
-          <div className="lg:col-span-7">
+          <motion.div
+            initial={{ opacity: 0, y: 35 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.65, ease: "easeOut", delay: 0.15 }}
+            className="lg:col-span-7"
+          >
             <div className="rounded-3xl overflow-hidden bg-white border border-slate-200/90 shadow-2xl">
               {/* Window Header */}
               <div className="bg-[#0B1528] text-white px-5 py-4 flex items-center justify-between border-b border-white/10">
@@ -97,14 +105,20 @@ export const AskBeforeSailingSection: React.FC = () => {
 
                 <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
                   <span>Teluk Penyu Online</span>
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 </div>
               </div>
 
               {/* Chat Canvas */}
               <div className="p-5 sm:p-6 bg-slate-50/50 space-y-4">
                 {/* User Message Bubble */}
-                <div className="flex justify-end">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: 0.3 }}
+                  className="flex justify-end"
+                >
                   <div className="max-w-md bg-[#0B1528] text-white rounded-2xl rounded-tr-sm p-4 text-xs sm:text-sm leading-relaxed shadow-sm">
                     <p>
                       Apakah besok pagi aman menyeberang ke Nusakambangan naik kapal kayu untuk 8 orang?
@@ -113,10 +127,16 @@ export const AskBeforeSailingSection: React.FC = () => {
                       09:41 WIB
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* AI Response Bubble */}
-                <div className="flex items-start gap-3">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.45 }}
+                  className="flex items-start gap-3"
+                >
                   <div className="w-7 h-7 rounded-full bg-[#0B1528] text-white font-bold text-[10px] flex items-center justify-center flex-shrink-0 mt-1 shadow">
                     AI
                   </div>
@@ -170,16 +190,18 @@ export const AskBeforeSailingSection: React.FC = () => {
                         </div>
                       </div>
 
-                      <button
+                      <motion.button
                         type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleSelectBoat}
-                        className="px-4 py-1.5 rounded-lg bg-[#0B1528] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors"
+                        className="px-4 py-1.5 rounded-lg bg-[#0B1528] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors shadow-sm"
                       >
                         Pilih
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               {/* Chat Input Bar */}
@@ -189,18 +211,20 @@ export const AskBeforeSailingSection: React.FC = () => {
                   value={questionInput}
                   onChange={(e) => setQuestionInput(e.target.value)}
                   placeholder="Tanya kondisi ombak, rute kapal, atau aturan anak-anak..."
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all"
                 />
-                <button
+                <motion.button
                   type="submit"
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
                   aria-label="Kirim Pertanyaan"
-                  className="w-10 h-10 rounded-xl bg-[#0B1528] hover:bg-[#1E293B] text-white flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-10 h-10 rounded-xl bg-[#0B1528] hover:bg-[#1E293B] text-white flex items-center justify-center transition-colors flex-shrink-0 shadow-sm"
                 >
                   <Send className="h-4 w-4" />
-                </button>
+                </motion.button>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

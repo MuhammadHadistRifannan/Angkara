@@ -1,6 +1,6 @@
 import React from "react";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
-import logoSuar from "@/assets/logo-suar.png";
+import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
 const Footer: React.FC = () => {
   return (
@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
               <img
                 src={logoSuar}
                 alt="SUAR - Berlayar Aman, Berdaya Bersama"
-                className="h-8 sm:h-9 w-auto object-contain filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]"
+                className="h-16 sm:h-18 w-auto object-contain filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]"
               />
             </div>
             <p className="text-slate-300 text-sm leading-relaxed">

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import logoSuar from "@/assets/logo-suar.png";
+import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ const Navbar = () => {
             <img
               src={logoSuar}
               alt="SUAR - Berlayar Aman, Berdaya Bersama"
-              className="h-8 sm:h-9 w-auto object-contain group-hover:scale-105 transition-transform filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]"
+              className="h-16 sm:h-18 w-auto object-contain group-hover:scale-105 transition-transform filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.25)]"
             />
           </div>
 

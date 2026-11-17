@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio } from "lucide-react";
@@ -58,6 +59,26 @@ const defaultFleet: FleetBoat[] = [
     price: 400000,
   },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
 
 export const ReadyFleetSection: React.FC = () => {
   const navigate = useNavigate();
@@ -124,7 +145,13 @@ export const ReadyFleetSection: React.FC = () => {
     <section id="armada-siap-berlayar" className="py-20 sm:py-24 bg-white text-slate-900 relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header & KSOP Verified Badge */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 sm:mb-14">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 sm:mb-14"
+        >
           <div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
               Armada Siap Berlayar Hari Ini
@@ -134,8 +161,12 @@ export const ReadyFleetSection: React.FC = () => {
             </p>
           </div>
 
-          {/* KSOP Verified Indicator Pill */}
-          <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-sky-100/70 border border-sky-200/80 text-sky-950 shadow-sm self-start md:self-auto">
+          {/* KSOP Verified Indicator Pill with Floating Animation */}
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+            className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-sky-100/70 border border-sky-200/80 text-sky-950 shadow-sm self-start md:self-auto"
+          >
             <div className="p-1.5 rounded-xl bg-sky-500/20 text-sky-800">
               <ShieldCheck className="h-6 w-6 text-sky-700" />
             </div>
@@ -147,15 +178,23 @@ export const ReadyFleetSection: React.FC = () => {
                 Terverifikasi KSOP Hari Ini
               </span>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* 3 Fleet Cards matching Image 4 */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mb-10"
+        >
           {fleet.map((boat) => (
-            <div
+            <motion.div
               key={boat.id}
-              className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col justify-between"
+              variants={cardVariants}
+              whileHover={{ y: -8, transition: { duration: 0.25 } }}
+              className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-2xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 {/* Header: Tag & Rating */}
@@ -206,34 +245,48 @@ export const ReadyFleetSection: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <button
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleChatCaptain(boat)}
                     className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-bold transition-colors"
                   >
                     <MessageSquare className="h-4 w-4 text-slate-600" />
                     <span>Chat Nelayan</span>
-                  </button>
+                  </motion.button>
 
-                  <button
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => handleBookNow(boat.id)}
                     className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-[#090D16] hover:bg-[#1E293B] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
                   >
                     Pesan Sekarang
-                  </button>
+                  </motion.button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Emergency SAR Quick-Response Banner matching Image 4 */}
-        <div className="rounded-2xl p-4 sm:p-5 bg-[#EFEFEF] border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="rounded-2xl p-4 sm:p-5 bg-[#EFEFEF] border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
+        >
           <div className="flex items-center gap-3.5">
-            <div className="p-2.5 rounded-xl bg-slate-300/80 text-slate-700 flex-shrink-0">
+            <motion.div
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              className="p-2.5 rounded-xl bg-slate-300/80 text-slate-700 flex-shrink-0"
+            >
               <Radio className="h-6 w-6 text-slate-700" />
-            </div>
+            </motion.div>
             <div>
               <h4 className="text-sm sm:text-base font-bold text-slate-900">
                 Jalur Cepat Darurat Maritim Terpadu
@@ -248,15 +301,17 @@ export const ReadyFleetSection: React.FC = () => {
             <span className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700">
               VHF Radio: CH 16
             </span>
-            <a
+            <motion.a
               href="tel:115"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#090D16] hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-colors"
             >
               <PhoneCall className="h-4 w-4" />
               <span>Hotline 115</span>
-            </a>
+            </motion.a>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

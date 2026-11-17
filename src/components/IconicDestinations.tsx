@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { Compass, Landmark, Trees } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import imgKarangBolong from "@/assets/dest-karang-bolong.jpg";
@@ -35,14 +36,40 @@ const destinations = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 32 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: "easeOut" },
+  },
+};
+
 export const IconicDestinations: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <section id="destinasi-ikonik" className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center max-w-3xl mx-auto mb-14 sm:mb-16"
+        >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Destinasi Ikonik
             <span className="block mt-1">di Pantai Nusakambangan</span>
@@ -51,15 +78,23 @@ export const IconicDestinations: React.FC = () => {
             Jelajahi keajaiban bentang alam karst selatan, peninggalan benteng kolonial, dan
             mercusuar legendaris yang hanya dapat diakses melalui jalur laut yang aman.
           </p>
-        </div>
+        </motion.div>
 
         {/* 3 Cards */}
-        <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid md:grid-cols-3 gap-6 sm:gap-8"
+        >
           {destinations.map((item) => {
             const Icon = item.icon;
             return (
-              <div
+              <motion.div
                 key={item.id}
+                variants={cardVariants}
+                whileHover={{ y: -10, transition: { duration: 0.3 } }}
                 onClick={() => navigate("/tour-packages")}
                 className="group relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/60"
               >
@@ -71,13 +106,13 @@ export const IconicDestinations: React.FC = () => {
                 />
 
                 {/* Dark Gradient Overlay for optimal legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
 
                 {/* Card Content placed at the bottom */}
                 <div className="absolute inset-0 p-6 sm:p-7 flex flex-col justify-end text-white">
                   {/* Badge */}
                   <div className="flex items-center gap-1.5 text-cyan-400 text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-2.5">
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className="h-3.5 w-3.5 animate-pulse" />
                     <span>{item.tag}</span>
                   </div>
 
@@ -87,14 +122,14 @@ export const IconicDestinations: React.FC = () => {
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-3">
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-3 group-hover:text-slate-100 transition-colors">
                     {item.description}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

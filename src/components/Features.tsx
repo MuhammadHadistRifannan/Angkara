@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import {
   Shield,
   Calendar,
@@ -86,17 +87,55 @@ const features = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
 const Features: React.FC = () => {
   return (
     <section
       id="features"
       className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden"
     >
+      {/* Ambient background decorative elements */}
+      <motion.div
+        animate={{ scale: [1, 1.15, 1], opacity: [0.08, 0.16, 0.08] }}
+        transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+        className="absolute -top-24 -left-24 w-96 h-96 bg-sky-400 rounded-full blur-3xl pointer-events-none"
+      />
+      <motion.div
+        animate={{ scale: [1, 1.2, 1], opacity: [0.06, 0.12, 0.06] }}
+        transition={{ repeat: Infinity, duration: 10, ease: "easeInOut", delay: 2 }}
+        className="absolute -bottom-24 -right-24 w-96 h-96 bg-cyan-400 rounded-full blur-3xl pointer-events-none"
+      />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header Section matching SUAR Coastal Theme */}
-        <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs sm:text-sm font-semibold">
-            <Sparkles className="h-4 w-4 text-sky-700" />
+        {/* Header Section with Smooth Scroll-Reveal */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center max-w-3xl mx-auto mb-14 sm:mb-16 space-y-4"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs sm:text-sm font-semibold shadow-sm">
+            <Sparkles className="h-4 w-4 text-sky-700 animate-pulse" />
             <span>Ekosistem Maritim Terpadu</span>
           </div>
 
@@ -108,25 +147,33 @@ const Features: React.FC = () => {
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
             10 kapabilitas inti yang dirancang khusus untuk memodernisasi reservasi kapal wisata di pesisir Cilacap dengan standar keselamatan tertinggi.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Feature Cards Grid matching SUAR Coastal Theme */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        {/* Feature Cards Grid with Staggered Entrance & Micro-Interactions */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+        >
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <div
+              <motion.div
                 key={index}
+                variants={cardVariants}
+                whileHover={{ y: -8, transition: { duration: 0.25 } }}
                 className="group relative p-7 rounded-2xl bg-white border border-slate-200/90 hover:border-sky-300 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
                   {/* Icon & Category Tag Header */}
                   <div className="flex items-center justify-between mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 group-hover:bg-sky-100 group-hover:scale-105 transition-all">
+                    <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 group-hover:bg-sky-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-sm">
                       <Icon className="h-6 w-6 text-sky-700" />
                     </div>
 
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 group-hover:bg-sky-50 group-hover:text-sky-800 transition-colors">
                       {feature.tag}
                     </span>
                   </div>
@@ -140,10 +187,10 @@ const Features: React.FC = () => {
                     {feature.description}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

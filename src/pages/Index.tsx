@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
@@ -21,7 +22,7 @@ const Index: React.FC = () => {
       {/* 2. Hybrid Multi-Layer Parallax Hero with Weather Widget & Card */}
       <Hero />
 
-      {/* 3. Features Section (Clean Coastal Light Theme) */}
+      {/* 3. Features Section (Clean Coastal Light Theme with In-View Animations) */}
       <Features />
 
       {/* 4. Mengapa Wisatawan Memilih Platform SUAR? (Image 2) */}
@@ -42,12 +43,18 @@ const Index: React.FC = () => {
       {/* 9. Tanya Apa Saja Sebelum Berlayar (Image 5) */}
       <AskBeforeSailingSection />
 
-      {/* 10. Dedicated Maritime Weather Map Section */}
-      <section className="py-20 sm:py-24 bg-[#F8FAFC] border-t border-slate-200/60" id="weather-map-section">
+      {/* 10. Dedicated Maritime Weather Map Section with Smooth Reveal */}
+      <section className="py-20 sm:py-24 bg-[#F8FAFC] border-t border-slate-200/60 overflow-hidden" id="weather-map-section">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.65, ease: "easeOut" }}
+            className="max-w-6xl mx-auto"
+          >
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800">
+              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800 shadow-sm">
                 Peta & Telemetri Maritim
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mt-3">
@@ -58,7 +65,7 @@ const Index: React.FC = () => {
               </p>
             </div>
             <WeatherMapPanel />
-          </div>
+          </motion.div>
         </div>
       </section>
 

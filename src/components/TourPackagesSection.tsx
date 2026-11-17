@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
@@ -68,6 +69,26 @@ const defaultTourPackages: TourPackageItem[] = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
+
 export const TourPackagesSection: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -82,7 +103,6 @@ export const TourPackagesSection: React.FC = () => {
           .order("price", { ascending: true });
 
         if (!error && data && data.length > 0) {
-          // Map backend items if available, else keep defaults
           const mapped: TourPackageItem[] = (data as Array<Record<string, unknown>>).map((item, idx: number) => {
             const fallback = defaultTourPackages[idx % defaultTourPackages.length];
             return {
@@ -126,7 +146,13 @@ export const TourPackagesSection: React.FC = () => {
     <section id="pilihan-paket-tour" className="py-20 sm:py-24 bg-[#F1F5F9]/60 text-slate-900 relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header & Tabs */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12 sm:mb-14">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12 sm:mb-14"
+        >
           <div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
               Pilihan Paket Tour
@@ -136,14 +162,16 @@ export const TourPackagesSection: React.FC = () => {
             </p>
           </div>
 
-          {/* Filter Tabs */}
+          {/* Filter Tabs with interactive feedback */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
-                <button
+                <motion.button
                   key={tab.id}
                   type="button"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
                     isActive
@@ -152,18 +180,26 @@ export const TourPackagesSection: React.FC = () => {
                   }`}
                 >
                   {tab.label}
-                </button>
+                </motion.button>
               );
             })}
           </div>
-        </div>
+        </motion.div>
 
-        {/* 3 Tour Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        {/* 3 Tour Cards with Staggered Entrance */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+        >
           {filteredPackages.map((pkg) => (
-            <div
+            <motion.div
               key={pkg.id}
-              className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col justify-between group"
+              variants={cardVariants}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
+              className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-slate-300 transition-all duration-300 flex flex-col justify-between group"
             >
               <div>
                 {/* Image & Badges */}
@@ -171,7 +207,7 @@ export const TourPackagesSection: React.FC = () => {
                   <img
                     src={pkg.image_url}
                     alt={pkg.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
                   {/* Top-left badge */}
                   <div className="absolute top-4 left-4">
@@ -222,17 +258,19 @@ export const TourPackagesSection: React.FC = () => {
                   </div>
                 </div>
 
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => navigate("/tour-packages")}
                   className="px-4 py-2.5 rounded-xl bg-[#090D16] hover:bg-[#1E293B] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
                 >
                   Detail Rute
-                </button>
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

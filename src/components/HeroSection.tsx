@@ -114,17 +114,6 @@ export const HeroSection: React.FC = () => {
               willChange: "transform, opacity",
             }}
           >
-            {/* Top Safety Trust Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-lg text-xs sm:text-sm font-medium text-white/95">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
-              <span>SUAR · Wisata Bahari Pesisir Cilacap</span>
-              <span className="text-white/40">•</span>
-              <span className="text-cyan-300">Terverifikasi KSOP</span>
-              <Sparkles className="h-3.5 w-3.5 text-accent ml-0.5" />
-            </div>
 
             {/* Judul Besar Sesuai Permintaan */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
