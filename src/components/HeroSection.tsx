@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +11,6 @@ import {
   MessageSquare,
   ArrowRight,
   Anchor,
-  Sparkles,
   Waves,
   Wind,
   Navigation2,
@@ -25,26 +24,104 @@ export const HeroSection: React.FC = () => {
   const [departureDate, setDepartureDate] = useState("");
   const [passengers, setPassengers] = useState(2);
 
+  // --- Cuaca asli via Open-Meteo (Plan B) ---
+  // BMKG tidak punya tinggi gelombang, jadi gelombang dari Open-Meteo Marine.
+  // Dipakai sementara karena Edge Function marine-conditions BOOT_ERROR.
+  const [waveM, setWaveM] = useState<number | null>(null);
+  const [windKn, setWindKn] = useState<number | null>(null);
+  const [marineLevel, setMarineLevel] = useState<string>("Waspada");
+  const [fetchedAt, setFetchedAt] = useState<string>("");
+  const [marineError, setMarineError] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadMarine() {
+      try {
+        const res = await fetch(
+          "https://marine-api.open-meteo.com/v1/marine?latitude=-7.7401&longitude=109.017&current=wave_height,wave_direction,wave_period&timezone=Asia%2FJakarta"
+        );
+        const windRes = await fetch(
+          "https://api.open-meteo.com/v1/forecast?latitude=-7.7401&longitude=109.017&current=wind_speed_10m,wind_direction_10m&timezone=Asia%2FJakarta"
+        );
+        const marine = await res.json();
+        const wind = await windRes.json();
+        const wave = marine.current?.wave_height ?? null;
+        const windKmh = wind.current?.wind_speed_10m ?? null;
+        if (mounted && wave !== null) setWaveM(wave);
+        if (mounted && windKmh !== null) setWindKn(windKmh / 1.852);
+        if (mounted) {
+          setMarineLevel(wave !== null && wave > 1.5 ? "Waspada" : "Aman");
+          setFetchedAt(new Date().toISOString());
+        }
+      } catch {
+        if (mounted) setMarineError(true);
+      }
+    }
+
+    loadMarine();
+    return () => {
+      mounted = false;
+    };
+  }, [departurePoint]);
+
   // Parallax Scroll Animation Controller via Framer Motion
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
 
-  // Layer 1: z-0 Parallax Background Laut (lambat: y 0% -> 35%, scale 1 -> 1.1)
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "35%"]);
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+  // Spring bikin semua gerakan tidak kaku — mengikuti scroll dengan jeda halus.
+  // Versi kuat: stiffness lebih rendah supaya lag-nya kelihatan.
+  const smooth = useSpring(scrollYProgress, { stiffness: 55, damping: 20, mass: 0.6 });
 
-  // Layer 2: z-10 Teks Judul & CTA Kiri (turun lebih cepat: y 0% -> 65%, perlahan tenggelam di balik ombak depan)
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "65%"]);
-  const textOpacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 0.7, 0.2]);
+  // Layer 1: Background laut — paling lambat, zoom makin besar.
+  const bgY = useTransform(smooth, [0, 1], ["0%", "50%"]);
+  const bgScale = useTransform(smooth, [0, 1], [1.1, 1.35]);
 
-  // Layer 3: z-20 Ombak Depan (horizontal drift halus x: 0% -> -3% dan 0% -> 3%)
-  const waveX1 = useTransform(scrollYProgress, [0, 1], ["0%", "-3%"]);
-  const waveX2 = useTransform(scrollYProgress, [0, 1], ["0%", "3%"]);
+  // Layer 2: Teks kiri — paling cepat: turun 120% + hilang total.
+  const textY = useTransform(smooth, [0, 1], ["0%", "75%"]);
+  const textOpacity = useTransform(smooth, [0, 0.5, 1], [1, 0.4, 0]);
+  const textScale = useTransform(smooth, [0, 1], [1, 0.9]);
 
-  // Layer 4: z-30 Kartu Kanan (naik perlahan: y 0% -> -15%)
-  const cardY = useTransform(scrollYProgress, [0, 1], ["0%", "-15%"]);
+  // Layer 4: Kartu kapal kanan — naik melawan arah scroll + miring jelas.
+  const cardY = useTransform(smooth, [0, 1], ["0%", "-25%"]);
+  const cardRotate = useTransform(smooth, [0, 1], [0, 2.5]);
+  const cardScale = useTransform(smooth, [0, 1], [1, 0.88]);
+
+  // Watermark raksasa SUAR — layer tengah, paling lambat.
+  const watermarkY = useTransform(smooth, [0, 1], ["12%", "-18%"]);
+  const watermarkOpacity = useTransform(smooth, [0, 0.6, 1], [0.5, 0.35, 0]);
+
+  // --- Parallax mouse + tilt 3D ---
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const cardMouseX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-10, 10]), { stiffness: 120, damping: 18 });
+  const cardMouseY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-8, 8]), { stiffness: 120, damping: 18 });
+  const bgMouseX = useSpring(useTransform(mouseX, [-0.5, 0.5], [6, -6]), { stiffness: 60, damping: 20 });
+
+  // Tilt 3D: mouse ke kanan -> kartu miring ke kanan, mouse ke atas -> miring ke atas.
+  // Maksimal 7-9 derajat supaya teks di kartu tetap bisa dibaca.
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [7, -7]), { stiffness: 120, damping: 18 });
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-9, 9]), { stiffness: 120, damping: 18 });
+  // Background miring berlawanan arah, lebih pelan — jadi terasa jauh.
+  const bgRotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [-2, 2]), { stiffness: 60, damping: 20 });
+  const bgRotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [3, -3]), { stiffness: 60, damping: 20 });
+  // Teks kiri miring sedikit berlawanan arah dengan kartu.
+  const textRotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [4, -4]), { stiffness: 100, damping: 20 });
+  // Bayangan kartu bergerak berlawanan arah tilt.
+  const shadowX = useSpring(useTransform(mouseX, [-0.5, 0.5], [12, -12]), { stiffness: 100, damping: 20 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const r = containerRef.current?.getBoundingClientRect();
+    if (!r) return;
+    mouseX.set(e.clientX / r.width - 0.5);
+    mouseY.set(e.clientY / r.height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   const handleAskJuruMudi = () => {
     window.dispatchEvent(
@@ -67,11 +144,12 @@ export const HeroSection: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[95vh] w-full overflow-hidden bg-[#090D16] text-white flex flex-col justify-between pt-24"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative w-full overflow-hidden bg-[#090D16] text-white flex flex-col pt-24 [perspective:1200px]"
     >
       {/* =========================================================================
-          LAYER 1: z-0 (Background Laut Parallax - Menggunakan Gambar 2)
-          y: ['0%', '35%'], scale: [1, 1.1]
+          LAYER 1: z-0 (Background Laut Parallax)
           ========================================================================= */}
       <motion.div
         data-testid="parallax-bg"
@@ -79,6 +157,10 @@ export const HeroSection: React.FC = () => {
         style={{
           y: bgY,
           scale: bgScale,
+          x: bgMouseX,
+          rotateX: bgRotateX,
+          rotateY: bgRotateY,
+          transformPerspective: 1200,
           willChange: "transform",
         }}
       >
@@ -97,39 +179,66 @@ export const HeroSection: React.FC = () => {
         <div className="absolute bottom-32 right-1/4 w-[36rem] h-[36rem] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none" />
       </motion.div>
 
+      {/* Watermark raksasa SUAR — layer tengah, paling lambat */}
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-0 z-[5] pointer-events-none flex items-center justify-center overflow-hidden"
+        style={{ y: watermarkY, opacity: watermarkOpacity }}
+      >
+        <span className="text-[20vw] leading-none font-black tracking-tighter text-white/[0.03] select-none">
+          SUAR
+        </span>
+      </motion.div>
+
       {/* =========================================================================
           HERO MAIN CONTENT AREA (Grid 2 Kolom)
           ========================================================================= */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-6 pb-24 md:pb-32">
-        <div className="grid lg:grid-cols-12 gap-10 items-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative pt-6 pb-12">
+        <div className="grid lg:grid-cols-12 gap-10 items-center [transform-style:preserve-3d]">
           {/* =====================================================================
-              LAYER 2: z-10 (Teks Judul & CTA Kiri - Tenggelam di Balik Ombak)
-              y: ['0%', '65%']
+              LAYER 2: z-10 (Teks Judul & CTA Kiri)
               ===================================================================== */}
           <motion.div
             className="lg:col-span-7 space-y-6 relative z-10"
             style={{
               y: textY,
               opacity: textOpacity,
+              scale: textScale,
+              rotateY: textRotateY,
+              transformPerspective: 1200,
               willChange: "transform, opacity",
             }}
           >
-
-            {/* Judul Besar Sesuai Permintaan */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]">
+            {/* Judul Besar */}
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12]"
+            >
               Jelajahi Pesisir Cilacap,{" "}
               <span className="bg-gradient-to-r from-cyan-300 via-sky-200 to-accent bg-clip-text text-transparent">
                 Berlayar dengan Lebih Aman
               </span>
-            </h1>
+            </motion.h1>
 
             {/* Subjudul */}
-            <p className="text-base sm:text-lg text-slate-200/90 max-w-2xl leading-relaxed">
+            <motion.p
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
+              className="text-base sm:text-lg text-slate-200/90 max-w-2xl leading-relaxed"
+            >
               Platform wisata bahari pesisir Cilacap & Nusakambangan dengan sistem keselamatan maritim real-time, panduan AI Juru Mudi, dan perahu terverifikasi KSOP.
-            </p>
+            </motion.p>
 
             {/* Tombol CTA */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+              className="flex flex-wrap items-center gap-3 pt-2"
+            >
               <a
                 href="#boats"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-primary to-primary-light text-white font-semibold text-sm shadow-xl hover:shadow-cyan-500/25 hover:scale-[1.03] transition-all duration-300"
@@ -154,23 +263,35 @@ export const HeroSection: React.FC = () => {
                 <MessageSquare className="h-4 w-4 text-accent" />
                 <span>Tanya Juru Mudi</span>
               </button>
-            </div>
+            </motion.div>
           </motion.div>
 
           {/* =====================================================================
-              LAYER 4: z-30 (Kartu Kanan - Menggunakan Gambar 3 Sesuai Desain Gambar 1)
-              y: ['0%', '-15%']
+              LAYER 4: z-30 (Kartu Kapal Kanan — 3D tilt)
               ===================================================================== */}
           <motion.div
-            className="lg:col-span-5 relative z-30 flex justify-center lg:justify-end"
+            className="lg:col-span-5 relative z-30 flex justify-center lg:justify-end [transform-style:preserve-3d]"
             style={{
               y: cardY,
+              rotate: cardRotate,
+              scale: cardScale,
+              x: cardMouseX,
+              rotateX,
+              rotateY,
+              transformPerspective: 1200,
               willChange: "transform",
             }}
           >
-            {/* Kartu Wisata Perahu persis seperti Desain Gambar 1 */}
-            <div className="relative w-full max-w-[380px] sm:max-w-[420px] aspect-[4/5] rounded-[28px] overflow-hidden shadow-2xl border border-white/20 bg-slate-900 group">
-              {/* Gambar 3: Foto Perahu Biru Ambulance / Wisata Cilacap */}
+            {/* Bayangan 3D di bawah kartu */}
+            <motion.div
+              aria-hidden="true"
+              className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-8 rounded-full bg-black/60 blur-xl"
+              style={{ x: shadowX }}
+            />
+
+            {/* Kartu Wisata Perahu */}
+            <div className="relative w-full max-w-[380px] sm:max-w-[420px] aspect-[4/5] rounded-[28px] overflow-hidden shadow-2xl border border-white/20 bg-slate-900 group [transform-style:preserve-3d]">
+              {/* Gambar 3: Foto Perahu Biru */}
               <img
                 src={heroBoatCard}
                 alt="Kapal Wisata Bahari Cilacap - Kearifan Bahari Lokal"
@@ -180,15 +301,15 @@ export const HeroSection: React.FC = () => {
               {/* Gradient halus di background kartu */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
 
-              {/* Badge Kanan Atas: NO. LAMBUNG: TPY-048 */}
-              <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+              {/* Badge Kanan Atas: NO. LAMBUNG: TPY-048 — paling depan (translateZ 50px) */}
+              <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 [transform:translateZ(50px)]">
                 <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-xl px-4 py-2 text-xs sm:text-sm font-extrabold tracking-wider text-[#1e3a5f] uppercase border border-white/50">
                   NO. LAMBUNG: TPY-048
                 </div>
               </div>
 
-              {/* Box Bawah: Kearifan Bahari Lokal */}
-              <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 z-10">
+              {/* Box Bawah: Kearifan Bahari Lokal — tengah (translateZ 35px) */}
+              <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 z-10 [transform:translateZ(35px)]">
                 <div className="p-4 sm:p-5 rounded-2xl bg-[#0B132B]/95 backdrop-blur-md border border-white/15 shadow-xl">
                   <h4 className="text-sm sm:text-base font-bold text-white mb-1.5 tracking-tight">
                     Kearifan Bahari Lokal
@@ -201,63 +322,12 @@ export const HeroSection: React.FC = () => {
             </div>
           </motion.div>
         </div>
-      </div>
-
-      {/* =========================================================================
-          LAYER 3: z-20 (Layer Ombak Depan / Foreground SVG)
-          Warna gelap #090D16 dan #0F172A
-          x: ['0%', '-3%'] & ['0%', '3%']
-          Menutupi teks saat teks bergerak turun
-          ========================================================================= */}
-      <div className="relative z-20 w-full pointer-events-none mt-auto">
-        {/* Ombak Layer 1: Belakang (#0F172A) */}
-        <motion.div
-          className="w-[125%] -ml-[12%] -mb-16 sm:-mb-24"
-          style={{ x: waveX2, willChange: "transform" }}
-        >
-          <svg
-            viewBox="0 0 1440 260"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-28 sm:h-36 md:h-48 object-cover"
-            preserveAspectRatio="none"
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.5, ease: "easeOut" }}
+            className="mt-14 rounded-3xl p-5 sm:p-6 bg-slate-900/90 backdrop-blur-2xl border border-white/15 shadow-2xl space-y-5"
           >
-            <path
-              d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,260L1392,260C1344,260,1248,260,1152,260C1056,260,960,260,864,260C768,260,672,260,576,260C480,260,384,260,288,260C192,260,96,260,48,260L0,260Z"
-              fill="#0F172A"
-              fillOpacity="0.88"
-            />
-          </svg>
-        </motion.div>
-
-        {/* Ombak Layer 2: Depan (#090D16 Solid) */}
-        <motion.div
-          className="w-[125%] -ml-[8%] relative z-20"
-          style={{ x: waveX1, willChange: "transform" }}
-        >
-          <svg
-            viewBox="0 0 1440 260"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-24 sm:h-32 md:h-44 object-cover"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0,144L48,133.3C96,123,192,101,288,112C384,123,480,165,576,176C672,187,768,165,864,144C960,123,1056,101,1152,112C1248,123,1344,165,1392,186.7L1440,208L1440,260L1392,260C1344,260,1248,260,1152,260C1056,260,960,260,864,260C768,260,672,260,576,260C480,260,384,260,288,260C192,260,96,260,48,260L0,260Z"
-              fill="#090D16"
-            />
-          </svg>
-        </motion.div>
-      </div>
-
-      {/* =========================================================================
-          LAYER 4 (Bawah): z-30 Widget Cuaca Maritim AI & Bar Pencarian Rute
-          Menumpuk di atas ombak dan menempel di perbatasan section berikutnya
-          ========================================================================= */}
-      <div className="relative z-30 w-full bg-[#090D16] px-4 sm:px-6 lg:px-8 pb-10 pt-2">
-        <div className="container mx-auto">
-          {/* Card Gabungan: Widget Cuaca Maritim AI + Bar Pencarian Rute */}
-          <div className="rounded-3xl p-5 sm:p-6 bg-slate-900/90 backdrop-blur-2xl border border-white/15 shadow-2xl space-y-5">
             {/* 1. Baris Widget Cuaca Maritim AI */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
               <div className="flex items-center gap-3">
@@ -270,45 +340,47 @@ export const HeroSection: React.FC = () => {
                       Widget Cuaca Maritim AI
                     </h3>
                     <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] px-2 py-0.5 rounded-full font-semibold">
-                      Live BMKG & Open-Meteo
+                      Prakiraan Open-Meteo
                     </div>
                   </div>
                   <p className="text-xs text-slate-300">
-                    Kondisi maritim perairan Teluk Penyu & Pelabuhan Tanjung Intan
+                    Kondisi perairan Teluk Penyu & Pelabuhan Tanjung Intan
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    {marineError
+                      ? "Data cuaca tidak tersedia saat ini — status: Waspada."
+                      : fetchedAt
+                        ? `Diperbarui ${new Date(fetchedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })} WIB · Sumber: Open-Meteo Marine & Forecast`
+                        : "Memuat prakiraan cuaca…"}
                   </p>
                 </div>
               </div>
 
-              {/* 3 Parameter Cuaca Spesifik yang Diminta User */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-6">
-                {/* Tinggi Gelombang: 1.4 m */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
                   <Waves className="h-4 w-4 text-cyan-400" />
                   <div>
                     <div className="text-[10px] text-slate-400 uppercase font-semibold">Tinggi Gelombang</div>
-                    <div className="text-sm font-bold text-white">1.4 m</div>
+                    <div className="text-sm font-bold text-white">{waveM === null ? "—" : `${waveM.toFixed(2)} m`}</div>
                   </div>
                 </div>
 
-                {/* Kecepatan Angin: 12 knot */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
                   <Wind className="h-4 w-4 text-sky-400" />
                   <div>
                     <div className="text-[10px] text-slate-400 uppercase font-semibold">Kecepatan Angin</div>
-                    <div className="text-sm font-bold text-white">12 knot</div>
+                    <div className="text-sm font-bold text-white">{windKn === null ? "—" : `${Math.round(windKn)} knot`}</div>
                   </div>
                 </div>
 
-                {/* Arus Laut: 1.8 m/s */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10">
                   <Navigation2 className="h-4 w-4 text-emerald-400 rotate-45" />
                   <div>
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Arus Laut</div>
-                    <div className="text-sm font-bold text-white">1.8 m/s</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-semibold">Status Pelayaran</div>
+                    <div className="text-sm font-bold text-white capitalize">{marineLevel}</div>
                   </div>
                 </div>
 
-                {/* Link ke Peta Cuaca Maritim */}
                 <a
                   href="#weather-map-section"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-300 hover:text-cyan-200 transition-colors ml-auto sm:ml-2"
@@ -322,7 +394,6 @@ export const HeroSection: React.FC = () => {
             {/* 2. Baris Pencarian Rute Kapal */}
             <form onSubmit={handleSearchSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Input Dermaga */}
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
                     <MapPin className="h-3.5 w-3.5 text-primary-light" />
@@ -340,7 +411,6 @@ export const HeroSection: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Input Tanggal */}
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5 text-primary-light" />
@@ -354,7 +424,6 @@ export const HeroSection: React.FC = () => {
                   />
                 </div>
 
-                {/* Input Jumlah Penumpang */}
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
                     <Users className="h-3.5 w-3.5 text-primary-light" />
@@ -370,7 +439,6 @@ export const HeroSection: React.FC = () => {
                   />
                 </div>
 
-                {/* Tombol Submit Cari Kapal */}
                 <div className="space-y-1 flex flex-col justify-end">
                   <Button
                     type="submit"
@@ -383,9 +451,25 @@ export const HeroSection: React.FC = () => {
                 </div>
               </div>
             </form>
-          </div>
-        </div>
+          </motion.div>
       </div>
+
+      {/* Aksen ombak tipis — SATU layer saja, isi warna section berikutnya (#f8fafc) */}
+      <div className="relative w-full overflow-hidden leading-none -mb-px" aria-hidden="true">
+        <svg
+          viewBox="0 0 1440 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-[60px] sm:h-[80px] block"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,64 C240,96 480,32 720,64 C960,96 1200,32 1440,64 L1440,100 L0,100 Z"
+            fill="#f8fafc"
+          />
+        </svg>
+      </div>
+
     </section>
   );
 };
