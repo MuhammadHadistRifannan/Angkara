@@ -15,7 +15,7 @@ const Hero: React.FC = () => {
   const sentinelRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [activeStep, setActiveStep] = useState(0);
-  const [hasNavbarShown, setHasNavbarShown] = useState(false);
+  const [showNavbar, setShowNavbar] = useState(false);
   const [isInHero, setIsInHero] = useState(true);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
@@ -29,9 +29,6 @@ const Hero: React.FC = () => {
     const updatePreferences = () => {
       const reduced = motionQuery.matches || isSaveData;
       setIsReducedMotion(reduced);
-      if (reduced) {
-        setHasNavbarShown(true);
-      }
     };
 
     updatePreferences();
@@ -66,12 +63,18 @@ const Hero: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Status isInHero untuk tampilan LiquidNav
+  // Status isInHero untuk tampilan LiquidNav & deteksi kembali ke puncak (Step 0)
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       setIsInHero(rect.bottom > 70);
+
+      // Jika user scroll kembali ke paling atas halaman, reset ke step 0 & sembunyikan navbar
+      if (window.scrollY <= 15) {
+        setActiveStep(0);
+        setShowNavbar(false);
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -79,20 +82,30 @@ const Hero: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Tampilkan LiquidNav setelah batas waktu 800ms sejak masuk Step 1
+  // Kontrol tampilan LiquidNav:
+  // - Step 0: Hilang dengan bounce exit (kembali ke full screen nothing)
+  // - Step >= 1: Tampil bouncing setelah delay 800ms atau setelah pengetikan judul 1 selesai
   useEffect(() => {
-    if (activeStep >= 1 && !hasNavbarShown) {
+    if (activeStep >= 1) {
+      if (isReducedMotion) {
+        setShowNavbar(true);
+        return;
+      }
       const timer = setTimeout(() => {
-        setHasNavbarShown(true);
+        setShowNavbar(true);
       }, 800);
       return () => clearTimeout(timer);
+    } else {
+      setShowNavbar(false);
     }
-  }, [activeStep, hasNavbarShown]);
+  }, [activeStep, isReducedMotion]);
 
   // Callback saat pengetikan judul pertama selesai sempurna
   const handleFirstTitleComplete = useCallback(() => {
-    setHasNavbarShown(true);
-  }, []);
+    if (activeStep >= 1) {
+      setShowNavbar(true);
+    }
+  }, [activeStep]);
 
   // Lapisan gradasi gelap adaptif di atas video (~15% di step 0 -> ~25% -> ~32% -> ~40%)
   const overlayOpacity = isReducedMotion ? 0.35 : getOverlayOpacityForStep(activeStep);
@@ -159,7 +172,7 @@ const Hero: React.FC = () => {
         {typeof document !== "undefined" &&
           createPortal(
             <LiquidNav
-              show={hasNavbarShown}
+              show={showNavbar}
               isReducedMotion={isReducedMotion}
               isInHero={isInHero}
             />,

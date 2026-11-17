@@ -134,13 +134,17 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           },
     },
     exit: isReducedMotion
-      ? { opacity: 0 }
+      ? { opacity: 0, transition: { duration: 0.15 } }
       : {
-          opacity: 0,
-          y: "14vh",
-          scaleX: 0.25,
-          scaleY: 0.6,
-          transition: { duration: 0.2 },
+          opacity: [1, 1, 0],
+          y: [0, 8, -36],
+          scaleX: [1, 1.03, 0.65],
+          scaleY: [1, 1.03, 0.65],
+          transition: {
+            duration: 0.35,
+            times: [0, 0.25, 1],
+            ease: "easeInOut",
+          },
         },
   };
 
@@ -153,11 +157,14 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         ? { duration: 0 }
         : { type: "spring" as const, stiffness: 360, damping: 25 },
     },
+    exit: isReducedMotion
+      ? { opacity: 0, transition: { duration: 0.15 } }
+      : { opacity: 0, scale: 0.85, transition: { duration: 0.2 } },
   };
 
   return (
     <AnimatePresence>
-      {(show || isReducedMotion) && (
+      {show && (
         <motion.nav
           variants={navContainerVariants}
           initial="hidden"
