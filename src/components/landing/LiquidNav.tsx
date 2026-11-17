@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Ship, CloudSun, Bot, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -27,14 +27,6 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
   const location = useLocation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [user, setUser] = useState<unknown>(null);
-
-  const navGroupRef = useRef<HTMLDivElement>(null);
-  const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const [highlightStyle, setHighlightStyle] = useState<{ x: number; width: number; ready: boolean }>({
-    x: 0,
-    width: 0,
-    ready: false,
-  });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -119,46 +111,10 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
 
   const activeItem = navItems.find((item) => item.isActive) || navItems[0];
   const currentHighlightedId = hoveredId || activeItem.id;
-
-  // Ukur posisi tab aktif secara presisi menggunakan getBoundingClientRect relatif terhadap kelompok nav menu
-  const updateHighlightPosition = useCallback(() => {
-    const btn = buttonRefs.current.get(currentHighlightedId);
-    const navGroup = navGroupRef.current;
-    if (!btn || !navGroup) return;
-
-    const btnRect = btn.getBoundingClientRect();
-    const navGroupRect = navGroup.getBoundingClientRect();
-
-    if (btnRect.width > 0 && navGroupRect.width > 0) {
-      setHighlightStyle({
-        x: btnRect.left - navGroupRect.left,
-        width: btnRect.width,
-        ready: true,
-      });
-    }
-  }, [currentHighlightedId]);
-
-  // Pantau perubahan ukuran layar (ResizeObserver) agar kapsul selalu tepat menempel
-  useEffect(() => {
-    if (!show) return;
-
-    const timer = setTimeout(() => {
-      updateHighlightPosition();
-    }, 20);
-
-    const navGroup = navGroupRef.current;
-    if (!navGroup) return () => clearTimeout(timer);
-
-    const ro = new ResizeObserver(() => {
-      updateHighlightPosition();
-    });
-
-    ro.observe(navGroup);
-    return () => {
-      clearTimeout(timer);
-      ro.disconnect();
-    };
-  }, [show, updateHighlightPosition]);
+  const highlightedIndex = Math.max(
+    0,
+    navItems.findIndex((item) => item.id === currentHighlightedId)
+  );
 
   // Animasi ekspansi bouncy saat muncul dan dip-bounce saat menghilang
   const navContainerVariants = {
@@ -269,23 +225,32 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
             />
 
             {/* Kelompok Menu Navigasi Utama */}
-            <div ref={navGroupRef} className="relative flex-1 flex items-center justify-between min-w-0">
-              {/* Highlight Kapsul Terukur (Measured Highlight, Tanpa layoutId detached bug N1) */}
-              <div
+            <div className="relative flex-1 flex items-center justify-between min-w-0">
+              {/* Highlight Kapsul Bergeser Murni Slot Flex (100% Bebas Bug Desync/Scale/Detach) */}
+              <motion.div
                 aria-hidden="true"
-                className={`absolute top-0 bottom-0 rounded-full pointer-events-none transition-all ease-out z-0 ${
-                  isReducedMotion ? "duration-0" : "duration-200"
-                } ${
-                  isInHero
-                    ? "bg-white/90 border border-white shadow-[0_4px_18px_rgba(0,0,0,0.18),inset_0_1.5px_2px_rgba(255,255,255,1)]"
-                    : "bg-white border border-slate-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1)]"
-                }`}
+                className="absolute top-0.5 bottom-0.5 pointer-events-none z-0 p-0.5 sm:p-1"
                 style={{
-                  left: `${highlightStyle.x}px`,
-                  width: `${highlightStyle.width}px`,
-                  opacity: highlightStyle.ready ? 1 : 0,
+                  width: `${100 / navItems.length}%`,
+                  left: 0,
                 }}
-              />
+                animate={{
+                  x: `${highlightedIndex * 100}%`,
+                }}
+                transition={
+                  isReducedMotion
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 380, damping: 30 }
+                }
+              >
+                <div
+                  className={`w-full h-full rounded-full transition-colors duration-200 ${
+                    isInHero
+                      ? "bg-white/90 border border-white shadow-[0_4px_18px_rgba(0,0,0,0.18),inset_0_1.5px_2px_rgba(255,255,255,1)]"
+                      : "bg-white border border-slate-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1)]"
+                  }`}
+                />
+              </motion.div>
 
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -297,10 +262,6 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                     className="relative flex-1 flex items-center justify-center min-w-0"
                   >
                     <button
-                      ref={(el) => {
-                        if (el) buttonRefs.current.set(item.id, el);
-                        else buttonRefs.current.delete(item.id);
-                      }}
                       type="button"
                       onClick={item.action}
                       onMouseEnter={() => setHoveredId(item.id)}
