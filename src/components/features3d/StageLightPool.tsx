@@ -11,10 +11,10 @@ export const StageLightPool = () => {
       {/* Bayangan kontak halus transparan berbentuk elips lembut di lantai */}
       <ContactShadows
         position={[0, 0, 0]}
-        opacity={0.4}
-        scale={3.2}
-        blur={2.6}
-        far={2.2}
+        opacity={0.35}
+        scale={3.0}
+        blur={2.8}
+        far={2.0}
         color="#020b17"
       />
     </group>

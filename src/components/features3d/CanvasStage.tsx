@@ -13,18 +13,60 @@ interface CanvasStageProps {
   pulseTrigger?: number | string;
   isMobile?: boolean;
   isReducedMotion?: boolean;
+  scrollProgress?: number;
 }
+
+const CinematicCameraController = ({
+  scrollProgress = 0.5,
+  isMobile = false,
+  isReducedMotion = false,
+}: {
+  scrollProgress?: number;
+  isMobile?: boolean;
+  isReducedMotion?: boolean;
+}) => {
+  const currentRotY = useRef(0);
+  const currentRotX = useRef(0);
+  const currentZ = useRef(4.0);
+
+  useFrame((state, delta) => {
+    const dt = Math.min(delta, 0.05);
+
+    // 1. Dolly scroll: z +/- 0.35 mengikuti progres scroll di section
+    const targetZ = 4.0 + (scrollProgress - 0.5) * 0.7;
+    currentZ.current += (targetZ - currentZ.current) * Math.min(1, dt * 3.5);
+    state.camera.position.z = currentZ.current;
+
+    // 2. Parallax pointer: miring maksimal 3 derajat (0.052 rad) mengikuti pointer mouse
+    if (!isMobile && !isReducedMotion) {
+      const targetRotY = -state.pointer.x * (3 * Math.PI / 180);
+      const targetRotX = state.pointer.y * (2 * Math.PI / 180);
+
+      currentRotY.current += (targetRotY - currentRotY.current) * Math.min(1, dt * 4);
+      currentRotX.current += (targetRotX - currentRotX.current) * Math.min(1, dt * 4);
+
+      state.camera.rotation.y = currentRotY.current;
+      state.camera.rotation.x = currentRotX.current;
+    } else {
+      state.camera.rotation.set(0, 0, 0);
+    }
+  });
+
+  return null;
+};
 
 const StageLighting = ({
   pulseTrigger,
+  isEntered = true,
 }: {
   pulseTrigger?: number | string;
+  isEntered?: boolean;
 }) => {
   const spotRef = useRef<SpotLight>(null);
+  const entranceProgressRef = useRef(isEntered ? 1 : 0);
   const pulseTimerRef = useRef(1); // 1 = selesai
-
-  // Pulse spotlight +15% saat pergantian model
   const lastKeyRef = useRef(pulseTrigger);
+
   useEffect(() => {
     if (lastKeyRef.current !== pulseTrigger) {
       lastKeyRef.current = pulseTrigger;
@@ -34,14 +76,21 @@ const StageLighting = ({
 
   useFrame((_, delta) => {
     if (!spotRef.current) return;
+    const dt = Math.min(delta, 0.05);
+
+    // Fade-in intensitas spotlight 900ms saat masuk viewport
+    if (isEntered && entranceProgressRef.current < 1) {
+      entranceProgressRef.current = Math.min(1, entranceProgressRef.current + dt / 0.9);
+    }
 
     let boost = 0;
     if (pulseTimerRef.current < 1) {
-      pulseTimerRef.current = Math.min(1, pulseTimerRef.current + delta * 2.5);
+      pulseTimerRef.current = Math.min(1, pulseTimerRef.current + dt * 2.5);
       boost = Math.sin(pulseTimerRef.current * Math.PI) * 0.15; // +15% pulse
     }
 
-    spotRef.current.intensity = 2.4 * (1 + boost);
+    const baseIntensity = 2.4 * entranceProgressRef.current;
+    spotRef.current.intensity = baseIntensity * (1 + boost);
   });
 
   return (
@@ -72,18 +121,26 @@ const StageLighting = ({
 export const CanvasStage = ({
   activeFeature,
   isVisible = true,
+  isEntered = true,
   pulseTrigger,
   isMobile = false,
   isReducedMotion = false,
+  scrollProgress = 0.5,
 }: CanvasStageProps) => {
   return (
     <div
-      className="relative w-full h-full flex items-center justify-center select-none overflow-hidden"
+      className="relative w-full h-[400px] sm:h-[480px] md:h-[540px] lg:h-[560px] flex items-center justify-center select-none"
       aria-hidden="true"
+      style={{
+        // Mask-image vertikal & radial agar partikel dan efek memudar halus tanpa garis/tepi kotak
+        maskImage:
+          "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%), radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, transparent 100%)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%), radial-gradient(ellipse 92% 86% at 50% 50%, black 65%, transparent 100%)",
+        maskComposite: "intersect",
+        WebkitMaskComposite: "destination-in",
+      }}
     >
-      {/* Berkas Cahaya Sorot Lembut (Beam) CSS dari Atas ke Model */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_70%_at_50%_0%,rgba(255,251,235,0.08),transparent_75%)]" />
-
       <Canvas
         camera={{ position: [0, 0.15, 4.0], fov: 38 }}
         dpr={isMobile ? [1, 1.25] : [1, 1.5]}
@@ -95,16 +152,23 @@ export const CanvasStage = ({
         }}
         className="touch-none"
       >
-        {/* Tata Lampu Sorot Panggung Sesuai Revisi 2 */}
-        <StageLighting pulseTrigger={pulseTrigger} />
+        {/* Kontroler Kamera Sinematik (Dolly Scroll & Pointer Parallax) */}
+        <CinematicCameraController
+          scrollProgress={scrollProgress}
+          isMobile={isMobile}
+          isReducedMotion={isReducedMotion}
+        />
+
+        {/* Tata Lampu Sorot Panggung Sesuai Revisi 3 */}
+        <StageLighting pulseTrigger={pulseTrigger} isEntered={isEntered} />
 
         {/* Kolam Cahaya Lembut di Bawah Model (Tanpa Wooden Plate) */}
         <StageLightPool />
 
-        {/* Partikel Debu Kecil Melayang di Berkas Cahaya */}
+        {/* Partikel Debu Kecil Melayang di Berkas Cahaya dengan Alpha Falloff */}
         <DustParticles isMobile={isMobile} isReducedMotion={isReducedMotion} />
 
-        {/* Model Fitur 3D Aktif (Ayunan Pendulum, Bounding Box Pivot Tengah, Float) */}
+        {/* Model Fitur 3D Aktif */}
         <FeatureModel
           key={activeFeature.id}
           activeId={activeFeature.id}

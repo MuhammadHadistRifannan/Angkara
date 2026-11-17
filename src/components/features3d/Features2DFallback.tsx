@@ -21,14 +21,15 @@ export const Features2DFallback = () => {
     <div className="w-full bg-[hsl(var(--features-bg-top))] pt-36 sm:pt-40 pb-16 text-white min-h-[600px]">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 mb-3 tracking-wider uppercase">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-400/30 mb-4 tracking-[0.18em] uppercase">
             Fitur Utama Angkara
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-sky-500 bg-clip-text text-transparent">
-            Fitur Lengkap untuk Pengalaman Terbaik
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-semibold tracking-[-0.03em] leading-[1.12] mb-4 text-white">
+            <span>Lima alasan </span>
+            <span className="text-white/70">berlayar tanpa ragu.</span>
           </h2>
-          <p className="text-base md:text-lg text-slate-300 max-w-2xl mx-auto">
-            10 fitur utama yang dirancang khusus untuk mengatasi tantangan booking kapal wisata di Cilacap
+          <p className="text-base md:text-lg text-slate-300 max-w-xl mx-auto">
+            Dari verifikasi sampai pembayaran, semuanya terjaga.
           </p>
         </div>
 

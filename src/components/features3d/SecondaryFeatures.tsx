@@ -7,7 +7,7 @@ interface SecondaryFeaturesProps {
 
 export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
   return (
-    <div className="mt-16 sm:mt-24 pt-12 border-t border-slate-800/80">
+    <div className="pt-10 pb-8">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
           <span className="text-xs font-mono font-semibold tracking-wider text-cyan-400 uppercase">
