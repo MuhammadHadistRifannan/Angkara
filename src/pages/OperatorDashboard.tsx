@@ -21,10 +21,17 @@ import {
   Ticket,
   FileCheck2,
   AlertOctagon,
+  Compass,
+  Sparkles,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BoatModal, type OperatorBoatData } from "@/components/BoatModal";
 import { ManifestModal } from "@/components/ManifestModal";
+import {
+  TourPackageModal,
+  type OperatorTourPackageData,
+} from "@/components/TourPackageModal";
 import {
   OperatorWeatherAdvisory,
   type SailingSafetyLevel,
@@ -86,6 +93,10 @@ const OperatorDashboard = () => {
   const [isTogglingBoat, setIsTogglingBoat] = useState<string | null>(null);
   const [isManifestModalOpen, setIsManifestModalOpen] = useState(false);
   const [selectedBookingForManifest, setSelectedBookingForManifest] = useState<OperatorBooking | null>(null);
+  const [packages, setPackages] = useState<OperatorTourPackageData[]>([]);
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [selectedPackageToEdit, setSelectedPackageToEdit] = useState<OperatorTourPackageData | null>(null);
+  const [isTogglingPackage, setIsTogglingPackage] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalBoats: 0,
     totalBookings: 0,
@@ -162,11 +173,12 @@ const OperatorDashboard = () => {
       setOperator(operatorData as OperatorData);
       fetchBoats(operatorData.id);
       fetchBookings(operatorData.id);
+      fetchPackages(operatorData.id);
     };
     checkOperator();
   }, [navigate]);
 
-  // Langganan sinkronisasi realtime Supabase untuk booking & armada kapal
+  // Langganan sinkronisasi realtime Supabase untuk booking, armada, dan paket wisata
   useEffect(() => {
     if (!operator?.id) return;
     if (typeof supabase.channel !== "function") return;
@@ -188,6 +200,13 @@ const OperatorDashboard = () => {
           fetchBoats(opId);
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tour_packages" },
+        () => {
+          fetchPackages(opId);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -196,6 +215,21 @@ const OperatorDashboard = () => {
       }
     };
   }, [operator?.id]);
+
+  const fetchPackages = async (operatorId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("tour_packages")
+        .select("*")
+        .eq("operator_id", operatorId);
+
+      if (!error && data) {
+        setPackages(data as OperatorTourPackageData[]);
+      }
+    } catch {
+      // Handle gracefully
+    }
+  };
 
   const fetchBoats = async (operatorId: string) => {
     const { data, error } = await supabase
@@ -289,6 +323,78 @@ const OperatorDashboard = () => {
       toast.error(msg);
     } finally {
       setIsTogglingBoat(null);
+    }
+  };
+
+  // Aksi Manajemen Paket Wisata (Tambah / Edit / Toggle Status / Hapus)
+  const handleOpenAddPackage = () => {
+    setSelectedPackageToEdit(null);
+    setIsPackageModalOpen(true);
+  };
+
+  const handleOpenEditPackage = (pkg: OperatorTourPackageData) => {
+    setSelectedPackageToEdit(pkg);
+    setIsPackageModalOpen(true);
+  };
+
+  const handlePackageSaved = (savedPkg: OperatorTourPackageData) => {
+    setPackages((prev) => {
+      const exists = prev.some((p) => p.id === savedPkg.id);
+      if (exists) {
+        return prev.map((p) => (p.id === savedPkg.id ? ({ ...p, ...savedPkg } as OperatorTourPackageData) : p));
+      } else {
+        return [savedPkg, ...prev];
+      }
+    });
+  };
+
+  const handleTogglePackageAvailability = async (pkg: OperatorTourPackageData) => {
+    if (!pkg.id) return;
+    const newStatus = !(pkg.available ?? true);
+    try {
+      setIsTogglingPackage(pkg.id);
+      const { error } = await supabase
+        .from("tour_packages")
+        .update({ available: newStatus })
+        .eq("id", pkg.id);
+
+      if (error) throw error;
+
+      setPackages((prev) =>
+        prev.map((p) => (p.id === pkg.id ? { ...p, available: newStatus } : p))
+      );
+
+      toast.success(
+        `Status paket "${pkg.name}" diubah menjadi: ${
+          newStatus ? "Aktif Ditawarkan" : "Nonaktif"
+        }`
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal mengubah status paket wisata";
+      toast.error(msg);
+    } finally {
+      setIsTogglingPackage(null);
+    }
+  };
+
+  const handleDeletePackage = async (pkg: OperatorTourPackageData) => {
+    if (!pkg.id) return;
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus paket "${pkg.name}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("tour_packages")
+        .delete()
+        .eq("id", pkg.id);
+
+      if (error) throw error;
+
+      setPackages((prev) => prev.filter((p) => p.id !== pkg.id));
+      toast.success(`Paket wisata "${pkg.name}" berhasil dihapus`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal menghapus paket wisata";
+      toast.error(msg);
     }
   };
 
@@ -501,6 +607,17 @@ const OperatorDashboard = () => {
               Kapal Saya
             </TabsTrigger>
             <TabsTrigger
+              value="packages"
+              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
+            >
+              <span>Paket Wisata</span>
+              {packages.length > 0 && (
+                <span className="h-5 px-1.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-black flex items-center justify-center">
+                  {packages.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
               value="bookings"
               className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
             >
@@ -615,7 +732,146 @@ const OperatorDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* TAB 2: Konsol Booking */}
+          {/* TAB 2: Paket Wisata */}
+          <TabsContent value="packages" className="space-y-4 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-black tracking-tight text-slate-900">Daftar Paket Wisata</h2>
+                <p className="text-xs text-slate-500">
+                  Kelola paket tour penyeberangan, charter mancing, dan tarif yang ditawarkan ke wisatawan.
+                </p>
+              </div>
+              <Button
+                variant="hero"
+                onClick={handleOpenAddPackage}
+                className="rounded-xl text-xs font-bold gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Tambah Paket
+              </Button>
+            </div>
+
+            {packages.length === 0 ? (
+              <Card className="rounded-2xl border-slate-200 border-dashed p-8 text-center bg-white">
+                <Compass className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                <h3 className="font-bold text-slate-700 text-sm">Belum ada paket wisata</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  Mulai tawarkan paket tour penyeberangan Teluk Penyu atau charter kapal ke Nusakambangan.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenAddPackage}
+                  className="mt-4 rounded-xl text-xs font-bold gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Tambah Paket Pertama
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {packages.map((pkg) => (
+                  <Card key={pkg.id} className="rounded-2xl border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-between">
+                    <div>
+                      <CardHeader className="bg-slate-50/80 border-b border-slate-100 pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-base font-bold text-slate-900 leading-snug">
+                            {pkg.name}
+                          </CardTitle>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] font-bold shrink-0 ${
+                              pkg.available ?? true
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                : "bg-slate-100 text-slate-600 border-slate-300"
+                            }`}
+                          >
+                            {pkg.available ?? true ? "● Aktif" : "○ Nonaktif"}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between py-1 border-b border-slate-50">
+                            <span className="text-slate-500">Tarif Paket:</span>
+                            <span className="font-black text-cyan-800 text-sm">
+                              Rp {pkg.price.toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-slate-50">
+                            <span className="text-slate-500">Estimasi Durasi:</span>
+                            <span className="font-bold text-slate-800">{pkg.duration_hours} Jam</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-slate-50">
+                            <span className="text-slate-500">Kapasitas Maksimal:</span>
+                            <span className="font-bold text-slate-800">
+                              {pkg.max_participants ? `${pkg.max_participants} Orang` : "-"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {pkg.description && (
+                          <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">
+                            {pkg.description}
+                          </p>
+                        )}
+
+                        {pkg.includes && pkg.includes.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {pkg.includes.map((inc) => (
+                              <span
+                                key={inc}
+                                className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-medium"
+                              >
+                                {inc}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </div>
+
+                    <CardContent className="pt-0 pb-4">
+                      <div className="flex gap-2 pt-3 border-t border-slate-100">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenEditPackage(pkg)}
+                          className="flex-1 rounded-xl text-xs font-bold border-slate-200"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isTogglingPackage === pkg.id}
+                          onClick={() => handleTogglePackageAvailability(pkg)}
+                          className={`flex-1 rounded-xl text-xs font-bold ${
+                            pkg.available ?? true
+                              ? "border-amber-200 text-amber-700 hover:bg-amber-50"
+                              : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                          }`}
+                        >
+                          {pkg.available ?? true ? "Nonaktifkan" : "Aktifkan"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeletePackage(pkg)}
+                          className="h-9 px-2 text-rose-600 hover:bg-rose-50 rounded-xl"
+                          title="Hapus Paket"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* TAB 3: Konsol Booking */}
           <TabsContent value="bookings" className="space-y-4 animate-in fade-in duration-200">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -943,6 +1199,15 @@ const OperatorDashboard = () => {
         onOpenChange={setIsManifestModalOpen}
         booking={selectedBookingForManifest}
         operatorName={operator?.company_name}
+      />
+
+      {/* Modal Tambah / Edit Paket Wisata */}
+      <TourPackageModal
+        open={isPackageModalOpen}
+        onOpenChange={setIsPackageModalOpen}
+        operatorId={operator?.id || ""}
+        packageToEdit={selectedPackageToEdit}
+        onSaveSuccess={handlePackageSaved}
       />
     </div>
   );
