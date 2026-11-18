@@ -170,7 +170,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           {/* Pill Kaca Translucent Frosted Glass (Unified Floating Glass Bar) */}
           <div
             onMouseLeave={() => setHoveredId(null)}
-            className={`relative flex items-center justify-between p-1.5 sm:p-2 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
+            className={`relative flex items-center justify-between p-1 sm:p-1.5 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
               isInHero
                 ? "bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)]"
                 : "bg-white/80 backdrop-blur-3xl border border-white/80 shadow-[0_18px_45px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.04),inset_0_1.5px_2px_rgba(255,255,255,1),inset_0_-1px_1px_rgba(0,0,0,0.04)]"
@@ -201,7 +201,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                 }
               }}
               aria-label="Kembali ke Beranda Suar"
-              className={`relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[46px] sm:min-h-[52px] select-none group ${
+              className={`relative z-10 flex items-center gap-2 pl-3 sm:pl-4 pr-3 py-1.5 sm:py-2 rounded-full transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 min-h-[50px] sm:min-h-[54px] select-none group ${
                 isInHero ? "hover:bg-white/10" : "hover:bg-black/5"
               }`}
             >
@@ -229,7 +229,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
               {/* Highlight Kapsul Bergeser Murni Slot Flex (100% Bebas Bug Desync/Scale/Detach) */}
               <motion.div
                 aria-hidden="true"
-                className="absolute top-0.5 bottom-0.5 pointer-events-none z-0 p-0.5 sm:p-1"
+                className="absolute inset-y-0 pointer-events-none z-0 px-1 py-0.5"
                 style={{
                   width: `${100 / navItems.length}%`,
                   left: 0,
@@ -268,7 +268,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       onFocus={() => setHoveredId(item.id)}
                       onBlur={() => setHoveredId(null)}
                       aria-label={item.label}
-                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-1 sm:py-2 px-1 sm:px-2 rounded-full transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[46px] sm:min-h-[52px] ${
+                      className={`group relative z-10 flex flex-col items-center justify-center w-full py-1.5 sm:py-2 px-1 sm:px-2 rounded-full transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-h-[50px] sm:min-h-[54px] ${
                         isHighlighted
                           ? "text-slate-950 font-semibold" // Teks gelap kontras WCAG AA di atas kapsul putih terang (Perbaikan N2)
                           : isInHero
@@ -277,8 +277,8 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       }`}
                     >
                       <Icon
-                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:scale-105 ${
-                          isHighlighted ? "mb-0.5 text-slate-950" : "mb-0.5"
+                        className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-transform duration-200 group-hover:scale-110 ${
+                          isHighlighted ? "mb-1 text-slate-950" : "mb-1"
                         } ${
                           !isHighlighted && isInHero
                             ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
