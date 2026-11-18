@@ -10,13 +10,15 @@ import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/auth";
 import { getDashboardRedirectPath } from "@/lib/authRoles";
 import googleLogo from "@/assets/google.svg";
-import { Ship, User } from "lucide-react";
+import { Ship, User, Eye, EyeOff } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [signupRole, setSignupRole] = useState<"tourist" | "operator">("tourist");
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
+  const [showSigninPassword, setShowSigninPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
 
   // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard sesuai perannya
   useEffect(() => {
@@ -159,13 +161,24 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    name="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signin-password"
+                      name="signin-password"
+                      type={showSigninPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      className="pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSigninPassword((v) => !v)}
+                      aria-label={showSigninPassword ? "Sembunyikan password" : "Lihat password"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                    >
+                      {showSigninPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                   {loading ? "Memproses..." : "Masuk"}
@@ -321,14 +334,25 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    name="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      name="signup-password"
+                      type={showSignupPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                      className="pr-10 [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPassword((v) => !v)}
+                      aria-label={showSignupPassword ? "Sembunyikan password" : "Lihat password"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                    >
+                      {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" variant="hero" className="w-full" disabled={loading}>
                   {loading ? "Memproses..." : "Daftar Sekarang"}
