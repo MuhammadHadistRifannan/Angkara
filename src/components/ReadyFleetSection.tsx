@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { motion, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { AuthModal } from "@/components/AuthModal";
+import { supabase } from "@/integrations/supabase/client";
 import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface FleetBoat {
@@ -19,7 +21,7 @@ interface FleetBoat {
 
 const defaultFleet: FleetBoat[] = [
   {
-    id: "sri-rejeki-03",
+    id: "10000000-0000-4000-8000-000000000001",
     name: "KM Sri Rejeki 03",
     boatTypeTag: "Jukung Tradisional",
     rating: 4.9,
@@ -32,7 +34,7 @@ const defaultFleet: FleetBoat[] = [
     price: 350000
   },
   {
-    id: "nusantara-express-01",
+    id: "10000000-0000-4000-8000-000000000002",
     name: "KM Nusantara Express 01",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.8,
@@ -45,7 +47,7 @@ const defaultFleet: FleetBoat[] = [
     price: 650000
   },
   {
-    id: "segara-anakan-07",
+    id: "10000000-0000-4000-8000-000000000003",
     name: "KM Segara Anakan 07",
     boatTypeTag: "Kapal Ekowisata",
     rating: 4.8,
@@ -58,7 +60,7 @@ const defaultFleet: FleetBoat[] = [
     price: 400000
   },
   {
-    id: "camar-laut-02",
+    id: "10000000-0000-4000-8000-000000000004",
     name: "KM Camar Laut 02",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.7,
@@ -71,7 +73,7 @@ const defaultFleet: FleetBoat[] = [
     price: 550000
   },
   {
-    id: "baruna-jaya-05",
+    id: "10000000-0000-4000-8000-000000000005",
     name: "KM Baruna Jaya 05",
     boatTypeTag: "Kapal Kayu Tradisional",
     rating: 4.7,
@@ -84,7 +86,7 @@ const defaultFleet: FleetBoat[] = [
     price: 300000
   },
   {
-    id: "samudra-kilat-01",
+    id: "10000000-0000-4000-8000-000000000006",
     name: "KM Samudra Kilat 01",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.8,
@@ -97,7 +99,7 @@ const defaultFleet: FleetBoat[] = [
     price: 600000
   },
   {
-    id: "lumba-lumba-04",
+    id: "10000000-0000-4000-8000-000000000007",
     name: "KM Lumba-Lumba 04",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.6,
@@ -110,7 +112,7 @@ const defaultFleet: FleetBoat[] = [
     price: 450000
   },
   {
-    id: "bahari-sejahtera-09",
+    id: "10000000-0000-4000-8000-000000000008",
     name: "KM Bahari Sejahtera 09",
     boatTypeTag: "Kapal Kayu Tradisional",
     rating: 4.7,
@@ -123,7 +125,7 @@ const defaultFleet: FleetBoat[] = [
     price: 350000
   },
   {
-    id: "albatros-06",
+    id: "10000000-0000-4000-8000-000000000009",
     name: "KM Albatros 06",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.7,
@@ -136,7 +138,7 @@ const defaultFleet: FleetBoat[] = [
     price: 500000
   },
   {
-    id: "mangrove-explorer-02",
+    id: "10000000-0000-4000-8000-000000000010",
     name: "KM Mangrove Explorer 02",
     boatTypeTag: "Kapal Ekowisata",
     rating: 4.8,
@@ -149,7 +151,7 @@ const defaultFleet: FleetBoat[] = [
     price: 425000
   },
   {
-    id: "pesisir-indah-08",
+    id: "10000000-0000-4000-8000-000000000011",
     name: "KM Pesisir Indah 08",
     boatTypeTag: "Kapal Kayu Tradisional",
     rating: 4.6,
@@ -162,7 +164,7 @@ const defaultFleet: FleetBoat[] = [
     price: 325000
   },
   {
-    id: "cahaya-selatan-10",
+    id: "10000000-0000-4000-8000-000000000012",
     name: "KM Cahaya Selatan 10",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.8,
@@ -202,6 +204,7 @@ export const ReadyFleetSection: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const updateArrows = () => {
     const el = scrollRef.current;
@@ -218,16 +221,12 @@ export const ReadyFleetSection: React.FC = () => {
   // Fetch Supabase dimatikan sementara, karena tabel boats di Supabase
   // hanya berisi 3 kapal dengan nama/kapasitas berbeda, dan query lama
   // memakai .limit(3) sehingga menimpa 12 kapal di atas.
-  // Nyalakan lagi setelah tabel boats berisi 12 kapal yang sama.
+  // Setelah Hadist menjalankan seed-demo-12-kapal-8-paket.sql, tabel
+  // boats berisi 12 kapal ini (id UUID sama) — fetch boleh dinyalakan
+  // lagi, dan pemesanan online (RPC create_booking) bisa jalan.
 
 
-  const handleChatCaptain = (boat: FleetBoat) => {
-    const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
-    try {
-      sessionStorage.setItem("pending_assistant_prompt", prompt);
-    } catch (e) {
-      console.warn("Gagal menyimpan prompt:", e);
-    }
+  const openAssistantWith = (prompt: string) => {
     window.dispatchEvent(
       new CustomEvent("open-assistant", {
         detail: {
@@ -235,7 +234,38 @@ export const ReadyFleetSection: React.FC = () => {
         },
       })
     );
-    navigate("/dashboard");
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    try {
+      const prompt = sessionStorage.getItem("pending_assistant_prompt");
+      if (prompt) openAssistantWith(prompt);
+    } catch (err) {
+      console.warn("Gagal membaca prompt tersimpan:", err);
+    }
+  };
+
+  // PERBAIKAN 2026-11-18: "Chat Nelayan" di-gate login lewat popup
+  // AuthModal di landing (sama seperti section Tanya Juru Mudi).
+  // Sebelumnya: langsung navigate("/dashboard") yang melempar user belum
+  // login ke halaman /auth. Sekarang chat terbuka di landing, tanpa pindah
+  // halaman — baik untuk user login maupun yang baru saja login.
+  const handleChatCaptain = async (boat: FleetBoat) => {
+    const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
+    try {
+      sessionStorage.setItem("pending_assistant_prompt", prompt);
+    } catch (e) {
+      console.warn("Gagal menyimpan prompt:", e);
+    }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setAuthOpen(true);
+      return;
+    }
+    openAssistantWith(prompt);
   };
 
   const handleBookNow = (boatId: string) => {
@@ -244,7 +274,11 @@ export const ReadyFleetSection: React.FC = () => {
 
   return (
     <section id="armada-siap-berlayar" className="py-20 sm:py-24 bg-white text-slate-900 relative">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      {/* id="boats": target semua tautan #boats di landing (hero
+          "Pilih Armada Kapal", form "Cari Kapal", WhyChoose, contoh
+          chat Juru Mudi, footer). Sebelumnya tidak ada elemen ber-id
+          ini, jadi semua tautan itu mati. */}
+      <div id="boats" className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header & KSOP Verified Badge */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
@@ -442,6 +476,7 @@ export const ReadyFleetSection: React.FC = () => {
           </div>
         </motion.div>
       </div>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
     </section>
   );
 };

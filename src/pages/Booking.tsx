@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapBookingError } from "@/lib/bookingErrors";
 import { formatDateWib, isDateInPastWib } from "@/lib/bookingDate";
+import { DEMO_BOATS, findDemoBoat, findDemoPackage } from "@/lib/demoFallback";
 
 interface BoatDetail {
   id: string;
@@ -19,37 +20,177 @@ interface BoatDetail {
   description: string | null;
   base_price: number;
   capacity: number;
+  isDemo?: boolean;
+}
+
+interface PackageDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  destination: string;
+  durationLabel: string;
+  price: number;
+  unit: string;
+  includes: string[];
+  isDemo?: boolean;
 }
 
 const Booking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const boatId = searchParams.get("boatId");
-  
+  // PERBAIKAN 2026-11-18: terima ketiga nama param yang dipakai di situs —
+  // ?boat= (dari Armada), ?boatId= (nama lama), ?packageId= (dari Paket Tour).
+  // Sebelumnya hanya "boatId" yang dibaca, sehingga "Pesan Sekarang" dari
+  // Armada selalu membuka halaman dengan ringkasan pesanan kosong.
+  const boatParam = searchParams.get("boatId") ?? searchParams.get("boat");
+  const packageParam = searchParams.get("packageId");
+
   const [date, setDate] = useState<Date>();
   const [boat, setBoat] = useState<BoatDetail | null>(null);
+  const [pkg, setPkg] = useState<PackageDetail | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [passengers, setPassengers] = useState(1);
   const [departureTime, setDepartureTime] = useState("09:00");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  // Mode paket: kapal yang dipilih untuk paket ini. Daftar kapal asli dari
+  // Supabase (bisa dipesan online) + 12 kapal demo sebagai pilihan.
+  const [realBoats, setRealBoats] = useState<BoatDetail[]>([]);
+  const [selectedBoatId, setSelectedBoatId] = useState(DEMO_BOATS[0].id);
 
   useEffect(() => {
-    const fetchBoat = async () => {
-      if (!boatId) return;
-      const { data } = await supabase
-        .from("boats")
-        .select("id, name, description, base_price, capacity")
-        .eq("id", boatId)
-        .single();
-      if (data) {
-        setBoat(data as BoatDetail);
+    let cancelled = false;
+    const load = async () => {
+      if (packageParam) {
+        let found: PackageDetail | null = null;
+        try {
+          const { data } = await supabase
+            .from("tour_packages")
+            .select("id, name, description, duration_hours, price, includes")
+            .eq("id", packageParam)
+            .single();
+          if (data) {
+            found = {
+              id: data.id,
+              name: data.name,
+              description: data.description ?? null,
+              destination: "",
+              durationLabel:
+                data.duration_hours != null ? `${data.duration_hours} jam` : "-",
+              price: data.price,
+              unit: "/ orang",
+              includes: (data.includes as string[]) || [],
+              isDemo: false,
+            };
+          }
+        } catch {
+          // Supabase gagal / id tidak ada — jatuh ke data demo di bawah.
+        }
+        if (!found) {
+          const demo = findDemoPackage(packageParam);
+          if (demo) {
+            found = {
+              id: demo.id,
+              name: demo.name,
+              description: demo.description,
+              destination: demo.destination,
+              durationLabel: demo.durationLabel,
+              price: demo.price,
+              unit: demo.unit,
+              includes: demo.includes,
+              isDemo: true,
+            };
+          }
+        }
+        if (!cancelled) {
+          setPkg(found);
+          setLoaded(true);
+        }
+        return;
       }
+      if (boatParam) {
+        let found: BoatDetail | null = null;
+        try {
+          const { data } = await supabase
+            .from("boats")
+            .select("id, name, description, base_price, capacity")
+            .eq("id", boatParam)
+            .single();
+          if (data) found = { ...(data as BoatDetail), isDemo: false };
+        } catch {
+          // Supabase gagal / id tidak ada — jatuh ke data demo di bawah.
+        }
+        if (!found) {
+          const demo = findDemoBoat(boatParam);
+          if (demo) {
+            found = {
+              id: demo.id,
+              name: demo.name,
+              description: demo.description,
+              base_price: demo.base_price,
+              capacity: demo.capacity,
+              isDemo: true,
+            };
+          }
+        }
+        if (!cancelled) {
+          setBoat(found);
+          setLoaded(true);
+        }
+        return;
+      }
+      setLoaded(true);
     };
-    fetchBoat();
-  }, [boatId]);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [boatParam, packageParam]);
+
+  // Mode paket: ambil kapal asli dari Supabase untuk dropdown pilihan kapal.
+  // Kalau ada kapal asli, jadikan pilihan default supaya pemesanan paket
+  // bisa diproses RPC (kapal demo belum terdaftar di database).
+  useEffect(() => {
+    if (!packageParam) return;
+    let cancelled = false;
+    supabase
+      .from("boats")
+      .select("id, name, base_price, capacity")
+      .eq("available", true)
+      .then(({ data }) => {
+        if (!cancelled && data && data.length > 0) {
+          setRealBoats(data as BoatDetail[]);
+          setSelectedBoatId((cur) =>
+            DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
+          );
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [packageParam]);
+
+  const selectedBoat =
+    realBoats.find((b) => b.id === selectedBoatId) ||
+    DEMO_BOATS.find((b) => b.id === selectedBoatId) ||
+    null;
+  // Kapal yang dipakai RPC: kapal di mode kapal, atau kapal pilihan di mode paket.
+  const bookingBoatId = boat?.id ?? selectedBoatId;
+  const bookingBoatIsDemo = boat
+    ? !!boat.isDemo
+    : !realBoats.some((b) => b.id === selectedBoatId);
+  const effectiveCapacity = boat?.capacity ?? selectedBoat?.capacity ?? 100;
+  const totalPrice = pkg
+    ? pkg.unit === "/ orang"
+      ? pkg.price * passengers
+      : pkg.price
+    : boat
+      ? boat.base_price * passengers
+      : 0;
 
   const handleBooking = async () => {
-    if (!date || !boat) {
+    if (!date || (!boat && !pkg)) {
       toast.error("Mohon lengkapi semua data");
       return;
     }
@@ -59,11 +200,21 @@ const Booking = () => {
       return;
     }
 
+    // Kapal demo belum ada di database → RPC create_booking pasti menolak
+    // (boat_unavailable). Beri tahu dengan jujur, jangan panggil RPC sia-sia.
+    // Setelah seed demo dijalankan, kapal ini terdaftar dan pemesanan jalan.
+    if (bookingBoatIsDemo) {
+      toast.error(
+        "Kapal ini memakai data demo dan belum terdaftar di sistem pemesanan. Minta operator menjalankan seed data demo (seed-demo-12-kapal-8-paket.sql) supaya pemesanan bisa diproses."
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       const formattedDate = formatDateWib(date);
       const { error } = await supabase.rpc("create_booking", {
-        p_boat_id: boat.id,
+        p_boat_id: bookingBoatId,
         p_date: formattedDate,
         p_time: departureTime,
         p_passengers: passengers,
@@ -88,16 +239,16 @@ const Booking = () => {
     }
   };
 
-  const totalPrice = boat ? boat.base_price * passengers : 0;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="grid md:grid-cols-2 gap-8">
           <div>
-            <h1 className="text-3xl font-bold mb-6">Booking Kapal</h1>
-            
+            <h1 className="text-3xl font-bold mb-6">
+              {pkg ? "Booking Paket Tour" : "Booking Kapal"}
+            </h1>
+
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -121,6 +272,41 @@ const Booking = () => {
                 <CardTitle>Detail Booking</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {pkg && (
+                  <div>
+                    <Label htmlFor="boat-select">Pilih Kapal untuk Paket Ini</Label>
+                    <select
+                      id="boat-select"
+                      value={selectedBoatId}
+                      onChange={(e) => setSelectedBoatId(e.target.value)}
+                      className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {realBoats.length > 0 && (
+                        <optgroup label="Kapal terdaftar — bisa dipesan online">
+                          {realBoats.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
+                              {b.capacity} penumpang
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <optgroup label="Kapal demo — tampil di landing">
+                        {DEMO_BOATS.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
+                            {b.capacity} penumpang
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Paket berlayar dengan kapal yang dipilih. Kapal demo bisa
+                      dipesan setelah operator menjalankan seed data demo.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <Label htmlFor="passengers">Jumlah Penumpang</Label>
                   <div className="flex items-center gap-2 mt-2">
@@ -129,7 +315,7 @@ const Booking = () => {
                       id="passengers"
                       type="number"
                       min="1"
-                      max={boat?.capacity || 100}
+                      max={effectiveCapacity}
                       value={passengers}
                       onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
                     />
@@ -169,6 +355,30 @@ const Booking = () => {
                 <CardTitle>Ringkasan Pesanan</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {!loaded && (
+                  <p className="text-sm text-muted-foreground">
+                    Memuat detail pesanan…
+                  </p>
+                )}
+
+                {loaded && !boat && !pkg && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Kapal atau paket yang dipilih tidak ditemukan. Mungkin tautan
+                      sudah kedaluwarsa atau datanya belum tersedia.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        window.location.href = "/#armada-siap-berlayar";
+                      }}
+                    >
+                      Lihat Armada Kapal
+                    </Button>
+                  </div>
+                )}
+
                 {boat && (
                   <>
                     <div>
@@ -219,9 +429,93 @@ const Booking = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      variant="hero" 
-                      className="w-full" 
+                    <Button
+                      variant="hero"
+                      className="w-full"
+                      size="lg"
+                      onClick={handleBooking}
+                      disabled={loading || !date}
+                    >
+                      {loading ? "Memproses..." : "Lanjut ke Pembayaran"}
+                    </Button>
+                  </>
+                )}
+
+                {pkg && (
+                  <>
+                    <div>
+                      <h3 className="font-semibold text-lg">{pkg.name}</h3>
+                      {pkg.destination && (
+                        <p className="text-sm text-muted-foreground">
+                          Tujuan: {pkg.destination} · Durasi: {pkg.durationLabel}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground mt-1">{pkg.description}</p>
+                      {pkg.includes.length > 0 && (
+                        <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                          {pkg.includes.map((item, idx) => (
+                            <li key={idx}>✓ {item}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 py-4 border-y">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Harga paket</span>
+                        <span>
+                          Rp {pkg.price.toLocaleString('id-ID')} {pkg.unit}
+                        </span>
+                      </div>
+                      {pkg.unit === "/ orang" && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Jumlah penumpang</span>
+                          <span>{passengers} orang</span>
+                        </div>
+                      )}
+                      {selectedBoat && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Kapal</span>
+                          <span>{selectedBoat.name}</span>
+                        </div>
+                      )}
+                      {date && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Tanggal</span>
+                          <span>{date.toLocaleDateString('id-ID')}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Waktu</span>
+                        <span>{departureTime}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xl font-bold">
+                      <span>Total</span>
+                      <span className="text-primary">
+                        Rp {totalPrice.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <DollarSign className="h-5 w-5 text-primary mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-semibold mb-1">Pembayaran DP 30%</p>
+                          <p className="text-muted-foreground">
+                            Bayar DP: Rp {(totalPrice * 0.3).toLocaleString('id-ID')}
+                          </p>
+                          <p className="text-muted-foreground">
+                            Pelunasan di lokasi: Rp {(totalPrice * 0.7).toLocaleString('id-ID')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="hero"
+                      className="w-full"
                       size="lg"
                       onClick={handleBooking}
                       disabled={loading || !date}

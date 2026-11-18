@@ -1,4 +1,9 @@
 import React from "react";
+// PERBAIKAN 2026-11-18: nomor telepon + email dijadikan tautan
+// (tel: / mailto:) supaya bisa diklik. Isinya tetap nomor/email
+// yang sama seperti sebelumnya (keputusan Adin: dibiarkan).
+// Ikon media sosial masih href="#" — belum ada akun resmi SUAR;
+// minta URL aslinya ke Adin sebelum menautkannya.
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
 import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
@@ -109,11 +114,11 @@ const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 shrink-0 text-cyan-400" />
-                <span>+62 812-3456-7890</span>
+                <a href="tel:+6281234567890" className="hover:text-cyan-300 transition-colors">+62 812-3456-7890</a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 shrink-0 text-cyan-400" />
-                <span>kontak@suarcilacap.id</span>
+                <a href="mailto:kontak@suarcilacap.id" className="hover:text-cyan-300 transition-colors">kontak@suarcilacap.id</a>
               </li>
             </ul>
           </div>

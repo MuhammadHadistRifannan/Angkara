@@ -9,8 +9,11 @@ const reasons = [
     icon: Brain,
     title: "Analisis AI & BMKG Terpadu",
     description:
-      "Sistem kami memadukan prakiraan gelombang dan angin. Status pelayaran Aman, Waspada, atau Tunda mengikuti data terbaru, supaya nahkoda dan wisatawan bisa memutuskan sebelum berangkat.",
-    linkText: "Pelajari model keselamatan",
+      "Sistem kami memadukan data prakiraan gelombang terbaru dengan riwayat arus Teluk Penyu. Status pelayaran Aman, Waspada, atau Tunda mengikuti data terbaru, supaya nahkoda dan wisatawan bisa memutuskan sebelum berangkat.",
+    // PERBAIKAN 2026-11-18: label lama "Pelajari model keselamatan"
+    // menyesatkan — tombol ini hanya scroll ke peta cuaca, tidak
+    // membuka halaman/model keselamatan apa pun.
+    linkText: "Lihat Peta Cuaca Maritim",
     action: "scroll-weather",
   },
   {
@@ -18,7 +21,7 @@ const reasons = [
     icon: Handshake,
     title: "Ekonomi Nelayan Berkelanjutan",
     description:
-    "Tanpa perantara dan tanpa calo di dermaga. Harga tertera di depan, dan biaya sewa dibayar langsung kepada nelayan yang bertugas saat Anda berlayar.",
+      "Tanpa perantara dan tanpa calo di dermaga. Harga tertera di depan, dan biaya sewa dibayar langsung kepada nelayan yang bertugas saat Anda berlayar.",
     linkText: "Transparansi bagi hasil",
     action: "scroll-boats",
   },
@@ -33,7 +36,7 @@ const reasons = [
   },
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -44,7 +47,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 32 },
   visible: {
     opacity: 1,
