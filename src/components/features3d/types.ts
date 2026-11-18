@@ -4,6 +4,7 @@ export interface Feature3DItem {
   id: string;
   title: string;
   description?: string;
+  audience?: string;
   modelUrl: string;
   targetHeight: number;
   initialRotation?: [number, number, number];

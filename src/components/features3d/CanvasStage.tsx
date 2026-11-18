@@ -1,5 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import { MAIN_FEATURES_3D } from "./data";
 import { Vector3, type Group, type SpotLight } from "three";
 import { FeatureModel } from "./FeatureModel";
 import { StageLightPool } from "./StageLightPool";
@@ -266,6 +268,13 @@ export const CanvasStage = ({
   slotIntroRef,
   slotFeatureRef,
 }: CanvasStageProps) => {
+  // Preload semua model GLTF agar siap saat scroll (dipindah dari FeaturesStage)
+  useEffect(() => {
+    MAIN_FEATURES_3D.forEach((feature) => {
+      useGLTF.preload(feature.modelUrl);
+    });
+  }, []);
+
   if (!isVisible) return null;
 
   return (
@@ -287,7 +296,7 @@ export const CanvasStage = ({
           alpha: true,
           powerPreference: "high-performance",
         }}
-        dpr={isMobile ? [1, 1.5] : [1, 2]}
+        dpr={[1, 1.5]}
       >
         <CinematicCameraController
           scrollProgress={scrollProgress}

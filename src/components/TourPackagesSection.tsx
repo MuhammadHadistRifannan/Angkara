@@ -198,7 +198,7 @@ export const TourPackagesSection: React.FC = () => {
   ];
 
   return (
-    <section id="pilihan-paket-tour" className="py-20 sm:py-24 bg-[#F1F5F9]/60 text-slate-900 relative">
+    <section id="pilihan-paket-tour" className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden border-t border-slate-200/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header & Tabs */}
         <motion.div
@@ -209,6 +209,10 @@ export const TourPackagesSection: React.FC = () => {
           className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12 sm:mb-14"
         >
           <div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-2.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+              <span>Rute &amp; Paket Kurasi Nakhoda</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
               Pilihan Paket Tour
             </h2>
@@ -235,8 +239,8 @@ export const TourPackagesSection: React.FC = () => {
                   }}
                   className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-[#090D16] text-white shadow-md"
-                      : "bg-white text-slate-700 hover:text-slate-900 border border-slate-200/80 hover:border-slate-300"
+                      ? "bg-[#0B1528] text-white shadow-md border border-cyan-400/20"
+                      : "bg-slate-100/80 text-slate-700 hover:text-slate-900 border border-slate-200/80 hover:border-slate-300 hover:bg-white"
                   }`}
                 >
                   {tab.label}
@@ -263,7 +267,7 @@ export const TourPackagesSection: React.FC = () => {
               key={pkg.id}
               variants={cardVariants}
               whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-slate-300 transition-all duration-300 flex flex-col justify-between group"
+              className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-sm hover:shadow-2xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between group"
             >
               <div>
                 {/* Image & Badges */}
@@ -275,7 +279,7 @@ export const TourPackagesSection: React.FC = () => {
                   />
                   {/* Top-left badge */}
                   <div className="absolute top-4 left-4">
-                    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#090D16]/80 backdrop-blur-md text-white border border-white/20">
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-[#0B1528]/85 backdrop-blur-md text-white border border-white/20">
                       {pkg.badge}
                     </span>
                   </div>
@@ -330,7 +334,7 @@ export const TourPackagesSection: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate("/tour-packages")}
-                  className="px-4 py-2.5 rounded-xl bg-[#090D16] hover:bg-[#1E293B] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                  className="px-4 py-2.5 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
                 >
                   Detail Rute
                 </motion.button>

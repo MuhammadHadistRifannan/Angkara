@@ -273,12 +273,13 @@ export const ReadyFleetSection: React.FC = () => {
   };
 
   return (
-    <section id="armada-siap-berlayar" className="py-20 sm:py-24 bg-white text-slate-900 relative">
-      {/* id="boats": target semua tautan #boats di landing (hero
-          "Pilih Armada Kapal", form "Cari Kapal", WhyChoose, contoh
-          chat Juru Mudi, footer). Sebelumnya tidak ada elemen ber-id
-          ini, jadi semua tautan itu mati. */}
-      <div id="boats" className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="armada-siap-berlayar" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60">
+      {/* Subtle Ambient Glow */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl pointer-events-none" />
+
+      {/* id="boats": target semua tautan #boats di landing */}
+      <div id="boats" className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header & KSOP Verified Badge */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
@@ -288,6 +289,10 @@ export const ReadyFleetSection: React.FC = () => {
           className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 sm:mb-14"
         >
           <div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-2.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+              <span>Armada Resmi Berlisensi KSOP</span>
+            </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
               Armada Siap Berlayar Hari Ini
             </h2>
@@ -300,7 +305,7 @@ export const ReadyFleetSection: React.FC = () => {
           <motion.div
             animate={{ y: [0, -5, 0] }}
             transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-            className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-sky-100/70 border border-sky-200/80 text-sky-950 shadow-sm self-start md:self-auto"
+            className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-sky-100/80 border border-sky-200 text-sky-950 shadow-sm self-start md:self-auto"
           >
             <div className="p-1.5 rounded-xl bg-sky-500/20 text-sky-800">
               <ShieldCheck className="h-6 w-6 text-sky-700" />
@@ -412,7 +417,7 @@ export const ReadyFleetSection: React.FC = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleChatCaptain(boat)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-bold transition-colors"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-sky-50/50 hover:border-sky-300 text-slate-800 text-xs sm:text-sm font-bold transition-colors"
                   >
                     <MessageSquare className="h-4 w-4 text-slate-600" />
                     <span>Chat Nelayan</span>
@@ -423,7 +428,7 @@ export const ReadyFleetSection: React.FC = () => {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleBookNow(boat.id)}
-                    className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-[#090D16] hover:bg-[#1E293B] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                    className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
                   >
                     Pesan Sekarang
                   </motion.button>
@@ -440,35 +445,36 @@ export const ReadyFleetSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="rounded-2xl p-4 sm:p-5 bg-[#EFEFEF] border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
+          className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-[#0B1528] via-[#0f2142] to-[#0B1528] text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xl relative overflow-hidden"
         >
-          <div className="flex items-center gap-3.5">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="flex items-center gap-4 relative z-10">
             <motion.div
               animate={{ scale: [1, 1.08, 1] }}
               transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-              className="p-2.5 rounded-xl bg-slate-300/80 text-slate-700 flex-shrink-0"
+              className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/30 text-rose-400 flex-shrink-0 shadow-inner"
             >
-              <Radio className="h-6 w-6 text-slate-700" />
+              <Radio className="h-6 w-6 text-rose-400" />
             </motion.div>
             <div>
-              <h4 className="text-sm sm:text-base font-bold text-slate-900">
+              <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 Jalur Cepat Darurat Maritim Terpadu
               </h4>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs sm:text-sm text-slate-300">
                 Pos Siaga Basarnas SAR Pelabuhan Cilacap & Radio Nelayan
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            <span className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700">
+          <div className="flex items-center gap-3 self-end sm:self-auto relative z-10">
+            <span className="px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs font-mono font-bold text-slate-200">
               VHF Radio: CH 16
             </span>
             <motion.a
               href="tel:115"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#090D16] hover:bg-rose-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-950/40 transition-colors"
             >
               <PhoneCall className="h-4 w-4" />
               <span>Hotline 115</span>

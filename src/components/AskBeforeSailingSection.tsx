@@ -60,9 +60,9 @@ export const AskBeforeSailingSection: React.FC = () => {
   };
 
   return (
-    <section id="tanya-sebelum-berlayar" className="py-12 sm:py-16 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
+    <section id="tanya-sebelum-berlayar" className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden border-t border-slate-200/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Descriptive info & Key Points matching Image 5 */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -72,9 +72,9 @@ export const AskBeforeSailingSection: React.FC = () => {
             className="lg:col-span-5 space-y-6"
           >
             {/* Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100 text-sky-800 text-xs font-semibold shadow-sm">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider shadow-2xs">
               <span className="h-2 w-2 rounded-full bg-sky-600 animate-pulse" />
-              <span>Asisten Cerdas Navigasi & Cuaca</span>
+              <span>Asisten Navigasi &amp; Cuaca Maritim</span>
             </div>
 
             {/* Title */}
@@ -103,7 +103,7 @@ export const AskBeforeSailingSection: React.FC = () => {
                   transition={{ duration: 0.4, delay: 0.2 + idx * 0.12 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <div className="w-5 h-5 rounded-full bg-[#0B1528] text-white flex items-center justify-center flex-shrink-0 shadow-sm">
                     <Check className="h-3 w-3 stroke-[3]" />
                   </div>
                   <span className="text-xs sm:text-sm font-semibold text-slate-800">
@@ -178,7 +178,7 @@ export const AskBeforeSailingSection: React.FC = () => {
                     </p>
 
                     {/* Blue Telemetry Box */}
-                    <div className="rounded-xl p-3.5 bg-sky-50/80 border border-sky-100 space-y-1.5 text-slate-800 mb-3">
+                    <div className="rounded-2xl p-4 bg-sky-50/90 border border-sky-200/80 space-y-2 text-slate-800 mb-3 shadow-2xs">
                       <div className="flex justify-between items-center">
                         <span className="text-slate-600">Tinggi Gelombang:</span>
                         <span className="font-bold text-slate-900">1,1 meter (Tenang)</span>
@@ -191,7 +191,7 @@ export const AskBeforeSailingSection: React.FC = () => {
                         <span className="text-slate-600">Status Pelayaran:</span>
                         <span className="font-bold text-emerald-600">HIJAU (Aman Berlayar)</span>
                       </div>
-                      <div className="pt-1.5 border-t border-sky-200/60 flex justify-between items-center text-[11px]">
+                      <div className="pt-2 border-t border-sky-200/70 flex justify-between items-center text-[11px]">
                         <span className="text-slate-500">Rekomendasi Waktu:</span>
                         <span className="font-bold text-slate-800">07:15 – 10:45 WIB</span>
                       </div>
@@ -206,9 +206,9 @@ export const AskBeforeSailingSection: React.FC = () => {
                     </div>
 
                     {/* Recommended Boat Card */}
-                    <div className="rounded-xl p-3 border border-cyan-200 bg-cyan-50/30 flex items-center justify-between gap-3">
+                    <div className="rounded-2xl p-3.5 border border-sky-200 bg-white shadow-sm flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center text-sky-700">
+                        <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700">
                           <Ship className="h-5 w-5" />
                         </div>
                         <div>
@@ -226,7 +226,7 @@ export const AskBeforeSailingSection: React.FC = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleSelectBoat}
-                        className="px-4 py-1.5 rounded-lg bg-[#0B1528] hover:bg-[#1E293B] text-white text-xs font-bold transition-colors shadow-sm"
+                        className="px-4 py-2 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs font-bold transition-colors shadow-sm"
                       >
                         Pilih
                       </motion.button>
@@ -242,20 +242,20 @@ export const AskBeforeSailingSection: React.FC = () => {
               </p>
 
               {/* Chat Input Bar */}
-              <form onSubmit={handleSendQuestion} className="p-4 bg-white border-t border-slate-200/90 flex items-center gap-2">
+              <form onSubmit={handleSendQuestion} className="p-4 bg-white border-t border-slate-200/90 flex items-center gap-2.5">
                 <input
                   type="text"
                   value={questionInput}
                   onChange={(e) => setQuestionInput(e.target.value)}
                   placeholder="Tanya kondisi ombak, rute kapal, atau aturan anak-anak..."
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 transition-all"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white transition-all"
                 />
                 <motion.button
                   type="submit"
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
                   aria-label="Kirim Pertanyaan"
-                  className="w-10 h-10 rounded-xl bg-[#0B1528] hover:bg-[#1E293B] text-white flex items-center justify-center transition-colors flex-shrink-0 shadow-sm"
+                  className="w-10 h-10 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white flex items-center justify-center transition-colors flex-shrink-0 shadow-sm"
                 >
                   <Send className="h-4 w-4" />
                 </motion.button>

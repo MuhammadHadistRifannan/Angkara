@@ -4,11 +4,12 @@ import {
   useRef,
   useCallback,
   Component,
+  lazy,
+  Suspense,
   type ReactNode,
 } from "react";
-import { useGLTF } from "@react-three/drei";
 import { MAIN_FEATURES_3D, SECONDARY_FEATURES } from "./data";
-import { CanvasStage } from "./CanvasStage";
+import { FeatureIllustration } from "./FeatureIllustration";
 import { SecondaryFeatures } from "./SecondaryFeatures";
 import { Features2DFallback } from "./Features2DFallback";
 import { FeatureDescriptionPanel } from "./FeatureDescriptionPanel";
@@ -19,6 +20,14 @@ import {
 } from "../landing/useSectionStep";
 import { useSnapAssist } from "../landing/useSnapAssist";
 import { updateDebugOverlay } from "../landing/debugStore";
+
+// Panggung fitur memakai ilustrasi SVG buatan sendiri (ringan, satu gaya).
+// Set ke true untuk mengembalikan model 3D (.glb) seperti semula.
+// CanvasStage dimuat malas, jadi Three.js tidak diunduh selama flag ini false.
+const USE_3D_MODELS = false;
+const CanvasStage = lazy(() =>
+  import("./CanvasStage").then((m) => ({ default: m.CanvasStage }))
+);
 
 // WebGL Error Boundary Fallback
 class WebGLErrorBoundary extends Component<
@@ -47,9 +56,9 @@ class WebGLErrorBoundary extends Component<
 }
 
 // Salinan judul intro diperbesar sinematik (clamp 2.5rem - 6.5rem)
-const INTRO_TITLE_LINE_1 = ["Lima", "alasan"];
-const INTRO_TITLE_LINE_2 = ["berlayar", "tanpa", "ragu."];
-const SUBTITLE_TEXT = "Dari verifikasi sampai pembayaran, semuanya terjaga.";
+const INTRO_TITLE_LINE_1 = ["Cara", "Suar", "mengurus"];
+const INTRO_TITLE_LINE_2 = ["satu", "perjalanan."];
+const SUBTITLE_TEXT = "Lima bagian sistem, dari daftar kapal sampai pembayaran.";
 
 export const FeaturesStage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,6 +71,7 @@ export const FeaturesStage = () => {
   const [isEntered, setIsEntered] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0.5);
+  const lastProgressRef = useRef(0.5);
   const [exitProgress, setExitProgress] = useState(0);
 
   // Posisi horizontal spotlight beam & glow yang adaptif mengikuti model 3D
@@ -114,14 +124,6 @@ export const FeaturesStage = () => {
       mediaQueryMotion.removeEventListener("change", updateMotion);
     };
   }, []);
-
-  // 4. Preload semua 5 model GLTF agar siap saat scroll
-  useEffect(() => {
-    if (!hasWebGL) return;
-    MAIN_FEATURES_3D.forEach((feature) => {
-      useGLTF.preload(feature.modelUrl);
-    });
-  }, [hasWebGL]);
 
   // 5. Observer Visibilitas Section Panggung untuk mematikan render 3D saat di luar layar
   useEffect(() => {
@@ -178,7 +180,10 @@ export const FeaturesStage = () => {
             const totalDist = rect.height - vh;
             const scrolledDist = -rect.top;
             const progress = Math.max(0, Math.min(1, scrolledDist / Math.max(1, totalDist)));
-            setScrollProgress(progress);
+            if (Math.abs(progress - lastProgressRef.current) >= 0.004 || progress === 0 || progress === 1) {
+              lastProgressRef.current = progress;
+              setScrollProgress(progress);
+            }
 
             // Deteksi keluar panggung (saat di sentinel ke-6 / langkah terakhir)
             const remaining = rect.bottom - vh;
@@ -219,7 +224,7 @@ export const FeaturesStage = () => {
     window.scrollTo({ top: targetScrollY, behavior: "smooth" });
   }, []);
 
-  if (!hasWebGL) {
+  if (USE_3D_MODELS && !hasWebGL) {
     return <Features2DFallback />;
   }
 
@@ -234,14 +239,14 @@ export const FeaturesStage = () => {
     <WebGLErrorBoundary fallback={<Features2DFallback />}>
       {/* 
         PEMBUNGKUS SCROLL (SCROLLCRAFT):
-        Setinggi ~700vh (atau 560svh di mobile) untuk menampung 7 sentinel (1 intro + 5 fitur + 1 exit).
+        Setinggi ~460vh (atau 400svh di mobile) untuk menampung 7 sentinel (1 intro + 5 fitur + 1 exit).
         Menyediakan ruang cukup di akhir agar section berikutnya tidak menimpa (Perbaikan F4).
       */}
       <div
         ref={containerRef}
         id="features"
         className="relative w-full bg-[hsl(var(--features-bg-top))]"
-        style={{ height: isMobile ? "560svh" : "700vh" }}
+        style={{ height: isMobile ? "400svh" : "460vh" }}
       >
         {/* 7 Sentinel Tidak Terlihat */}
         <div className="absolute inset-0 pointer-events-none flex flex-col">
@@ -268,76 +273,41 @@ export const FeaturesStage = () => {
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
             <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--features-bg-top))] via-[#041d2f] via-45% to-[#020b17]" />
 
-            {/* Spotlight Beam Sinematik - Melaraskan presisi ke titik tengah model 3D */}
+            {/* Cahaya lembut di belakang model 3D: satu sumber saja, tanpa sorot kerucut/noise */}
             <div
-              className="absolute -top-24 w-[950px] h-[1100px] pointer-events-none transition-all duration-700 ease-out"
-              style={{
-                left: isMobile || isIntro ? "50%" : `${featureSlotCenterX}%`,
-                transform: "translateX(-50%)",
-                opacity: isEntered ? Math.max(0, 0.9 * (1 - exitProgress)) : 0,
-                background:
-                  "conic-gradient(from 180deg at 50% 0%, rgba(254, 243, 199, 0.28) 0deg, rgba(56, 189, 248, 0.16) 18deg, rgba(2, 6, 23, 0) 45deg, rgba(2, 6, 23, 0) 315deg, rgba(56, 189, 248, 0.16) 342deg, rgba(254, 243, 199, 0.28) 360deg)",
-                maskImage:
-                  "radial-gradient(ellipse 70% 90% at 50% 0%, black 20%, rgba(0,0,0,0.65) 55%, transparent 85%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 70% 90% at 50% 0%, black 20%, rgba(0,0,0,0.65) 55%, transparent 85%)",
-                mixBlendMode: "screen",
-                filter: "blur(18px)",
-              }}
-            />
-
-            {/* Spotlight Glow Pool di Belakang Model 3D */}
-            <div
-              className="absolute w-[680px] h-[680px] rounded-full pointer-events-none transition-all duration-700 ease-out"
+              className="absolute w-[560px] h-[560px] rounded-full pointer-events-none transition-all duration-700 ease-out"
               style={{
                 left: isMobile || isIntro ? "50%" : `${featureSlotCenterX}%`,
                 top: isMobile ? "40%" : isIntro ? "62%" : "50%",
                 transform: "translate(-50%, -50%)",
-                opacity: isEntered ? (isIntro ? 0.35 : 0.55) * (1 - exitProgress) : 0,
+                opacity: isEntered ? (isIntro ? 0.3 : 0.4) * (1 - exitProgress) : 0,
                 background:
-                  "radial-gradient(circle, rgba(56, 189, 248, 0.22) 0%, rgba(254, 243, 199, 0.12) 32%, rgba(2, 6, 23, 0) 70%)",
-                mixBlendMode: "screen",
-                filter: "blur(40px)",
+                  "radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, rgba(2, 6, 23, 0) 68%)",
+                filter: "blur(32px)",
               }}
             />
-
-            {/* Grain Dither Halus */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.025]"
-              aria-hidden="true"
-            >
-              <filter id="features-stage-dither">
-                <feTurbulence
-                  type="fractalNoise"
-                  baseFrequency="0.8"
-                  numOctaves="3"
-                  stitchTiles="stitch"
-                />
-                <feColorMatrix
-                  type="matrix"
-                  values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1  0 0 0 1 0"
-                />
-              </filter>
-              <rect width="100%" height="100%" filter="url(#features-stage-dither)" />
-            </svg>
           </div>
 
           {/* 
-            KANVAS 3D SELEBAR PANGGUNG PENUH (ABSOLUTE INSET-0):
-            Menampung model 3D yang diproyeksikan langsung ke koordinat slot DOM.
+            MODEL 3D (OPSIONAL, hanya bila USE_3D_MODELS = true):
+            Kanvas selebar panggung yang memproyeksikan model ke koordinat slot DOM.
           */}
-          <CanvasStage
-            activeFeature={activeFeature}
-            step={currentStep}
-            isVisible={isVisible}
-            isEntered={isEntered}
-            pulseTrigger={currentStep}
-            isMobile={isMobile}
-            isReducedMotion={prefersReducedMotion}
-            scrollProgress={scrollProgress}
-            slotIntroRef={slotIntroRef}
-            slotFeatureRef={slotFeatureRef}
-          />
+          {USE_3D_MODELS && (
+            <Suspense fallback={null}>
+              <CanvasStage
+                activeFeature={activeFeature}
+                step={currentStep}
+                isVisible={isVisible}
+                isEntered={isEntered}
+                pulseTrigger={currentStep}
+                isMobile={isMobile}
+                isReducedMotion={prefersReducedMotion}
+                scrollProgress={scrollProgress}
+                slotIntroRef={slotIntroRef}
+                slotFeatureRef={slotFeatureRef}
+              />
+            </Suspense>
+          )}
 
           {/* 
             A. ZONA INTRO (STEP 0):
@@ -352,7 +322,7 @@ export const FeaturesStage = () => {
           >
             {/* Blok Judul Intro Besar */}
             <div className="text-center px-4 max-w-6xl xl:max-w-7xl mx-auto">
-              <h2 className="font-display font-semibold tracking-[-0.04em] leading-[1.04] text-[clamp(2.5rem,min(8vw,14svh),6.5rem)] drop-shadow-[0_4px_40px_rgba(0,0,0,0.35)]">
+              <h2 className="font-display font-semibold tracking-[-0.04em] leading-[1.04] text-[clamp(2.5rem,min(7vw,13svh),5.75rem)]">
                 {/* Baris 1: Putih Penuh */}
                 <div className="text-white flex items-center justify-center flex-wrap gap-x-3.5 sm:gap-x-5">
                   <span className="inline-flex items-center gap-x-2.5 sm:gap-x-3.5 whitespace-nowrap">
@@ -453,7 +423,9 @@ export const FeaturesStage = () => {
             <div
               ref={slotIntroRef}
               className="w-full max-w-sm sm:max-w-md mx-auto h-[38svh] max-h-[340px] pointer-events-none"
-            />
+            >
+              {!USE_3D_MODELS && <FeatureIllustration id="intro" />}
+            </div>
           </div>
 
           {/* 
@@ -462,7 +434,7 @@ export const FeaturesStage = () => {
             Kolom Kanan = Panel Deskripsi Teks (sejajar vertikal di tengah/middle).
           */}
           <div
-            className={`absolute inset-0 flex items-center justify-center pt-16 sm:pt-20 pb-12 sm:pb-14 px-4 sm:px-8 pointer-events-none transition-opacity duration-500 z-20 ${
+            className={`absolute inset-0 flex items-center justify-center pt-16 sm:pt-20 pb-12 sm:pb-14 px-4 sm:px-8 pointer-events-none transition-opacity duration-200 z-20 ${
               !isIntro && !sceneState.isExit
                 ? "opacity-100 pointer-events-auto"
                 : "opacity-0 pointer-events-none"
@@ -474,7 +446,14 @@ export const FeaturesStage = () => {
                 <div
                   ref={slotFeatureRef}
                   className="w-full max-w-xs sm:max-w-sm md:max-w-[380px] h-[45svh] max-h-[400px] pointer-events-none"
-                />
+                >
+                  {!USE_3D_MODELS && (
+                    <FeatureIllustration
+                      key={isIntro ? "idle" : activeFeature.id}
+                      id={activeFeature.id}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Kolom Kanan: Panel Deskripsi */}
@@ -482,6 +461,8 @@ export const FeaturesStage = () => {
                 <FeatureDescriptionPanel
                   key={activeFeature.id}
                   feature={activeFeature}
+                  index={sceneState.modelIndex}
+                  total={MAIN_FEATURES_3D.length}
                   isActive={!isIntro && !sceneState.isExit}
                   isMobile={isMobile}
                   isReducedMotion={prefersReducedMotion}
@@ -512,7 +493,7 @@ export const FeaturesStage = () => {
                     onClick={() => handleSelectFeature(idx)}
                     className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
                       isActive
-                        ? "w-7 bg-cyan-400 shadow-[0_0_12px_rgba(14,165,233,0.8)]"
+                        ? "w-7 bg-white"
                         : "w-2 bg-white/25 hover:bg-white/50"
                     }`}
                   />
@@ -525,14 +506,31 @@ export const FeaturesStage = () => {
 
       {/* 
         Section Fitur Pendukung (Dan Masih Banyak Lagi):
-        Diletakkan SETELAH pembungkus 700vh dengan latar opak dan z-20 agar TIDAK menimpa Fitur 5 (Perbaikan F4).
+        Diletakkan SETELAH pembungkus 460vh dengan latar opak dan z-20 agar TIDAK menimpa Fitur 5 (Perbaikan F4).
+        Perpotongan dengan section berikutnya dibuat menyatu mulus dalam tema kanvas bahari.
       */}
       <section
         id="secondary-features"
-        className="relative z-20 bg-[#020b17] text-white py-20 mt-0"
+        className="relative z-20 bg-[#020b17] text-white pt-16 pb-0 mt-0 overflow-hidden"
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <SecondaryFeatures features={SECONDARY_FEATURES} />
+        </div>
+
+        {/* Transisi Ombak Halus Menuju Pesisir Cilacap & Mengapa Wisatawan Memilih Platform SUAR */}
+        <div className="relative w-full overflow-hidden leading-none -mb-px mt-16" aria-hidden="true">
+          <svg
+            viewBox="0 0 1440 96"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full h-14 sm:h-20 block"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0,42 C320,85 640,15 960,58 C1200,88 1360,35 1440,42 L1440,96 L0,96 Z"
+              fill="#F8FAFC"
+            />
+          </svg>
         </div>
       </section>
     </WebGLErrorBoundary>

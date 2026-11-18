@@ -57,8 +57,8 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
     {
       active: displayedIndex !== null,
       forceComplete,
-      msPerChar: isReducedMotion ? 0 : 30, // 30ms per char untuk Hero
-      lineDelay: 90,
+      msPerChar: isReducedMotion ? 0 : 16, // 16ms per char: judul tampil cepat
+      lineDelay: 60,
       fadeOutDuration: 300,
       onLine2Start: () => {
         if (displayedIndex === 0 && onLine2Start) {
@@ -123,10 +123,10 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
       // aku ingin agar munculkan full teks title, lalu baru berganti ke title selanjutnya"
       setForceComplete(true);
 
-      // Tahan teks penuh selama 450ms agar pengguna sempat membaca title dengan nyaman
+      // Tahan teks penuh singkat (150ms) sebelum berganti
       transitionTimerRef.current = setTimeout(() => {
         performFadeAndSwitch();
-      }, 450);
+      }, 150);
     } else {
       // Jika pengetikan sudah selesai sebelumnya, langsung lakukan fade out dan ganti title
       performFadeAndSwitch();

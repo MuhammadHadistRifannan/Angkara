@@ -101,3 +101,24 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Ilustrasi garis panggung fitur: efek gambar-garis singkat (FeatureIllustration) */
+@keyframes suar-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.suar-draw .d {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: suar-draw 0.7s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suar-draw .d {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
