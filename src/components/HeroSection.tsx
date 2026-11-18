@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,7 +8,6 @@ import {
   Calendar,
   Users,
   Compass,
-  MessageSquare,
   ArrowRight,
   Anchor,
   Waves,
@@ -20,9 +18,11 @@ import heroBgSea from "@/assets/hero-bg-sea.png";
 import heroBoatCard from "@/assets/hero-boat-card.png";
 
 export const HeroSection: React.FC = () => {
-  const navigate = useNavigate();
   const containerRef = useRef<HTMLElement>(null);
-  const [departurePoint, setDeparturePoint] = useState("Teluk Penyu");
+  // Tujuan — diseragamkan dengan peta, paket tour, dan destinasi (4 tujuan):
+  // Pantai Karang Bolong, Pantai Permisan, Mercusuar Cimiring, Laguna Segara Anakan.
+  // Keberangkatan selalu dari Teluk Penyu (Dermaga Pandanarang).
+  const [departurePoint, setDeparturePoint] = useState("Pantai Karang Bolong");
   const [departureDate, setDepartureDate] = useState("");
   const [passengers, setPassengers] = useState(2);
 
@@ -125,22 +125,6 @@ export const HeroSection: React.FC = () => {
     mouseY.set(0);
   };
 
-  const handleAskJuruMudi = () => {
-    const prompt = `Halo Juru Mudi! Bagaimana rekomendasi jadwal dan kondisi cuaca maritim untuk perjalanan ke Nusakambangan dari ${departurePoint}?`;
-    try {
-      sessionStorage.setItem("pending_assistant_prompt", prompt);
-    } catch (e) {
-      console.warn("Gagal menyimpan prompt:", e);
-    }
-    window.dispatchEvent(
-      new CustomEvent("open-assistant", {
-        detail: {
-          prompt,
-        },
-      })
-    );
-    navigate("/dashboard");
-  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,7 +222,7 @@ export const HeroSection: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.15, ease: "easeOut" }}
               className="text-base sm:text-lg text-slate-200/90 max-w-2xl leading-relaxed"
             >
-              Platform wisata bahari pesisir Cilacap & Nusakambangan dengan sistem keselamatan maritim real-time, panduan AI Juru Mudi, dan perahu terverifikasi KSOP.
+              Platform wisata bahari pesisir Cilacap & Nusakambangan dengan sistem keselamatan maritim real-time, panduan Juru Mudi AI, dan perahu terverifikasi KSOP.
             </motion.p>
 
             {/* Tombol CTA */}
@@ -263,15 +247,6 @@ export const HeroSection: React.FC = () => {
                 <Compass className="h-4 w-4 text-cyan-400" />
                 <span>Lihat Peta Cuaca Maritim</span>
               </a>
-
-              <button
-                type="button"
-                onClick={handleAskJuruMudi}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-accent/20 hover:bg-accent/30 border border-accent/40 text-cyan-200 font-medium text-sm transition-all duration-300"
-              >
-                <MessageSquare className="h-4 w-4 text-accent" />
-                <span>Tanya Juru Mudi</span>
-              </button>
             </motion.div>
           </motion.div>
 
@@ -406,17 +381,17 @@ export const HeroSection: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
                     <MapPin className="h-3.5 w-3.5 text-primary-light" />
-                    <span>Dermaga / Rute</span>
+                    <span>Tujuan</span>
                   </label>
                   <select
                     value={departurePoint}
                     onChange={(e) => setDeparturePoint(e.target.value)}
                     className="w-full h-11 px-3 py-2 text-sm bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 text-white font-medium backdrop-blur-sm"
                   >
-                    <option value="Teluk Penyu" className="bg-slate-900 text-white">Teluk Penyu</option>
-                    <option value="Pelabuhan Tanjung Intan" className="bg-slate-900 text-white">Pelabuhan Tanjung Intan</option>
-                    <option value="Pulau Nusakambangan" className="bg-slate-900 text-white">Pulau Nusakambangan</option>
-                    <option value="Wisata Mangrove Segara Anakan" className="bg-slate-900 text-white">Mangrove Segara Anakan</option>
+                    <option value="Pantai Karang Bolong" className="bg-slate-900 text-white">Pantai Karang Bolong</option>
+                    <option value="Pantai Permisan" className="bg-slate-900 text-white">Pantai Permisan</option>
+                    <option value="Mercusuar Cimiring" className="bg-slate-900 text-white">Mercusuar Cimiring</option>
+                    <option value="Laguna Segara Anakan" className="bg-slate-900 text-white">Laguna Segara Anakan</option>
                   </select>
                 </div>
 
@@ -478,7 +453,6 @@ export const HeroSection: React.FC = () => {
           />
         </svg>
       </div>
-
     </section>
   );
 };

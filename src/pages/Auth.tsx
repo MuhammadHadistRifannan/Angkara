@@ -16,6 +16,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [signupRole, setSignupRole] = useState<"tourist" | "operator">("tourist");
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
 
   // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard sesuai perannya
   useEffect(() => {
@@ -36,6 +37,10 @@ const Auth = () => {
     const fullName = formData.get("full-name") as string;
     const companyName = (formData.get("company-name") as string) || fullName;
     const phone = (formData.get("operator-phone") as string) || "-";
+    const address = (formData.get("operator-address") as string) || undefined;
+    const ksopCertificate = (formData.get("ksop-certificate") as string) || undefined;
+    const homePort = (formData.get("home-port") as string) || undefined;
+    const boatCount = (formData.get("boat-count") as string) || undefined;
 
     const isOperator = signupRole === "operator";
 
@@ -49,6 +54,10 @@ const Auth = () => {
           role: isOperator ? "operator" : "tourist",
           company_name: isOperator ? companyName : undefined,
           phone: isOperator ? phone : undefined,
+          address: isOperator ? address : undefined,
+          ksop_certificate: isOperator ? ksopCertificate : undefined,
+          home_port: isOperator ? homePort : undefined,
+          boat_count: isOperator ? boatCount : undefined,
         },
       },
     });
@@ -61,6 +70,9 @@ const Auth = () => {
           company_name: companyName,
           email: email.trim().toLowerCase(),
           phone: phone,
+          // Kolom ini memang ada di tabel operators (lihat migrasi awal).
+          address: address ?? null,
+          ksop_certificate: ksopCertificate ?? null,
           verified: true,
         });
       } catch (opErr) {
@@ -113,8 +125,12 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 py-8">
+      <Card
+        className={`w-full max-h-[92vh] overflow-y-auto transition-all duration-300 ${
+          activeTab === "signup" && signupRole === "operator" ? "max-w-2xl" : "max-w-md"
+        }`}
+      >
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img src="/logo.png" alt="SUAR Logo" className="h-9 w-auto object-contain" />
@@ -123,7 +139,7 @@ const Auth = () => {
           <CardDescription>Berlayar Aman, Berdaya Bersama di Pesisir Cilacap</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "signin" | "signup")} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Masuk</TabsTrigger>
               <TabsTrigger value="signup">Daftar</TabsTrigger>
@@ -223,8 +239,8 @@ const Auth = () => {
                 </div>
 
                 {signupRole === "operator" && (
-                  <>
-                    <div className="space-y-2 animate-in fade-in duration-200">
+                  <div className="grid gap-4 md:grid-cols-2 animate-in fade-in duration-200">
+                    <div className="space-y-2">
                       <Label htmlFor="company-name">Nama Perusahaan / Usaha Kapal</Label>
                       <Input
                         id="company-name"
@@ -234,7 +250,7 @@ const Auth = () => {
                         required
                       />
                     </div>
-                    <div className="space-y-2 animate-in fade-in duration-200">
+                    <div className="space-y-2">
                       <Label htmlFor="operator-phone">Nomor Telepon / WhatsApp</Label>
                       <Input
                         id="operator-phone"
@@ -244,7 +260,53 @@ const Auth = () => {
                         required
                       />
                     </div>
-                  </>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="operator-address">Alamat Usaha / Dermaga</Label>
+                      <Input
+                        id="operator-address"
+                        name="operator-address"
+                        type="text"
+                        placeholder="Contoh: Jl. Dermaga Pandanarang, Teluk Penyu, Cilacap"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ksop-certificate">Nomor Sertifikat KSOP (opsional)</Label>
+                      <Input
+                        id="ksop-certificate"
+                        name="ksop-certificate"
+                        type="text"
+                        placeholder="Contoh: KSOP/CLP/2026/014"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="home-port">Dermaga Utama</Label>
+                      <select
+                        id="home-port"
+                        name="home-port"
+                        defaultValue="Teluk Penyu"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="Teluk Penyu">Teluk Penyu (Dermaga Pandanarang)</option>
+                        <option value="Tanjung Intan">Pelabuhan Tanjung Intan</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="boat-count">Jumlah Kapal yang Dioperasikan</Label>
+                      <Input
+                        id="boat-count"
+                        name="boat-count"
+                        type="number"
+                        min={1}
+                        max={50}
+                        placeholder="Contoh: 3"
+                      />
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-slate-400 md:col-span-2">
+                      Data ini dipakai untuk profil operator dan verifikasi armada. Nomor sertifikat KSOP
+                      dan alamat usaha tersimpan di profil operator; dermaga dan jumlah kapal tersimpan
+                      di data akun.
+                    </p>
+                  </div>
                 )}
 
                 <div className="space-y-2">

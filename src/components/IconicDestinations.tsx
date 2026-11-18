@@ -1,20 +1,30 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { Compass, Landmark, Trees } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import imgKarangBolong from "@/assets/dest-karang-bolong.jpg";
 import imgMercusuarCimiring from "@/assets/dest-mercusuar-cimiring.png";
 import imgSegaraAnakan from "@/assets/dest-segara-anakan.png";
+import imgPermisan from "@/assets/tour-teluk-penyu.png";
 
 const destinations = [
   {
     id: "karang-bolong",
-    title: "Pantai Karang Bolong & Benteng",
+    title: "Pantai Karang Bolong",
     tag: "PENYEBERANGAN 15 MENIT",
     icon: Compass,
     description:
-      "Pasir putih eksotis di sisi timur Pulau Nusakambangan yang berpadu dengan situs cagar benteng kolonial bersejarah.",
+      "Pasir putih eksotis di sisi timur Pulau Nusakambangan, dengan formasi karang berlubang yang menjadi ikon pesisir Cilacap.",
     image: imgKarangBolong,
+  },
+  {
+    id: "permisan",
+    title: "Pantai Permisan",
+    tag: "PASIR PUTIH NUSAKAMBANGAN",
+    icon: Compass,
+    description:
+      "Pantai pasir putih di Pulau Nusakambangan, tujuan penyeberangan paling populer untuk wisata keluarga dari Teluk Penyu.",
+    image: imgPermisan,
   },
   {
     id: "mercusuar-cimiring",
@@ -72,21 +82,22 @@ export const IconicDestinations: React.FC = () => {
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Destinasi Ikonik
-            <span className="block mt-1">di Pantai Nusakambangan</span>
+            <span className="block mt-1">di Pesisir Cilacap</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            Jelajahi keajaiban bentang alam karst selatan, peninggalan benteng kolonial, dan
-            mercusuar legendaris yang hanya dapat diakses melalui jalur laut yang aman.
+            Empat tujuan wisata bahari dari Teluk Penyu: Pantai Karang Bolong, Pantai
+            Permisan, Mercusuar Cimiring, dan Laguna Segara Anakan — semuanya hanya dapat
+            diakses melalui jalur laut.
           </p>
         </motion.div>
 
-        {/* 3 Cards */}
+        {/* 4 Cards — diseragamkan dengan widget, peta & paket tour */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
-          className="grid md:grid-cols-3 gap-6 sm:gap-8"
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
         >
           {destinations.map((item) => {
             const Icon = item.icon;

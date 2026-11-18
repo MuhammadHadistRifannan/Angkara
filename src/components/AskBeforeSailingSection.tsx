@@ -1,13 +1,27 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Zap, Send, Ship } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { AuthModal } from "@/components/AuthModal";
 
 export const AskBeforeSailingSection: React.FC = () => {
-  const navigate = useNavigate();
   const [questionInput, setQuestionInput] = useState("");
+  const [authOpen, setAuthOpen] = useState(false);
 
-  const handleSendQuestion = (e: React.FormEvent) => {
+  // Chat butuh login. Kalau belum login, simpan pertanyaan lalu buka popup
+  // login (AuthModal) — pengguna tetap di landing. Kalau sudah login, buka
+  // popup chat Juru Mudi AI (AssistantWidget, sudah terpasang di Index) di sini.
+  const openAssistantWith = (prompt: string) => {
+    window.dispatchEvent(
+      new CustomEvent("open-assistant", {
+        detail: {
+          prompt,
+        },
+      })
+    );
+  };
+
+  const handleSendQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     const promptToSend =
       questionInput.trim() ||
@@ -19,25 +33,36 @@ export const AskBeforeSailingSection: React.FC = () => {
       console.warn("Gagal menyimpan prompt:", err);
     }
 
-    window.dispatchEvent(
-      new CustomEvent("open-assistant", {
-        detail: {
-          prompt: promptToSend,
-        },
-      })
-    );
-    navigate("/dashboard");
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      setAuthOpen(true);
+      return;
+    }
+    openAssistantWith(promptToSend);
+    setQuestionInput("");
+  };
+
+  // Setelah login berhasil dari popup: tutup popup, buka chat dengan
+  // pertanyaan yang tadi disimpan.
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    try {
+      const prompt = sessionStorage.getItem("pending_assistant_prompt");
+      if (prompt) openAssistantWith(prompt);
+    } catch (err) {
+      console.warn("Gagal membaca prompt tersimpan:", err);
+    }
     setQuestionInput("");
   };
 
   const handleSelectBoat = () => {
-    navigate("/booking?boat=sri-rejeki-03");
+    document.getElementById("boats")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section id="tanya-sebelum-berlayar" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
+    <section id="tanya-sebelum-berlayar" className="py-12 sm:py-16 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* Left Column: Descriptive info & Key Points matching Image 5 */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -53,14 +78,14 @@ export const AskBeforeSailingSection: React.FC = () => {
             </div>
 
             {/* Title */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-[1.15]">
               Tanya Apa Saja Sebelum Berlayar ke Laut Selatan
             </h2>
 
             {/* Description */}
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
               Tidak perlu ragu menanyakan kondisi gelombang, kelayakan kapal kayu untuk anak-anak, atau
-              estimasi waktu pasang surut. <strong className="text-slate-900 font-bold">SUAR AI Navigator</strong> terhubung langsung ke telemetri BMKG Stasiun Meteorologi Tunggul Wulung dan izin syahbandar KSOP Cilacap.
+              estimasi waktu pasang surut. <strong className="text-slate-900 font-bold">Juru Mudi AI</strong> memakai prakiraan gelombang sebagai panduan sebelum berangkat — keputusan akhir tetap mengikuti instruksi resmi KSOP Cilacap.
             </p>
 
             {/* 3 Checklist Items */}
@@ -89,7 +114,7 @@ export const AskBeforeSailingSection: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Column: AI Navigator Window Mockup matching Image 5 */}
+          {/* Right Column: Juru Mudi AI Window Mockup matching Image 5 */}
           <motion.div
             initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -104,17 +129,19 @@ export const AskBeforeSailingSection: React.FC = () => {
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                     <Zap className="h-4 w-4 text-cyan-400" />
                   </div>
-                  <span className="font-bold text-sm tracking-tight">SUAR AI Navigator</span>
+                  <span className="font-bold text-sm tracking-tight">Juru Mudi AI</span>
+                  <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300 border border-amber-400/40">
+                    Contoh
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-                  <span>Teluk Penyu Online</span>
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Contoh percakapan</span>
                 </div>
               </div>
 
               {/* Chat Canvas */}
-              <div className="p-5 sm:p-6 bg-slate-50/50 space-y-4">
+              <div className="max-h-[360px] overflow-y-auto p-4 sm:p-5 bg-slate-50/50 space-y-4">
                 {/* User Message Bubble */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -147,7 +174,7 @@ export const AskBeforeSailingSection: React.FC = () => {
 
                   <div className="flex-1 bg-white border border-slate-200/90 rounded-2xl rounded-tl-sm p-4 sm:p-5 shadow-sm text-xs sm:text-sm">
                     <p className="text-slate-800 leading-relaxed mb-3">
-                      Halo! Berdasarkan prakiraan resmi <strong className="font-bold text-slate-900">BMKG Stasiun Tunggul Wulung</strong> besok pukul <strong className="font-bold text-slate-900">07.00 – 11.00 WIB</strong>, kondisi perairan Teluk Penyu sangat bersahabat:
+                      Halo! Berdasarkan contoh prakiraan besok pukul <strong className="font-bold text-slate-900">07.00 – 11.00 WIB</strong>, kondisi perairan Teluk Penyu sangat bersahabat:
                     </p>
 
                     {/* Blue Telemetry Box */}
@@ -161,7 +188,7 @@ export const AskBeforeSailingSection: React.FC = () => {
                         <span className="font-bold text-slate-900">10 knot (Tenggara)</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-600">Status Ijin KSOP:</span>
+                        <span className="text-slate-600">Status Pelayaran:</span>
                         <span className="font-bold text-emerald-600">HIJAU (Aman Berlayar)</span>
                       </div>
                       <div className="pt-1.5 border-t border-sky-200/60 flex justify-between items-center text-[11px]">
@@ -208,6 +235,12 @@ export const AskBeforeSailingSection: React.FC = () => {
                 </motion.div>
               </div>
 
+              {/* Penjelasan contoh — supaya pengunjung tidak mengira ini jawaban live */}
+              <p className="px-5 sm:px-6 pt-3 pb-1 text-[11px] leading-relaxed text-slate-400 bg-slate-50/50">
+                Percakapan di atas hanya contoh — angka gelombang dan statusnya ilustrasi, bukan data live.
+                Untuk jawaban sungguhan, ketik pertanyaanmu di kolom bawah. Kamu akan diminta masuk dulu (popup di halaman ini), lalu chat Juru Mudi AI terbuka.
+              </p>
+
               {/* Chat Input Bar */}
               <form onSubmit={handleSendQuestion} className="p-4 bg-white border-t border-slate-200/90 flex items-center gap-2">
                 <input
@@ -231,6 +264,8 @@ export const AskBeforeSailingSection: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
     </section>
   );
 };

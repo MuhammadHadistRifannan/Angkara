@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
 import imgTourMangrove from "@/assets/tour-mangrove-anakan.png";
 import imgTourMancing from "@/assets/tour-mancing-mercusuar.png";
@@ -8,6 +9,7 @@ import imgTourMancing from "@/assets/tour-mancing-mercusuar.png";
 interface TourPackageItem {
   id: string;
   title: string;
+  destination: string;
   category: "all" | "keluarga" | "mangrove" | "mancing";
   badge: string;
   duration: string;
@@ -24,12 +26,13 @@ const defaultTourPackages: TourPackageItem[] = [
   {
     id: "pkg-teluk-penyu",
     title: "Penyeberangan Teluk Penyu – Pantai Pasir Putih Permisan",
+    destination: "Pantai Permisan",
     category: "keluarga",
     badge: "Terpopuler Keluarga",
     duration: "15 Menit",
     distance: "2,5 km",
     description:
-      "Menyeberangi selat tenang menuju pulau legendaris Nusakambangan. Jelajah pantai pasir putih alami dengan ombak teduh yang ramah keluarga.",
+      "Menyeberangi selat tenang menuju Pantai Permisan di Nusakambangan. Jelajah pantai pasir putih alami dengan ombak teduh yang ramah keluarga.",
     tags: ["Perairan Tenang", "Gratis Pelampung Anak"],
     pricingType: "Mulai dari",
     price: 35000,
@@ -39,6 +42,7 @@ const defaultTourPackages: TourPackageItem[] = [
   {
     id: "pkg-segara-anakan",
     title: "Jelajah Hutan Mangrove & Laguna Segara Anakan",
+    destination: "Laguna Segara Anakan",
     category: "mangrove",
     badge: "Ekowisata Edukasi",
     duration: "2 Jam",
@@ -54,6 +58,7 @@ const defaultTourPackages: TourPackageItem[] = [
   {
     id: "pkg-mancing-mercusuar",
     title: "Trip Memancing & View Mercusuar Cimiring 1870",
+    destination: "Mercusuar Cimiring",
     category: "mancing",
     badge: "Trip Petualangan & Mancing",
     duration: "4 Jam",
@@ -68,13 +73,14 @@ const defaultTourPackages: TourPackageItem[] = [
   },
   {
     id: "pkg-sunset-karang-bolong",
-    title: "Sunset Teluk Penyu – Karang Bolong",
+    title: "Sunset Teluk Penyu – Pantai Karang Bolong",
+    destination: "Pantai Karang Bolong",
     category: "keluarga",
     badge: "Wisata Keluarga",
     duration: "2 Jam",
     distance: "4 km",
     description:
-      "Berlayar sore dari Teluk Penyu menuju Karang Bolong, pulang saat matahari terbenam di Laut Selatan.",
+      "Berlayar sore dari Teluk Penyu menuju Pantai Karang Bolong, pulang saat matahari terbenam di Laut Selatan.",
     tags: ["Perairan Tenang", "Spot Foto Sunset"],
     pricingType: "Mulai dari",
     price: 75000,
@@ -83,13 +89,14 @@ const defaultTourPackages: TourPackageItem[] = [
   },
   {
     id: "pkg-snorkeling-karang-bolong",
-    title: "Snorkeling Karang Bolong & Benteng Pendem",
+    title: "Snorkeling Pantai Karang Bolong",
+    destination: "Pantai Karang Bolong",
     category: "keluarga",
     badge: "Wisata Keluarga",
     duration: "3 Jam",
     distance: "6 km",
     description:
-      "Snorkeling di perairan jernih Karang Bolong lalu singgah melihat Benteng Pendem dari laut.",
+      "Snorkeling di perairan jernih Pantai Karang Bolong dengan pemandu lokal.",
     tags: ["Alat Snorkeling", "Pemandu Lokal"],
     pricingType: "Mulai dari",
     price: 150000,
@@ -98,7 +105,8 @@ const defaultTourPackages: TourPackageItem[] = [
   },
   {
     id: "pkg-susur-tambak",
-    title: "Susur Sungai & Tambak Kepiting Segara Anakan",
+    title: "Susur Sungai & Tambak Kepiting Laguna Segara Anakan",
+    destination: "Laguna Segara Anakan",
     category: "mangrove",
     badge: "Ekowisata Edukasi",
     duration: "3 Jam",
@@ -114,6 +122,7 @@ const defaultTourPackages: TourPackageItem[] = [
   {
     id: "pkg-mancing-malam",
     title: "Mancing Malam & Sunrise Mercusuar Cimiring",
+    destination: "Mercusuar Cimiring",
     category: "mancing",
     badge: "Trip Petualangan & Mancing",
     duration: "6 Jam",
@@ -128,7 +137,8 @@ const defaultTourPackages: TourPackageItem[] = [
   },
   {
     id: "pkg-nusakambangan-sehari",
-    title: "Jelajah Nusakambangan Sehari – Permisan + Mercusuar",
+    title: "Jelajah Sehari – Permisan, Karang Bolong & Mercusuar Cimiring",
+    destination: "Pantai Permisan, Pantai Karang Bolong & Mercusuar Cimiring",
     category: "keluarga",
     badge: "Terpopuler Keluarga",
     duration: "6 Jam",
@@ -143,7 +153,7 @@ const defaultTourPackages: TourPackageItem[] = [
   },
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -154,7 +164,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
@@ -277,9 +287,12 @@ export const TourPackagesSection: React.FC = () => {
 
                 {/* Body Content */}
                 <div className="p-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2.5 leading-snug line-clamp-2 group-hover:text-sky-800 transition-colors">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1.5 leading-snug line-clamp-2 group-hover:text-sky-800 transition-colors">
                     {pkg.title}
                   </h3>
+                  <p className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold text-sky-700">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" /> Tujuan: {pkg.destination}
+                  </p>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4 line-clamp-2">
                     {pkg.description}
                   </p>

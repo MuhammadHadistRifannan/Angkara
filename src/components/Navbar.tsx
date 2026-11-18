@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { checkIsOperator } from "@/lib/authRoles";
 import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
+import { AuthModal } from "@/components/AuthModal";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isOperator, setIsOperator] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeId, setActiveId] = useState<string>("beranda");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
 
   const handleLogout = async () => {
     setIsMenuOpen(false);
@@ -53,15 +57,61 @@ const Navbar = () => {
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+      if (location.pathname === "/" && window.scrollY < 300) {
+        setActiveId("beranda");
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
 
+    // Scroll-spy: section yang sedang terlihat di tengah layar jadi aktif.
+    const sectionIds = ["features", "how-it-works", "weather-map-section", "pilihan-paket-tour"];
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        }
+      },
+      { rootMargin: "-40% 0px -55% 0px" }
+    );
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    // Halaman terpisah: link yang cocok dengan URL jadi aktif.
+    if (location.pathname === "/permit-info") setActiveId("permit-info");
+
     return () => {
       subscription.unsubscribe();
       window.removeEventListener("scroll", handleScroll);
+      observer.disconnect();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname]);
+
+  const goToSection = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    setActiveId(id);
+    setIsMenuOpen(false);
+    if (id === "beranda") {
+      if (!isLandingPage) navigate("/");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!isLandingPage) {
+      navigate(`/#${id}`);
+      return;
+    }
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Gaya link: aktif = teks cyan + garis bawah; biasa = abu-abu, hover cyan.
+  const linkClass = (id: string) =>
+    `relative px-1 py-1.5 text-sm font-medium transition-colors ${
+      activeId === id
+        ? "text-cyan-300 after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-cyan-400"
+        : "text-slate-200/90 hover:text-cyan-300 hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+    }`;
 
   const dashboardPath = isOperator ? "/operator-dashboard" : "/dashboard";
   const dashboardLabel = isOperator ? "Dashboard Operator" : "Dashboard";
@@ -90,37 +140,35 @@ const Navbar = () => {
             />
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation — Beranda ditambahkan di paling kiri */}
           <div className="hidden md:flex items-center gap-7">
-            <a
-              href="/#features"
-              className="text-sm font-medium text-slate-200/90 hover:text-cyan-300 transition-colors hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
-            >
+            <a href="/" onClick={(e) => goToSection(e, "beranda")} className={linkClass("beranda")}>
+              Beranda
+            </a>
+            <a href="/#features" onClick={(e) => goToSection(e, "features")} className={linkClass("features")}>
               Fitur
             </a>
-            <a
-              href="/#how-it-works"
-              className="text-sm font-medium text-slate-200/90 hover:text-cyan-300 transition-colors hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
-            >
+            <a href="/#how-it-works" onClick={(e) => goToSection(e, "how-it-works")} className={linkClass("how-it-works")}>
               Cara Kerja
             </a>
             <a
               href="/#weather-map-section"
-              className="text-sm font-medium text-slate-200/90 hover:text-cyan-300 transition-colors hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)] flex items-center gap-1.5"
+              onClick={(e) => goToSection(e, "weather-map-section")}
+              className={`${linkClass("weather-map-section")} flex items-center gap-1.5`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>Peta Cuaca</span>
             </a>
+            {/* Paket Tour mengarah ke section di landing (bukan /tour-packages
+                yang masih "Gagal memuat paket tour") */}
             <a
-              href="/tour-packages"
-              className="text-sm font-medium text-slate-200/90 hover:text-cyan-300 transition-colors hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+              href="/#pilihan-paket-tour"
+              onClick={(e) => goToSection(e, "pilihan-paket-tour")}
+              className={linkClass("pilihan-paket-tour")}
             >
               Paket Tour
             </a>
-            <a
-              href="/permit-info"
-              className="text-sm font-medium text-slate-200/90 hover:text-cyan-300 transition-colors hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
-            >
+            <a href="/permit-info" className={linkClass("permit-info")}>
               Perizinan
             </a>
           </div>
@@ -150,7 +198,10 @@ const Navbar = () => {
               <>
                 <button
                   type="button"
-                  onClick={() => navigate("/auth")}
+                  onClick={() => {
+                    setAuthTab("signin");
+                    setAuthOpen(true);
+                  }}
                   className="px-4 py-2 text-sm font-semibold text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/40 rounded-xl shadow-sm hover:shadow-cyan-500/20 transition-all duration-200"
                 >
                   Masuk
@@ -159,7 +210,10 @@ const Navbar = () => {
                 <Button
                   variant="hero"
                   size="sm"
-                  onClick={() => navigate("/auth")}
+                  onClick={() => {
+                    setAuthTab("signup");
+                    setAuthOpen(true);
+                  }}
                   className="px-5 py-2 text-sm font-semibold text-white rounded-xl shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.03] transition-all duration-200"
                 >
                   Daftar
@@ -183,40 +237,31 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden py-5 px-4 mt-2 rounded-2xl bg-[#090D16]/95 backdrop-blur-2xl border border-white/15 shadow-2xl space-y-4 animate-in fade-in slide-in-from-top-4 duration-200">
             <div className="flex flex-col gap-3">
-              <a
-                href="/#features"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors"
-              >
+              <a href="/" onClick={(e) => goToSection(e, "beranda")} className={linkClass("beranda")}>
+                Beranda
+              </a>
+              <a href="/#features" onClick={(e) => goToSection(e, "features")} className={linkClass("features")}>
                 Fitur
               </a>
-              <a
-                href="/#how-it-works"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors"
-              >
+              <a href="/#how-it-works" onClick={(e) => goToSection(e, "how-it-works")} className={linkClass("how-it-works")}>
                 Cara Kerja
               </a>
               <a
                 href="/#weather-map-section"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors flex items-center gap-2"
+                onClick={(e) => goToSection(e, "weather-map-section")}
+                className={`${linkClass("weather-map-section")} flex items-center gap-2`}
               >
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 <span>Peta Cuaca Maritim</span>
               </a>
               <a
-                href="/tour-packages"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors"
+                href="/#pilihan-paket-tour"
+                onClick={(e) => goToSection(e, "pilihan-paket-tour")}
+                className={linkClass("pilihan-paket-tour")}
               >
                 Paket Tour
               </a>
-              <a
-                href="/permit-info"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors"
-              >
+              <a href="/permit-info" onClick={() => setIsMenuOpen(false)} className={linkClass("permit-info")}>
                 Perizinan
               </a>
             </div>
@@ -249,7 +294,8 @@ const Navbar = () => {
                     className="w-full bg-cyan-500/10 text-cyan-300 border-cyan-400/40 hover:bg-cyan-500/20 rounded-xl font-semibold"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      navigate("/auth");
+                      setAuthTab("signin");
+                      setAuthOpen(true);
                     }}
                   >
                     Masuk
@@ -259,7 +305,8 @@ const Navbar = () => {
                     className="w-full rounded-xl font-semibold shadow-lg"
                     onClick={() => {
                       setIsMenuOpen(false);
-                      navigate("/auth");
+                      setAuthTab("signup");
+                      setAuthOpen(true);
                     }}
                   >
                     Daftar Sekarang
@@ -270,6 +317,13 @@ const Navbar = () => {
           </div>
         )}
       </div>
+
+      <AuthModal
+        open={authOpen}
+        initialTab={authTab}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={() => setAuthOpen(false)}
+      />
     </nav>
   );
 };

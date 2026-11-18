@@ -180,7 +180,7 @@ const Dashboard = () => {
               className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-[#090D16] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-2"
             >
               <Bot className="h-4 w-4 text-cyan-400" />
-              <span>Juru Mudi AI Navigator</span>
+              <span>Juru Mudi AI</span>
             </TabsTrigger>
           </TabsList>
 
@@ -271,7 +271,7 @@ const Dashboard = () => {
                       className="rounded-xl font-bold text-xs gap-1.5"
                     >
                       <Bot className="h-4 w-4 text-cyan-600" />
-                      <span>Tanya AI Navigator</span>
+                      <span>Tanya Juru Mudi AI</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -439,7 +439,7 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
-          {/* TAB 2: Juru Mudi AI Navigator (Opsi B: Full-Page ChatGPT/Gemini Style) */}
+          {/* TAB 2: Juru Mudi AI (Opsi B: Full-Page ChatGPT/Gemini Style) */}
           <TabsContent value="ai-chat" className="animate-in fade-in duration-200">
             <FullPageAssistant />
           </TabsContent>

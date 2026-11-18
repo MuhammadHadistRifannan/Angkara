@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -176,7 +176,7 @@ const defaultFleet: FleetBoat[] = [
   },
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -187,7 +187,7 @@ const containerVariants = {
   },
 };
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,

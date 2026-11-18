@@ -11,6 +11,7 @@ import ReadyFleetSection from "@/components/ReadyFleetSection";
 import AskBeforeSailingSection from "@/components/AskBeforeSailingSection";
 import Footer from "@/components/Footer";
 import { WeatherMapPanel } from "@/components/weather/WeatherMapPanel";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 const Index: React.FC = () => {
   return (
@@ -42,31 +43,13 @@ const Index: React.FC = () => {
       {/* 9. Tanya Apa Saja Sebelum Berlayar (Image 5) */}
       <AskBeforeSailingSection />
 
-      {/* 10. Dedicated Maritime Weather Map Section with Smooth Reveal */}
-      <section className="py-20 sm:py-24 bg-[#F8FAFC] border-t border-slate-200/60 overflow-hidden" id="weather-map-section">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.65, ease: "easeOut" }}
-            className="max-w-6xl mx-auto"
-          >
-            <div className="text-center max-w-2xl mx-auto mb-10">
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mt-3">
-                Pemantauan Kondisi Cuaca Perairan Cilacap
-              </h2>
-              <p className="text-sm sm:text-base text-slate-600 mt-2">
-                Data terintegrasi BMKG Stasiun Meteorologi Tunggul Wulung & satelit Open-Meteo untuk keselamatan penyeberangan Anda.
-              </p>
-            </div>
-            <WeatherMapPanel />
-          </motion.div>
-        </div>
-      </section>
+      {/* 10. Peta Kelaikan Pelayaran */}
+      <WeatherMapPanel />
+
 
       {/* 11. Footer with SUAR Oceanic Theme */}
-      <Footer />
+      <Footer /> <AssistantWidget />
+
     </div>
   );
 };
