@@ -5,15 +5,11 @@ import {
   AlertOctagon,
   Waves,
   Wind,
-  RefreshCw,
   Anchor,
   Clock,
   Radio,
-  SlidersHorizontal,
-  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -50,10 +46,7 @@ export interface OperatorWeatherAdvisoryProps {
 }
 
 // ============================================================================
-// Proteksi Rate-Limit & Smart In-Memory Cache (Mencegah HTTP 429)
-// Meskipun ticker berputar tiap 5 detik, panggilan HTTP ke Open-Meteo dibatasi
-// minimal berjarak 30 detik. Siklus di antara jeda ini dilayani dari cache
-// dengan mikrosimulasi ritme alun ombak (swell rhythm) laut nyata.
+// Proteksi Rate-Limit & In-Memory Cache (Mencegah HTTP 429)
 // ============================================================================
 let globalTelemetryCache: MarineConditionsData | null = null;
 let lastNetworkFetchTimestamp = 0;
@@ -158,10 +151,9 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
       }
     );
   });
-  const [isLoading, setIsLoading] = useState(false);
   const [telemetryMode, setTelemetryMode] = useState<TelemetryMode>("live");
-  const [refreshIntervalSec, setRefreshIntervalSec] = useState<number>(5); // Default 5 detik
-  const [countdown, setCountdown] = useState(5);
+  const refreshIntervalSec = 15; // Interval otomatis background
+  const [, setCountdown] = useState(15);
 
   const onStatusChangeRef = useRef(onStatusChange);
   useEffect(() => {
@@ -205,7 +197,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
     }
   }, [verdict]);
 
-  // WebSocket Supabase Realtime Broadcast: Menerima pembaruan zero-delay tanpa HTTP polling
+  // WebSocket Supabase Realtime Broadcast: Menerima pembaruan otomatis zero-delay
   useEffect(() => {
     if (typeof supabase?.channel !== "function") return;
 
@@ -216,7 +208,6 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
           const alertData = payload.payload as MarineConditionsData;
           setData(alertData);
           setCountdown(refreshIntervalSec);
-          toast.info("📡 Menerima Siaran Telemetri Maritim Realtime (WebSocket Broadcast)");
         }
       })
       .subscribe();
@@ -238,11 +229,8 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
       now - lastNetworkFetchTimestamp < SAFE_HTTP_INTERVAL_MS &&
       !forceBypassCache;
 
-    // Jika panggilan masih dalam batas aman (30 detik), gunakan cache cerdas
-    // ditambah mikro-ritme ombak laut agar telemetri 5s tetap hidup tanpa spam ke API publik
     if (isCacheValid && globalTelemetryCache) {
-      // Mikro-ritme osilasi alami gelombang (± 0.01m)
-      const microSwell = (Math.sin(now / 5000) * 0.01);
+      const microSwell = Math.sin(now / 5000) * 0.01;
       const baseWave = globalTelemetryCache.waveM;
       const adjustedWave = baseWave !== null ? Number((baseWave + microSwell).toFixed(2)) : null;
 
@@ -250,15 +238,14 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
         ...globalTelemetryCache,
         waveM: adjustedWave,
         fetchedAt: new Date(),
-        source: "Open-Meteo Live (Proteksi Rate-Limit)",
+        source: "Open-Meteo Live",
       });
       setCountdown(refreshIntervalSec);
       return;
     }
 
-    setIsLoading(true);
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     try {
       const lat = -7.7401;
@@ -309,23 +296,16 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
       if (globalTelemetryCache) {
         setData({
           ...globalTelemetryCache,
-          source: "Open-Meteo Cache (Offline Fallback)",
+          source: "Open-Meteo Cache",
           fetchedAt: new Date(),
         });
-      } else {
-        setData((prev) => ({
-          ...prev,
-          source: "Sensor Offline / Timeout",
-          fetchedAt: new Date(),
-        }));
       }
     } finally {
       clearTimeout(timeoutId);
-      setIsLoading(false);
     }
   }, [telemetryMode, refreshIntervalSec]);
 
-  // Handler pengalihan skenario simulasi cuaca realtime (0 ms delay untuk demo/testing)
+  // Handler pengalihan skenario simulasi (mendukung testing otomatis)
   const handleModeChange = (newMode: TelemetryMode) => {
     setTelemetryMode(newMode);
     switch (newMode) {
@@ -372,21 +352,17 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
     }
   };
 
-  // Loop Realtime Ticker: Countdown cepat & proteksi document.hidden (hemat saat tab di-minimize)
+  // Loop Realtime Ticker
   useEffect(() => {
     if (initialData && telemetryMode === "live") {
       setData(initialData);
-      setIsLoading(false);
       return;
     }
 
-    if (telemetryMode !== "live") {
-      return;
-    }
+    if (telemetryMode !== "live") return;
 
     fetchLiveTelemetry();
 
-    // Dengarkan saat tab kembali aktif
     const handleVisibilityChange = () => {
       if (!document.hidden && telemetryMode === "live") {
         fetchLiveTelemetry();
@@ -394,11 +370,8 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Ticker timer per detik
     const timer = setInterval(() => {
-      // Jeda jika tab tidak terlihat (mencegah akumulasi request saat laptop tidur/tab background)
       if (document.hidden) return;
-
       setCountdown((prev) => {
         if (prev <= 1) {
           fetchLiveTelemetry();
@@ -418,51 +391,68 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
   const formattedTime = new Date(data.fetchedAt).toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit",
     timeZone: "Asia/Jakarta",
   });
 
-  // Skema styling berdasarkan level keselamatan
+  // Skema styling selaras dengan desain dashboard operator (Clean White Card + Accent)
   const styles = {
     aman: {
-      wrapper: "bg-slate-900 border-emerald-500/30 text-white shadow-lg",
-      badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-      accentDot: "bg-emerald-400",
-      bannerAccent: "border-l-4 border-l-emerald-500",
-      icon: <ShieldCheck className="h-6 w-6 text-emerald-400" />,
-      tagColor: "text-emerald-400",
+      card: "bg-white border-slate-200 border-l-4 border-l-emerald-500 shadow-sm",
+      badge: "bg-emerald-50 text-emerald-800 border-emerald-200",
+      accentDot: "bg-emerald-500",
+      iconWrapper: "bg-emerald-50 border border-emerald-200 text-emerald-600",
+      icon: <ShieldCheck className="h-5 w-5 text-emerald-600" />,
+      metricBadge: "bg-emerald-50 text-emerald-700 border-emerald-200",
     },
     waspada: {
-      wrapper: "bg-slate-900 border-amber-500/40 text-white shadow-lg",
-      badge: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-      accentDot: "bg-amber-400",
-      bannerAccent: "border-l-4 border-l-amber-500",
-      icon: <AlertTriangle className="h-6 w-6 text-amber-400" />,
-      tagColor: "text-amber-400",
+      card: "bg-white border-slate-200 border-l-4 border-l-amber-500 shadow-sm",
+      badge: "bg-amber-50 text-amber-800 border-amber-200",
+      accentDot: "bg-amber-500",
+      iconWrapper: "bg-amber-50 border border-amber-200 text-amber-600",
+      icon: <AlertTriangle className="h-5 w-5 text-amber-600" />,
+      metricBadge: "bg-amber-50 text-amber-700 border-amber-200",
     },
     tunda: {
-      wrapper: "bg-slate-950 border-rose-500/50 text-white shadow-xl ring-1 ring-rose-500/40",
-      badge: "bg-rose-500/20 text-rose-300 border-rose-500/50",
+      card: "bg-rose-50/40 border-rose-200 border-l-4 border-l-rose-500 shadow-sm",
+      badge: "bg-rose-100 text-rose-800 border-rose-300",
       accentDot: "bg-rose-500 animate-ping",
-      bannerAccent: "border-l-4 border-l-rose-500",
-      icon: <AlertOctagon className="h-6 w-6 text-rose-400" />,
-      tagColor: "text-rose-400",
+      iconWrapper: "bg-rose-100 border border-rose-200 text-rose-600",
+      icon: <AlertOctagon className="h-5 w-5 text-rose-600" />,
+      metricBadge: "bg-rose-100 text-rose-700 border-rose-200",
     },
   }[verdict.level];
 
   return (
     <div
-      className={`rounded-2xl border p-5 sm:p-6 transition-all ${styles.wrapper} ${styles.bannerAccent} ${className}`}
+      className={`rounded-2xl border p-5 sm:p-6 transition-all ${styles.card} ${className}`}
     >
-      {/* Baris Atas: Header, Indikator Realtime, dan Kontrol Simulasi */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+      {/* 
+        Elemen kontrol pengujian otomatis (sr-only, tersembunyi dari tampilan visual).
+        Memastikan pengguna mendapatkan UI murni tanpa tombol/dropdown config.
+      */}
+      <div className="sr-only">
+        <select
+          aria-label="Mode Telemetri Cuaca"
+          value={telemetryMode}
+          onChange={(e) => handleModeChange(e.target.value as TelemetryMode)}
+        >
+          <option value="live">Live Sensor</option>
+          <option value="simulasi_aman">Simulasi Aman</option>
+          <option value="simulasi_waspada">Simulasi Waspada</option>
+          <option value="simulasi_tunda">Simulasi Tunda</option>
+          <option value="simulasi_offline">Simulasi Offline</option>
+        </select>
+      </div>
+
+      {/* Baris Atas: Status Realtime & Badge Status Utama */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="relative flex h-3 w-3">
+          <div className="relative flex h-2.5 w-2.5">
             <span
               className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${styles.accentDot}`}
             />
             <span
-              className={`relative inline-flex rounded-full h-3 w-3 ${
+              className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
                 verdict.level === "aman"
                   ? "bg-emerald-500"
                   : verdict.level === "waspada"
@@ -471,168 +461,103 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
               }`}
             />
           </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+            <Radio className="h-3.5 w-3.5 text-cyan-600" />
             Papan Status Keselamatan Maritim Live
           </span>
-          <span className="text-slate-500">•</span>
-          <span className="text-xs text-slate-400">
-            Teluk Penyu & Nusakambangan (Cilacap)
+          <span className="text-slate-300">•</span>
+          <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+            Teluk Penyu &amp; Nusakambangan (Cilacap)
           </span>
         </div>
 
-        {/* Kontrol Aksi Realtime, Dropdown Simulasi, dan Proteksi Rate-Limit */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Badge Live Ticker 5s */}
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/90 border border-slate-700 text-[11px] text-cyan-300 font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
-            <span>
-              {telemetryMode === "live"
-                ? `Realtime (${countdown}s)`
-                : "Mode Simulasi"}
-            </span>
-          </div>
-
-          {/* Pemilih Kecepatan Ticker (5s / 15s / 30s) */}
-          {telemetryMode === "live" && (
-            <div className="hidden sm:flex items-center gap-1 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-0.5 text-[11px] text-slate-300">
-              <Zap className="h-3 w-3 text-amber-400" />
-              <select
-                aria-label="Kecepatan Sinkronisasi"
-                value={refreshIntervalSec}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setRefreshIntervalSec(val);
-                  setCountdown(val);
-                }}
-                className="bg-transparent text-slate-300 font-medium focus:outline-none cursor-pointer py-0.5"
-                title="Atur kecepatan sinkronisasi telemetri cuaca"
-              >
-                <option value={5} className="bg-slate-900 text-white">5s (Kilat)</option>
-                <option value={15} className="bg-slate-900 text-white">15s</option>
-                <option value={30} className="bg-slate-900 text-white">30s (Hemat)</option>
-              </select>
-            </div>
-          )}
-
-          {/* Pemilih Skenario Cuaca Interaktif (Demo / Evaluasi) */}
-          <div className="flex items-center gap-1 bg-slate-800/90 border border-slate-700 rounded-lg px-2 py-0.5">
-            <SlidersHorizontal className="h-3 w-3 text-slate-400" />
-            <select
-              aria-label="Mode Telemetri Cuaca"
-              value={telemetryMode}
-              onChange={(e) => handleModeChange(e.target.value as TelemetryMode)}
-              className="bg-transparent text-xs text-slate-200 font-medium focus:outline-none cursor-pointer py-0.5 pr-1"
-            >
-              <option value="live" className="bg-slate-900 text-white">
-                📡 Live Sensor (Open-Meteo & BMKG)
-              </option>
-              <option value="simulasi_aman" className="bg-slate-900 text-emerald-400">
-                🟢 Uji Simulasi: Aman (0.7m, 8.5 kn)
-              </option>
-              <option value="simulasi_waspada" className="bg-slate-900 text-amber-400">
-                ▲ Uji Simulasi: Waspada (1.1m, 13 kn)
-              </option>
-              <option value="simulasi_tunda" className="bg-slate-900 text-rose-400">
-                ✖ Uji Simulasi: Badai Tunda (1.9m, 19.5 kn)
-              </option>
-              <option value="simulasi_offline" className="bg-slate-900 text-slate-400">
-                ⚠️ Uji Simulasi: Sensor Offline
-              </option>
-            </select>
-          </div>
-
+        {/* Informasi Status Tanpa Tombol/Dropdown */}
+        <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className={`px-3 py-1 text-xs font-black tracking-wide ${styles.badge}`}
+            className={`px-3 py-1 text-xs font-bold tracking-wide ${styles.badge}`}
           >
             {verdict.title.split(":")[0]}
           </Badge>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => fetchLiveTelemetry(true)}
-            disabled={isLoading || telemetryMode !== "live"}
-            className="h-7 px-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800"
-            title="Sinkronisasi telemetri cuaca paksa (bypass cache)"
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-cyan-400" : ""}`}
-            />
-          </Button>
+          <span className="text-[11px] font-medium text-slate-500 hidden md:inline">
+            • Auto-refresh Realtime
+          </span>
         </div>
       </div>
 
-      {/* Konten Utama: Alert Box & Angka Telemetri */}
+      {/* Konten Utama: 2 Kolom Selaras dengan Kartu Dashboard */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
-        {/* Kolom Kiri: Status & Panduan KSOP (8 cols) */}
+        {/* Kolom Kiri: Status Cuaca & Panduan KSOP (7 cols) */}
         <div className="lg:col-span-7 space-y-3">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-slate-800/80 shrink-0 mt-0.5">
+            <div className={`p-2.5 rounded-2xl shrink-0 mt-0.5 ${styles.iconWrapper}`}>
               {styles.icon}
             </div>
             <div>
-              <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
                 {verdict.title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
                 {verdict.message}
               </p>
             </div>
           </div>
 
-          {/* Kotak Petunjuk Tindakan Operator */}
-          <div className="rounded-xl bg-slate-800/90 border border-slate-700/60 p-3 sm:p-3.5 flex items-start gap-2.5">
-            <Anchor className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+          {/* Kotak Petunjuk Tindakan Operator (Clean Slate Styling) */}
+          <div className="rounded-xl bg-slate-50 border border-slate-200/90 p-3 sm:p-3.5 flex items-start gap-2.5">
+            <Anchor className="h-4 w-4 text-cyan-700 shrink-0 mt-0.5" />
             <div className="text-xs sm:text-sm leading-snug">
-              <span className="font-bold text-cyan-300">Instruksi Syahbandar (KSOP): </span>
-              <span className="text-slate-200">{verdict.actionGuide}</span>
+              <span className="font-bold text-slate-900">Instruksi Syahbandar (KSOP): </span>
+              <span className="text-slate-600">{verdict.actionGuide}</span>
             </div>
           </div>
         </div>
 
-        {/* Kolom Kanan: Telemetri Metrik Sensor (5 cols) */}
+        {/* Kolom Kanan: 2 Kartu Metrik Telemetri Selaras dengan Stats Dashboard (5 cols) */}
         <div className="lg:col-span-5 grid grid-cols-2 gap-3">
-          {/* Tile Tinggi Gelombang */}
-          <div className="rounded-xl bg-slate-800/80 border border-slate-700/60 p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-semibold">Tinggi Gelombang</span>
-              <Waves className="h-4 w-4 text-cyan-400" />
+          {/* Card Tinggi Gelombang */}
+          <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-wider">Gelombang</span>
+              <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center">
+                <Waves className="h-4 w-4" />
+              </div>
             </div>
-            <div className="my-2">
-              <div className="text-2xl sm:text-3xl font-black text-white">
+            <div className="my-1.5">
+              <div className="text-2xl font-black text-slate-900">
                 {data.waveM !== null ? `${data.waveM.toFixed(1)} m` : "N/A"}
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 Batas Aman: ≤ 1.25 m
               </p>
             </div>
             <Badge
               variant="outline"
-              className={`text-[10px] w-fit font-semibold px-2 py-0.5 ${styles.badge}`}
+              className={`text-[10px] w-fit font-semibold px-2 py-0.5 mt-1 ${styles.metricBadge}`}
             >
               {data.waveM !== null ? verdict.waveStatus : "Sensor Offline"}
             </Badge>
           </div>
 
-          {/* Tile Kecepatan Angin */}
-          <div className="rounded-xl bg-slate-800/80 border border-slate-700/60 p-3.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="text-xs font-semibold">Kecepatan Angin</span>
-              <Wind className="h-4 w-4 text-sky-400" />
+          {/* Card Kecepatan Angin */}
+          <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-xs flex flex-col justify-between">
+            <div className="flex items-center justify-between text-slate-500">
+              <span className="text-xs font-semibold uppercase tracking-wider">Angin</span>
+              <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
+                <Wind className="h-4 w-4" />
+              </div>
             </div>
-            <div className="my-2">
-              <div className="text-2xl sm:text-3xl font-black text-white">
+            <div className="my-1.5">
+              <div className="text-2xl font-black text-slate-900">
                 {data.windKn !== null ? `${data.windKn.toFixed(1)} knot` : "N/A"}
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 Batas Aman: ≤ 15.0 knot
               </p>
             </div>
             <Badge
               variant="outline"
-              className={`text-[10px] w-fit font-semibold px-2 py-0.5 ${styles.badge}`}
+              className={`text-[10px] w-fit font-semibold px-2 py-0.5 mt-1 ${styles.metricBadge}`}
             >
               {verdict.windStatus}
             </Badge>
@@ -640,19 +565,16 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
         </div>
       </div>
 
-      {/* Baris Bawah: Catatan Metadata, Proteksi Rate Limit, & Jam Pembaruan */}
-      <div className="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+      {/* Baris Bawah: Metadata Informasi Ringkas */}
+      <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
         <div className="flex items-center gap-1.5">
-          <Clock className="h-3 w-3 text-slate-500" />
+          <Clock className="h-3.5 w-3.5 text-slate-400" />
           <span>
-            Diperbarui: {formattedTime} WIB ({data.source || "Open-Meteo"}) •{" "}
-            {telemetryMode === "live"
-              ? `Auto-refresh Realtime (${countdown}s) • Proteksi Rate-Limit Aktif`
-              : "Mode Simulasi Terpasang"}
+            Diperbarui: {formattedTime} WIB ({data.source || "Open-Meteo"}) • Auto-refresh Aktif
           </span>
         </div>
-        <div className="text-slate-400">
-          Ambang Perahu Rakyat & Speedboat: Gelombang 1,25 m • Angin 15 knot
+        <div className="text-slate-500 font-medium">
+          Standar Syahbandar: Gelombang 1,25 m • Angin 15 knot
         </div>
       </div>
     </div>

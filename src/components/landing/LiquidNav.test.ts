@@ -30,8 +30,10 @@ describe("LiquidNav slot-relative highlight navigation", () => {
 
     expect(screen.getByRole("button", { name: "Beranda" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Armada Kapal" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Paket Tour" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Cuaca & Peta" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Juru Mudi" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Panduan" })).toBeDefined();
     expect(screen.getByRole("button", { name: "Masuk / Akun" })).toBeDefined();
   });
 

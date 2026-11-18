@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Menu, X, ChevronDown, Sparkles } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -14,12 +14,28 @@ const Navbar = () => {
   const isLandingPage = location.pathname === "/";
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isOperator, setIsOperator] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string>("beranda");
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
+  const guideRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (guideRef.current && !guideRef.current.contains(event.target as Node)) {
+        setGuideOpen(false);
+      }
+    };
+    if (guideOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [guideOpen]);
 
   const handleLogout = async () => {
     setIsMenuOpen(false);
@@ -65,7 +81,7 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Scroll-spy: section yang sedang terlihat di tengah layar jadi aktif.
-    const sectionIds = ["features", "how-it-works", "weather-map-section", "pilihan-paket-tour"];
+    const sectionIds = ["how-it-works", "weather-map-section", "pilihan-paket-tour"];
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -81,6 +97,8 @@ const Navbar = () => {
 
     // Halaman terpisah: link yang cocok dengan URL jadi aktif.
     if (location.pathname === "/permit-info") setActiveId("permit-info");
+    if (location.pathname.startsWith("/boats")) setActiveId("boats");
+    if (location.pathname.startsWith("/tour-packages")) setActiveId("tour-packages");
 
     return () => {
       subscription.unsubscribe();
@@ -93,6 +111,7 @@ const Navbar = () => {
     e.preventDefault();
     setActiveId(id);
     setIsMenuOpen(false);
+    setGuideOpen(false);
     if (id === "beranda") {
       if (!isLandingPage) navigate("/");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -103,6 +122,19 @@ const Navbar = () => {
       return;
     }
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleOpenJuruMudi = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsMenuOpen(false);
+    setGuideOpen(false);
+    window.dispatchEvent(
+      new CustomEvent("open-assistant", {
+        detail: {
+          prompt: "Halo Juru Mudi, bantu saya cek rekomendasi pelayaran ke Nusakambangan",
+        },
+      })
+    );
   };
 
   // Gaya link: aktif = teks cyan + garis bawah; biasa = abu-abu, hover cyan.
@@ -140,16 +172,32 @@ const Navbar = () => {
             />
           </div>
 
-          {/* Desktop Navigation — Beranda ditambahkan di paling kiri */}
-          <div className="hidden md:flex items-center gap-7">
+          {/* Desktop Navigation — Opsi A: 6 Menu Seragam */}
+          <div className="hidden md:flex items-center gap-6">
             <a href="/" onClick={(e) => goToSection(e, "beranda")} className={linkClass("beranda")}>
               Beranda
             </a>
-            <a href="/#features" onClick={(e) => goToSection(e, "features")} className={linkClass("features")}>
-              Fitur
+            <a
+              href="/boats"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveId("boats");
+                navigate("/boats");
+              }}
+              className={linkClass("boats")}
+            >
+              Armada Kapal
             </a>
-            <a href="/#how-it-works" onClick={(e) => goToSection(e, "how-it-works")} className={linkClass("how-it-works")}>
-              Cara Kerja
+            <a
+              href="/tour-packages"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveId("tour-packages");
+                navigate("/tour-packages");
+              }}
+              className={linkClass("tour-packages")}
+            >
+              Paket Tour
             </a>
             <a
               href="/#weather-map-section"
@@ -157,20 +205,63 @@ const Navbar = () => {
               className={`${linkClass("weather-map-section")} flex items-center gap-1.5`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Peta Cuaca</span>
+              <span>Cuaca & Peta</span>
             </a>
-            {/* Paket Tour mengarah ke section di landing (bukan /tour-packages
-                yang masih "Gagal memuat paket tour") */}
-            <a
-              href="/#pilihan-paket-tour"
-              onClick={(e) => goToSection(e, "pilihan-paket-tour")}
-              className={linkClass("pilihan-paket-tour")}
+            <button
+              type="button"
+              onClick={handleOpenJuruMudi}
+              className={`${linkClass("juru-mudi")} flex items-center gap-1.5 cursor-pointer`}
             >
-              Paket Tour
-            </a>
-            <a href="/permit-info" className={linkClass("permit-info")}>
-              Perizinan
-            </a>
+              <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Juru Mudi</span>
+            </button>
+
+            {/* Dropdown Panduan (Cara Kerja & Perizinan) */}
+            <div
+              ref={guideRef}
+              className="relative"
+              onMouseEnter={() => setGuideOpen(true)}
+              onMouseLeave={() => setGuideOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setGuideOpen((prev) => !prev)}
+                className={`${linkClass("panduan")} flex items-center gap-1 cursor-pointer`}
+                aria-expanded={guideOpen}
+              >
+                <span>Panduan</span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    guideOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {guideOpen && (
+                <div className="absolute top-full left-0 pt-2 w-48 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="rounded-xl bg-[#090D16]/95 backdrop-blur-xl border border-white/15 p-2 shadow-2xl space-y-1">
+                    <a
+                      href="/#how-it-works"
+                      onClick={(e) => goToSection(e, "how-it-works")}
+                      className="block px-3 py-2 text-xs font-medium text-slate-200 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors"
+                    >
+                      Cara Kerja Platform
+                    </a>
+                    <a
+                      href="/permit-info"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setGuideOpen(false);
+                        setActiveId("permit-info");
+                        navigate("/permit-info");
+                      }}
+                      className="block px-3 py-2 text-xs font-medium text-slate-200 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors"
+                    >
+                      Perizinan KSOP
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Desktop Auth Action Buttons */}
@@ -240,11 +331,29 @@ const Navbar = () => {
               <a href="/" onClick={(e) => goToSection(e, "beranda")} className={linkClass("beranda")}>
                 Beranda
               </a>
-              <a href="/#features" onClick={(e) => goToSection(e, "features")} className={linkClass("features")}>
-                Fitur
+              <a
+                href="/boats"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveId("boats");
+                  setIsMenuOpen(false);
+                  navigate("/boats");
+                }}
+                className={linkClass("boats")}
+              >
+                Armada Kapal
               </a>
-              <a href="/#how-it-works" onClick={(e) => goToSection(e, "how-it-works")} className={linkClass("how-it-works")}>
-                Cara Kerja
+              <a
+                href="/tour-packages"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setActiveId("tour-packages");
+                  setIsMenuOpen(false);
+                  navigate("/tour-packages");
+                }}
+                className={linkClass("tour-packages")}
+              >
+                Paket Tour
               </a>
               <a
                 href="/#weather-map-section"
@@ -252,18 +361,43 @@ const Navbar = () => {
                 className={`${linkClass("weather-map-section")} flex items-center gap-2`}
               >
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span>Peta Cuaca Maritim</span>
+                <span>Cuaca & Peta</span>
               </a>
-              <a
-                href="/#pilihan-paket-tour"
-                onClick={(e) => goToSection(e, "pilihan-paket-tour")}
-                className={linkClass("pilihan-paket-tour")}
+              <button
+                type="button"
+                onClick={handleOpenJuruMudi}
+                className="text-left text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors flex items-center gap-2"
               >
-                Paket Tour
-              </a>
-              <a href="/permit-info" onClick={() => setIsMenuOpen(false)} className={linkClass("permit-info")}>
-                Perizinan
-              </a>
+                <Sparkles className="h-4 w-4 text-cyan-400" />
+                <span>Juru Mudi AI</span>
+              </button>
+
+              <div className="pt-2 border-t border-white/10">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
+                  Panduan
+                </span>
+                <div className="flex flex-col gap-2 pl-2">
+                  <a
+                    href="/#how-it-works"
+                    onClick={(e) => goToSection(e, "how-it-works")}
+                    className={linkClass("how-it-works")}
+                  >
+                    Cara Kerja Platform
+                  </a>
+                  <a
+                    href="/permit-info"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsMenuOpen(false);
+                      setActiveId("permit-info");
+                      navigate("/permit-info");
+                    }}
+                    className={linkClass("permit-info")}
+                  >
+                    Perizinan KSOP
+                  </a>
+                </div>
+              </div>
             </div>
 
             <div className="pt-3 border-t border-white/10 flex flex-col gap-2.5">

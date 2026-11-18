@@ -4,7 +4,7 @@ import {
   CreditCard,
   BarChart3,
   Anchor,
-  Calculator,
+  Ticket,
   Cloud,
   Star,
   MessageCircle,
@@ -74,15 +74,15 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
 // 4 fitur pelengkap di bawah panggung (Card Slider interaktif)
 export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
   {
-    id: "kalkulator-tarif",
-    title: "Kalkulator Tarif",
+    id: "etiket-asuransi",
+    title: "E-Tiket & Asuransi Resmi",
     description:
-      "Estimasi biaya transparan dengan breakdown detail bahan bakar, jasa nakhoda, dan sewa kapal tanpa biaya tersembunyi.",
-    icon: Calculator,
-    href: "#armada",
-    tag: "Transparansi Biaya",
-    badge: "Nol Biaya Tersembunyi",
-    actionText: "Hitung Tarif Sekarang",
+      "Tiket digital QR tervalidasi dermaga terpadu dengan premi asuransi resmi kecelakaan laut PT Jasa Raharja Putra.",
+    icon: Ticket,
+    href: "#",
+    tag: "Perlindungan Penumpang",
+    badge: "Asuransi Resmi KSOP",
+    actionText: "Cek Ketentuan Asuransi",
   },
   {
     id: "peringatan-cuaca",

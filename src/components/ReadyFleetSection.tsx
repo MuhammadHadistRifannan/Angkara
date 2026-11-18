@@ -378,7 +378,10 @@ export const ReadyFleetSection: React.FC = () => {
                 </div>
 
                 {/* Boat Name & Captain */}
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
+                <h3
+                  className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1 cursor-pointer hover:text-sky-700 transition-colors"
+                  onClick={() => navigate(`/boat/${boat.id}`)}
+                >
                   {boat.name}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium mb-6">

@@ -68,7 +68,7 @@ describe("SecondaryFeatures sliding card carousel", () => {
   it("renders all 4 feature cards with their numbers and titles", () => {
     render(React.createElement(SecondaryFeatures, { features: SECONDARY_FEATURES }));
 
-    expect(screen.getAllByText("Kalkulator Tarif").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("E-Tiket & Asuransi Resmi").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Peringatan Cuaca BMKG").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Rating Terverifikasi").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Asisten AI Juru Mudi").length).toBeGreaterThan(0);
