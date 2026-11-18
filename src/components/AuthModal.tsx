@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,7 +154,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess, 
     // Prompt tersimpan di sessionStorage, jadi tidak hilang.
   };
 
-  return (
+  // Portal ke <body>: modal ini dirender dari dalam <nav> yang memakai
+  // backdrop-blur — tanpa portal, `fixed inset-0` malah mengacu ke kotak
+  // navbar (80px) sehingga kartu terdorong ke atas layar dan header/tab
+  // Masuk-Daftar terpotong. Dengan portal, overlay selalu selebar viewport.
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
       onClick={onClose}
@@ -311,7 +316,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess, 
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
