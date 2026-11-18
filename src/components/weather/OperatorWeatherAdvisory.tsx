@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   ShieldCheck,
   AlertTriangle,
@@ -9,11 +9,20 @@ import {
   Anchor,
   Clock,
   Radio,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export type SailingSafetyLevel = "aman" | "waspada" | "tunda";
+
+export type TelemetryMode =
+  | "live"
+  | "simulasi_aman"
+  | "simulasi_waspada"
+  | "simulasi_tunda"
+  | "simulasi_offline";
 
 export interface SailingSafetyVerdict {
   level: SailingSafetyLevel;
@@ -38,14 +47,6 @@ export interface OperatorWeatherAdvisoryProps {
   className?: string;
 }
 
-/**
- * Mesin Aturan Deterministik Keselamatan Pelayaran (mengacu ke thresholds.json & aturan KSOP)
- * Ambang batas:
- * - Speedboat & Kapal Kayu: batas aman gelombang 1.25 m, angin 15 knot
- * - Status Waspada: jika mendekati batas (>= 80% yaitu >= 1.0 m atau >= 12 knot) atau sensor offline (null)
- * - Status Tunda: jika melebihi batas (> 1.25 m atau > 15 knot)
- * - Jika data gelombang null: status maksimal "waspada" dan TIDAK PERNAH "aman"
- */
 // eslint-disable-next-line react-refresh/only-export-components
 export function evaluateSailingSafety(
   waveM: number | null,
@@ -146,6 +147,8 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
     );
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [telemetryMode, setTelemetryMode] = useState<TelemetryMode>("live");
+  const [countdown, setCountdown] = useState(30);
 
   const onStatusChangeRef = useRef(onStatusChange);
   useEffect(() => {
@@ -155,16 +158,42 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
   const verdict = evaluateSailingSafety(data.waveM, data.windKn, true);
 
   const lastLevelRef = useRef<SailingSafetyLevel | null>(null);
+  const isFirstMountRef = useRef(true);
+
   useEffect(() => {
     if (lastLevelRef.current !== verdict.level) {
+      const prevLevel = lastLevelRef.current;
       lastLevelRef.current = verdict.level;
+
       if (onStatusChangeRef.current) {
         onStatusChangeRef.current(verdict);
       }
+
+      // Tampilkan toast alert darurat realtime saat status memburuk atau pulih
+      if (!isFirstMountRef.current) {
+        if (verdict.level === "tunda") {
+          toast.error(
+            "⚠️ PERINGATAN KSOP: Kondisi laut memburuk! Status berubah menjadi TUNDA BERLAYAR. Seluruh keberangkatan wajib ditunda.",
+            { duration: 6000 }
+          );
+        } else if (verdict.level === "waspada" && prevLevel === "aman") {
+          toast.warning(
+            "⚠️ INFORMASI KSOP: Status maritim berubah menjadi WASPADA. Seluruh nakhoda dan penumpang wajib mengenakan rompi pelampung SOLAS.",
+            { duration: 5000 }
+          );
+        } else if (verdict.level === "aman" && (prevLevel === "tunda" || prevLevel === "waspada")) {
+          toast.success(
+            "✅ INFORMASI KSOP: Kondisi laut kembali AMAN BERLAYAR. Seluruh armada diizinkan melaut normal.",
+            { duration: 4000 }
+          );
+        }
+      }
+      isFirstMountRef.current = false;
     }
   }, [verdict]);
 
-  const fetchLiveTelemetry = async () => {
+  const fetchLiveTelemetry = useCallback(async () => {
+    if (telemetryMode !== "live") return;
     setIsLoading(true);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -208,6 +237,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
         fetchedAt: new Date(),
         source: "Open-Meteo Marine Live",
       });
+      setCountdown(30);
     } catch {
       setData((prev) => ({
         ...prev,
@@ -218,19 +248,82 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
       clearTimeout(timeoutId);
       setIsLoading(false);
     }
+  }, [telemetryMode]);
+
+  // Handler pengalihan skenario simulasi cuaca realtime
+  const handleModeChange = (newMode: TelemetryMode) => {
+    setTelemetryMode(newMode);
+    switch (newMode) {
+      case "simulasi_aman":
+        setData({
+          waveM: 0.7,
+          windKn: 8.5,
+          trendM: 0.1,
+          fetchedAt: new Date(),
+          source: "Simulasi: Aman Melaut",
+        });
+        break;
+      case "simulasi_waspada":
+        setData({
+          waveM: 1.1,
+          windKn: 13.0,
+          trendM: 0.2,
+          fetchedAt: new Date(),
+          source: "Simulasi: Waspada SOLAS",
+        });
+        break;
+      case "simulasi_tunda":
+        setData({
+          waveM: 1.9,
+          windKn: 19.5,
+          trendM: 0.6,
+          fetchedAt: new Date(),
+          source: "Simulasi: Badai Ekstrem Tunda",
+        });
+        break;
+      case "simulasi_offline":
+        setData({
+          waveM: null,
+          windKn: 12.0,
+          trendM: null,
+          fetchedAt: new Date(),
+          source: "Simulasi: Sensor Offline",
+        });
+        break;
+      case "live":
+      default:
+        fetchLiveTelemetry();
+        break;
+    }
   };
 
+  // Loop Realtime: Countdown 30 detik & auto-fetch
   useEffect(() => {
-    if (initialData) {
+    if (initialData && telemetryMode === "live") {
       setData(initialData);
       setIsLoading(false);
       return;
     }
 
+    if (telemetryMode !== "live") {
+      return;
+    }
+
     fetchLiveTelemetry();
-    const interval = setInterval(fetchLiveTelemetry, 300000);
-    return () => clearInterval(interval);
-  }, [initialData]);
+
+    // Timer hitungan mundur realtime setiap detik
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          fetchLiveTelemetry();
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [initialData, telemetryMode, fetchLiveTelemetry]);
 
   // Formatter jam WIB
   const formattedTime = new Date(data.fetchedAt).toLocaleTimeString("id-ID", {
@@ -272,7 +365,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
     <div
       className={`rounded-2xl border p-5 sm:p-6 transition-all ${styles.wrapper} ${styles.bannerAccent} ${className}`}
     >
-      {/* Baris Atas: Header & Live Indicator */}
+      {/* Baris Atas: Header, Indikator Realtime, dan Kontrol Simulasi */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2.5">
           <div className="relative flex h-3 w-3">
@@ -290,7 +383,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
             />
           </div>
           <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Radio className="h-3.5 w-3.5 text-cyan-400" />
+            <Radio className="h-3.5 w-3.5 text-cyan-400 animate-pulse" />
             Papan Status Keselamatan Maritim Live
           </span>
           <span className="text-slate-500">•</span>
@@ -299,20 +392,59 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Kontrol Aksi Realtime & Dropdown Simulasi Skenario Cuaca */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Badge Live Realtime Ticker */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800/90 border border-slate-700 text-[11px] text-cyan-300 font-mono">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
+            <span>
+              {telemetryMode === "live"
+                ? `Realtime (${countdown}s)`
+                : "Mode Simulasi"}
+            </span>
+          </div>
+
+          {/* Pemilih Skenario Cuaca Interaktif (Demo / Evaluasi) */}
+          <div className="flex items-center gap-1 bg-slate-800/90 border border-slate-700 rounded-lg px-2 py-0.5">
+            <SlidersHorizontal className="h-3 w-3 text-slate-400" />
+            <select
+              aria-label="Mode Telemetri Cuaca"
+              value={telemetryMode}
+              onChange={(e) => handleModeChange(e.target.value as TelemetryMode)}
+              className="bg-transparent text-xs text-slate-200 font-medium focus:outline-none cursor-pointer py-0.5 pr-1"
+            >
+              <option value="live" className="bg-slate-900 text-white">
+                📡 Live Sensor (Open-Meteo & BMKG)
+              </option>
+              <option value="simulasi_aman" className="bg-slate-900 text-emerald-400">
+                🟢 Uji Simulasi: Aman (0.7m, 8.5 kn)
+              </option>
+              <option value="simulasi_waspada" className="bg-slate-900 text-amber-400">
+                ▲ Uji Simulasi: Waspada (1.1m, 13 kn)
+              </option>
+              <option value="simulasi_tunda" className="bg-slate-900 text-rose-400">
+                ✖ Uji Simulasi: Badai Tunda (1.9m, 19.5 kn)
+              </option>
+              <option value="simulasi_offline" className="bg-slate-900 text-slate-400">
+                ⚠️ Uji Simulasi: Sensor Offline
+              </option>
+            </select>
+          </div>
+
           <Badge
             variant="outline"
             className={`px-3 py-1 text-xs font-black tracking-wide ${styles.badge}`}
           >
             {verdict.title.split(":")[0]}
           </Badge>
+
           <Button
             size="sm"
             variant="ghost"
             onClick={fetchLiveTelemetry}
-            disabled={isLoading}
+            disabled={isLoading || telemetryMode !== "live"}
             className="h-7 px-2 text-xs text-slate-400 hover:text-white hover:bg-slate-800"
-            title="Perbarui data telemetri cuaca"
+            title="Sinkronisasi telemetri cuaca sekarang"
           >
             <RefreshCw
               className={`h-3.5 w-3.5 ${isLoading ? "animate-spin text-cyan-400" : ""}`}
@@ -402,7 +534,10 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
         <div className="flex items-center gap-1.5">
           <Clock className="h-3 w-3 text-slate-500" />
           <span>
-            Diperbarui: {formattedTime} WIB ({data.source || "Open-Meteo"})
+            Diperbarui: {formattedTime} WIB ({data.source || "Open-Meteo"}) •{" "}
+            {telemetryMode === "live"
+              ? `Auto-refresh Realtime aktif (${countdown}s)`
+              : "Mode Simulasi Terpasang"}
           </span>
         </div>
         <div className="text-slate-400">

@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
 import OperatorDashboard from "./OperatorDashboard";
+import { supabase } from "@/integrations/supabase/client";
 import {
   evaluateSailingSafety,
   OperatorWeatherAdvisory,
@@ -19,8 +20,21 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
+    channel: vi.fn().mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+    }),
+    removeChannel: vi.fn(),
     auth: {
       getUser: vi.fn().mockResolvedValue({
         data: {
@@ -202,6 +216,49 @@ describe("Sailing Safety Rules & Operator Weather Advisory", () => {
       expect(screen.getAllByText(/1.8 m/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/19.0 knot/i).length).toBeGreaterThanOrEqual(1);
     });
+
+    it("menampilkan kontrol realtime dan live ticker hitungan mundur", () => {
+      render(
+        React.createElement(OperatorWeatherAdvisory, {
+          initialData: {
+            waveM: 0.8,
+            windKn: 10.0,
+            trendM: 0.1,
+            fetchedAt: new Date(),
+            source: "Open-Meteo",
+          },
+        })
+      );
+
+      expect(screen.getAllByText(/Realtime|Auto-refresh/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByRole("combobox", { name: /Mode Telemetri Cuaca/i })).toBeDefined();
+    });
+
+    it("mengubah skenario simulasi cuaca secara instan memutakhirkan telemetri dan memicu callback realtime", () => {
+      const onStatusChange = vi.fn();
+      render(
+        React.createElement(OperatorWeatherAdvisory, {
+          initialData: {
+            waveM: 0.8,
+            windKn: 10.0,
+            trendM: 0.1,
+            fetchedAt: new Date(),
+            source: "Open-Meteo",
+          },
+          onStatusChange,
+        })
+      );
+
+      const select = screen.getByRole("combobox", { name: /Mode Telemetri Cuaca/i });
+      fireEvent.change(select, { target: { value: "simulasi_tunda" } });
+
+      expect(screen.getAllByText(/TUNDA|LARANGAN BERLAYAR/i).length).toBeGreaterThanOrEqual(1);
+      expect(onStatusChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: "tunda",
+        })
+      );
+    });
   });
 
   describe("Integrasi di OperatorDashboard", () => {
@@ -217,6 +274,20 @@ describe("Sailing Safety Rules & Operator Weather Advisory", () => {
       await waitFor(() => {
         expect(screen.getByText(/Papan Status Keselamatan Maritim/i)).toBeDefined();
         expect(screen.getByText(/Teluk Penyu & Nusakambangan/i)).toBeDefined();
+      });
+    });
+
+    it("dashboard operator berlangganan channel realtime Supabase untuk sinkronisasi seketika", async () => {
+      render(
+        React.createElement(
+          MemoryRouter,
+          null,
+          React.createElement(OperatorDashboard)
+        )
+      );
+
+      await waitFor(() => {
+        expect(supabase.channel).toHaveBeenCalledWith("operator-dashboard-sync");
       });
     });
   });

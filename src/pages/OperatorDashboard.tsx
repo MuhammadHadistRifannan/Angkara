@@ -166,6 +166,37 @@ const OperatorDashboard = () => {
     checkOperator();
   }, [navigate]);
 
+  // Langganan sinkronisasi realtime Supabase untuk booking & armada kapal
+  useEffect(() => {
+    if (!operator?.id) return;
+    if (typeof supabase.channel !== "function") return;
+
+    const opId = operator.id;
+    const channel = supabase
+      .channel("operator-dashboard-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings" },
+        () => {
+          fetchBookings(opId);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "boats" },
+        () => {
+          fetchBoats(opId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (typeof supabase.removeChannel === "function") {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [operator?.id]);
+
   const fetchBoats = async (operatorId: string) => {
     const { data, error } = await supabase
       .from("boats")
