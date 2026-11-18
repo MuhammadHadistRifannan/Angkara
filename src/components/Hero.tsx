@@ -214,3 +214,5 @@ const Hero: React.FC = () => {
 };
 
 export default Hero;
+export { Hero };
+export { HeroSection } from "./HeroSection";

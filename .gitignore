@@ -31,4 +31,5 @@ supabase/.temp/
 .agents/
 .aider-desk/
 skills-lock.json
-
+supabase/.branches/
+supabase/snippets/

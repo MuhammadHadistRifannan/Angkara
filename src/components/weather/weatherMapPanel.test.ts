@@ -21,6 +21,10 @@ vi.mock("react-leaflet", () => ({
   TileLayer: () => React.createElement("div", { "data-testid": "tile-layer" }),
   Marker: ({ children }: { children?: React.ReactNode }) =>
     React.createElement("div", { "data-testid": "marker" }, children),
+  Circle: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "circle" }, children),
+  Polyline: ({ children }: { children?: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "polyline" }, children),
   Popup: ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", { "data-testid": "popup" }, children),
 }));
@@ -34,58 +38,44 @@ describe("WeatherMapPanel", () => {
     cleanup();
   });
 
-  it("data unavailable → status keselamatan tidak pernah 'Aman' dan alert peringatan ditampilkan", async () => {
-    vi.mocked(supabase.functions.invoke).mockResolvedValue({
-      data: {
-        source: "unavailable",
-        fetched_at: "2026-11-10T08:00:00+07:00",
-        stale: false,
-        series: [
-          {
-            pointId: "teluk-penyu",
-            samples: [],
-            verdicts: [{ date: "2026-11-10", level: "aman", reasons: [] }], // Dikirim 'aman', tapi harus dipaksa jadi 'waspada'
-          },
-        ],
-        attribution: ["BMKG"],
-      },
-      error: null,
-    });
+  it("data unavailable → status keselamatan tidak pernah 'Aman' dan peringatan ditampilkan", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network error"));
 
     render(React.createElement(WeatherMapPanel));
 
-    // Harus menampilkan alert bahwa data tidak tersedia setelah selesai fetch
     await waitFor(() => {
-      expect(screen.getByText(/Sumber Data Cuaca Tidak Tersedia/i)).toBeDefined();
+      expect(screen.getByText(/Data cuaca tidak tersedia saat ini/i)).toBeDefined();
     });
 
-    // Status TIDAK BOLEH menampilkan "Aman untuk Berlayar", harus dipaksa menjadi "Perlu Kewaspadaan"
-    expect(screen.queryByText(/Aman untuk Berlayar/i)).toBeNull();
-    expect(screen.getByText(/Perlu Kewaspadaan/i)).toBeDefined();
+    // Status TIDAK BOLEH menampilkan "Aman Berlayar", harus waspada
+    expect(screen.queryByText(/Aman Berlayar/i)).toBeNull();
+    expect(screen.getAllByText(/Waspada/i).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("data stale → menampilkan banner peringatan data cuaca tertunda", async () => {
-    vi.mocked(supabase.functions.invoke).mockResolvedValue({
-      data: {
-        source: "official",
-        fetched_at: "2026-11-10T08:00:00+07:00",
-        stale: true,
-        series: [
-          {
-            pointId: "teluk-penyu",
-            samples: [],
-            verdicts: [{ date: "2026-11-10", level: "waspada", reasons: ["Gelombang tinggi"] }],
-          },
-        ],
-        attribution: ["BMKG"],
-      },
-      error: null,
+  it("data gelombang live → merender tinggi gelombang dan kategori keselamatan", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url: unknown) => {
+      if (String(url).includes("marine")) {
+        return {
+          ok: true,
+          json: async () => ({
+            current: { wave_height: 0.8 },
+            hourly: { wave_height: [0.8, 0.9, 0.7] },
+          }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          current: { wind_speed_10m: 12 },
+        }),
+      } as Response;
     });
 
     render(React.createElement(WeatherMapPanel));
 
     await waitFor(() => {
-      expect(screen.getByText(/Pemberitahuan Data Cuaca Tertunda/i)).toBeDefined();
+      expect(screen.getByText(/0.80/)).toBeDefined();
+      expect(screen.getByText(/KATEGORI: SEDANG/i)).toBeDefined();
     });
   });
 

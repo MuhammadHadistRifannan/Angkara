@@ -5,28 +5,71 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Users, Package as PackageIcon, Star } from "lucide-react";
-import { toast } from "sonner";
+import { Clock, Users, Package as PackageIcon, Star, MapPin } from "lucide-react";
+import { DEMO_PACKAGES } from "@/lib/demoFallback";
+
+interface PagePackage {
+  id: string;
+  name: string;
+  description: string | null;
+  durationLabel: string;
+  price: number;
+  unit: string;
+  includes: string[];
+  destination: string;
+  maxParticipants: number | null;
+}
+
+const mapRowToPackage = (row: any): PagePackage => ({
+  id: row.id,
+  name: row.name,
+  description: row.description ?? null,
+  durationLabel: row.duration_hours != null ? `${row.duration_hours} jam` : "-",
+  price: row.price,
+  unit: "/ orang",
+  includes: row.includes || [],
+  destination: row.destination || "",
+  maxParticipants: row.max_participants ?? null,
+});
 
 const TourPackages = () => {
   const navigate = useNavigate();
-  const [packages, setPackages] = useState<any[]>([]);
+  const [packages, setPackages] = useState<PagePackage[]>([]);
 
   useEffect(() => {
     fetchPackages();
   }, []);
 
   const fetchPackages = async () => {
-    const { data, error } = await supabase
-      .from("tour_packages")
-      .select("*")
-      .eq("available", true);
-
-    if (error) {
-      toast.error("Gagal memuat paket tour");
-    } else {
-      setPackages(data || []);
+    try {
+      const { data, error } = await supabase
+        .from("tour_packages")
+        .select("*")
+        .eq("available", true);
+      if (!error && data && data.length > 0) {
+        setPackages(data.map(mapRowToPackage));
+        return;
+      }
+    } catch {
+      // Supabase gagal — pakai data demo di bawah, jangan tampilkan toast error.
     }
+    // PERBAIKAN 2026-11-18: fallback ke 8 paket demo yang sama dengan
+    // section landing. Sebelumnya halaman ini menampilkan toast
+    // "Gagal memuat paket tour" + grid kosong saat Supabase gagal, sehingga
+    // semua tombol "Detail Rute" (8 kartu paket + 4 kartu destinasi) mati.
+    setPackages(
+      DEMO_PACKAGES.map((d) => ({
+        id: d.id,
+        name: d.name,
+        description: d.description,
+        durationLabel: d.durationLabel,
+        price: d.price,
+        unit: d.unit,
+        includes: d.includes,
+        destination: d.destination,
+        maxParticipants: null,
+      }))
+    );
   };
 
   return (
@@ -57,6 +100,12 @@ const TourPackages = () => {
                   </Badge>
                 </div>
                 <CardTitle className="text-2xl">{pkg.name}</CardTitle>
+                {pkg.destination && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 pt-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    Tujuan: {pkg.destination}
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="pt-6">
                 <p className="text-muted-foreground mb-4">{pkg.description}</p>
@@ -64,12 +113,12 @@ const TourPackages = () => {
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Durasi: {pkg.duration_hours} jam</span>
+                    <span>Durasi: {pkg.durationLabel}</span>
                   </div>
-                  {pkg.max_participants && (
+                  {pkg.maxParticipants && (
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>Maksimal {pkg.max_participants} peserta</span>
+                      <span>Maksimal {pkg.maxParticipants} peserta</span>
                     </div>
                   )}
                 </div>
@@ -94,6 +143,7 @@ const TourPackages = () => {
                       <div className="text-sm text-muted-foreground">Harga mulai dari</div>
                       <div className="text-3xl font-bold text-primary">
                         Rp {pkg.price.toLocaleString('id-ID')}
+                        <span className="text-base font-semibold text-muted-foreground"> {pkg.unit}</span>
                       </div>
                     </div>
                   </div>
