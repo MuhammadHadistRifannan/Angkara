@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,10 +20,16 @@ import {
   ShieldCheck,
   Ticket,
   FileCheck2,
+  AlertOctagon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BoatModal, type OperatorBoatData } from "@/components/BoatModal";
 import { ManifestModal } from "@/components/ManifestModal";
+import {
+  OperatorWeatherAdvisory,
+  type SailingSafetyLevel,
+  type SailingSafetyVerdict,
+} from "@/components/weather/OperatorWeatherAdvisory";
 
 interface OperatorData {
   id: string;
@@ -86,6 +92,8 @@ const OperatorDashboard = () => {
     totalRevenue: 0,
     pendingBookings: 0,
   });
+  const [currentSafety, setCurrentSafety] = useState<SailingSafetyLevel>("aman");
+  const [, setSafetyVerdict] = useState<SailingSafetyVerdict | null>(null);
 
   useEffect(() => {
     const checkOperator = async () => {
@@ -317,6 +325,12 @@ const OperatorDashboard = () => {
     setIsManifestModalOpen(true);
   };
 
+  // Handler update status keselamatan maritim dari papan telemetri
+  const handleWeatherStatusChange = useCallback((verdict: SailingSafetyVerdict) => {
+    setCurrentSafety(verdict.level);
+    setSafetyVerdict(verdict);
+  }, []);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -364,7 +378,7 @@ const OperatorDashboard = () => {
       <Navbar />
       <div className="container mx-auto px-4 sm:px-6 pt-24 pb-16">
         {/* Header Konsol Operator */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-2">
@@ -386,6 +400,11 @@ const OperatorDashboard = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Papan Status Keselamatan Maritim Live BMKG / Open-Meteo */}
+        <div className="mb-8">
+          <OperatorWeatherAdvisory onStatusChange={handleWeatherStatusChange} />
         </div>
 
         {/* Stats */}
@@ -507,7 +526,7 @@ const OperatorDashboard = () => {
                         <span className="text-slate-500">Tarif Dasar Sewa:</span>
                         <span className="font-bold text-cyan-800">Rp {boat.base_price.toLocaleString("id-ID")}</span>
                       </div>
-                      <div className="flex justify-between py-1">
+                      <div className="flex justify-between py-1 border-b border-slate-50">
                         <span className="text-slate-500">Status Kelaikan:</span>
                         <span
                           className={`font-bold ${
@@ -515,6 +534,24 @@ const OperatorDashboard = () => {
                           }`}
                         >
                           {boat.available ? "Tersedia Berlayar" : "Docking / Perawatan"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-slate-500">Kelaikan Cuaca:</span>
+                        <span>
+                          {currentSafety === "aman" ? (
+                            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold">
+                              ● Aman Melaut
+                            </Badge>
+                          ) : currentSafety === "waspada" ? (
+                            <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-bold">
+                              ▲ Waspada (SOLAS)
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-rose-50 text-rose-800 border-rose-300 text-[10px] font-bold">
+                              ✖ Larangan KSOP
+                            </Badge>
+                          )}
                         </span>
                       </div>
                     </div>
@@ -632,6 +669,19 @@ const OperatorDashboard = () => {
               </div>
             </div>
 
+            {/* Peringatan Darurat KSOP bila kondisi cuaca Tunda */}
+            {currentSafety === "tunda" && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-900 flex items-start gap-3">
+                <AlertOctagon className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="text-xs sm:text-sm">
+                  <p className="font-bold">PERINGATAN KSOP & SYAHBANDAR: Status Cuaca Maritim "TUNDA"</p>
+                  <p className="mt-0.5 text-rose-800">
+                    Gelombang laut atau kecepatan angin saat ini melebihi ambang batas aman kapal wisata. Seluruh keberangkatan dihimbau ditunda demi keselamatan jiwa penumpang. Hubungi wisatawan untuk koordinasi penjadwalan ulang melalui tombol Chat WhatsApp.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* List Booking */}
             {filteredBookings.length === 0 ? (
               <Card className="rounded-2xl border-slate-200 border-dashed p-8 text-center bg-white">
@@ -659,6 +709,13 @@ const OperatorDashboard = () => {
                                   {booking.payment_status}
                                 </strong>
                               </span>
+                              {currentSafety === "tunda" &&
+                                (booking.booking_status === "pending" ||
+                                  booking.booking_status === "confirmed") && (
+                                  <Badge className="bg-rose-100 text-rose-900 border-rose-300 font-bold text-[10px]">
+                                    ⚠️ Cuaca Ekstrem: Tunda Melaut
+                                  </Badge>
+                                )}
                             </div>
 
                             <h3 className="font-black text-lg text-slate-900 pt-1">
