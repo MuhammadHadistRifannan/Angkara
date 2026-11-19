@@ -74,7 +74,7 @@ describe("WeatherMapPanel", () => {
     render(React.createElement(WeatherMapPanel));
 
     await waitFor(() => {
-      expect(screen.getAllByText(/0.80/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(/0.80/)).toBeDefined();
       expect(screen.getByText(/KATEGORI: SEDANG/i)).toBeDefined();
     });
   });

@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import type { Feature3DItem } from "./types";
 
 interface FeatureDescriptionPanelProps {
@@ -11,7 +10,9 @@ interface FeatureDescriptionPanelProps {
   isReducedMotion: boolean;
 }
 
-// Teks langsung tampil dengan animasi bounce pada icon fitur saat berganti.
+// Teks langsung tampil (tanpa efek mengetik) agar pengunjung tidak menunggu.
+// Panel di-mount ulang per fitur (key di FeaturesStage), jadi transisi masuk
+// singkat ini berjalan setiap kali fitur berganti.
 export const FeatureDescriptionPanel: React.FC<FeatureDescriptionPanelProps> = ({
   feature,
   index,
@@ -23,8 +24,6 @@ export const FeatureDescriptionPanel: React.FC<FeatureDescriptionPanelProps> = (
   const enter = isReducedMotion
     ? ""
     : "animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both";
-
-  const Icon = feature.icon;
 
   return (
     <div
@@ -44,34 +43,15 @@ export const FeatureDescriptionPanel: React.FC<FeatureDescriptionPanelProps> = (
             </span>
           )}
           {feature.audience && (
-            <span className="rounded-full border border-teal-400/30 bg-teal-500/10 px-2.5 py-0.5 font-medium text-teal-300 flex items-center gap-1.5">
-              {Icon && <Icon className="w-3.5 h-3.5 text-teal-300" />}
+            <span className="rounded-full border border-white/20 px-2.5 py-0.5 font-medium text-white/70">
               {feature.audience}
             </span>
           )}
         </div>
 
-        <div className={`flex items-center gap-3.5 mb-4 ${isMobile ? "justify-center" : ""}`}>
-          {Icon && (
-            <motion.div
-              initial={isReducedMotion ? {} : { scale: 0, rotate: -25 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={
-                isReducedMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 420, damping: 14 }
-              }
-              className="p-2 sm:p-2.5 rounded-2xl bg-teal-500/15 border border-teal-400/30 text-teal-300 shadow-[0_4px_20px_rgba(20,184,166,0.3)] shrink-0"
-              aria-hidden="true"
-            >
-              <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
-            </motion.div>
-          )}
-
-          <h3 className="font-display font-semibold tracking-[-0.025em] leading-[1.1] text-[clamp(1.75rem,3.2vw,2.75rem)] text-white">
-            {feature.title}
-          </h3>
-        </div>
+        <h3 className="font-display font-semibold tracking-[-0.025em] leading-[1.1] text-[clamp(1.75rem,3.2vw,2.75rem)] text-white mb-4">
+          {feature.title}
+        </h3>
 
         {feature.description && (
           <p

@@ -1,19 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { motion, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { AuthModal } from "@/components/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ShieldCheck,
-  Star,
-  MessageSquare,
-  PhoneCall,
-  Radio,
-  Users,
-  Zap,
-} from "lucide-react";
-import { SuarCard, type SuarCardColor } from "@/components/ui/SuarCard";
-import { SuarCarousel } from "@/components/ui/SuarCarousel";
-import { BoatCardIllustration } from "@/components/illustrations/BoatCardIllustration";
+import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface FleetBoat {
   id: string;
@@ -41,7 +31,7 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "12 Jaket Pelampung SOLAS",
     engineSpecs: "Yamaha Marine 15PK",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 350000,
+    price: 350000
   },
   {
     id: "10000000-0000-4000-8000-000000000002",
@@ -54,7 +44,7 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "24 Pelampung + Life Raft",
     engineSpecs: "Twin Yamaha 200HP",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 650000,
+    price: 650000
   },
   {
     id: "10000000-0000-4000-8000-000000000003",
@@ -67,7 +57,7 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "Sound Guide + Binokular",
     engineSpecs: "Mesin Diesel Silent 40PK",
     fareLabel: "Tarif Trip Laguna:",
-    price: 400000,
+    price: 400000
   },
   {
     id: "10000000-0000-4000-8000-000000000004",
@@ -80,7 +70,7 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "10 Jaket Pelampung SOLAS",
     engineSpecs: "Yamaha 40PK",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 550000,
+    price: 550000
   },
   {
     id: "10000000-0000-4000-8000-000000000005",
@@ -93,7 +83,7 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "18 Jaket Pelampung SOLAS",
     engineSpecs: "Diesel 30PK",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 300000,
+    price: 300000
   },
   {
     id: "10000000-0000-4000-8000-000000000006",
@@ -106,95 +96,135 @@ const defaultFleet: FleetBoat[] = [
     safetyGear: "14 Pelampung + Life Raft",
     engineSpecs: "Twin Yamaha 115HP",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 600000,
+    price: 600000
   },
   {
     id: "10000000-0000-4000-8000-000000000007",
-    name: "KM Bintang Pesisir 04",
-    boatTypeTag: "Jukung Tradisional",
-    rating: 4.9,
-    tripsCount: 92,
-    captainName: "Pak Trisno",
-    capacityText: "Maks. 10 Penumpang",
-    safetyGear: "12 Pelampung SOLAS",
-    engineSpecs: "Yamaha 15PK",
+    name: "KM Lumba-Lumba 04",
+    boatTypeTag: "Speedboat Fiber Cepat",
+    rating: 4.6,
+    tripsCount: 37,
+    captainName: "Pak Dedi",
+    capacityText: "Maks. 6 Penumpang",
+    safetyGear: "8 Jaket Pelampung SOLAS",
+    engineSpecs: "Yamaha 40PK",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 350000,
+    price: 450000
   },
   {
     id: "10000000-0000-4000-8000-000000000008",
-    name: "KM Tirta Kencana 02",
-    boatTypeTag: "Kapal Ekowisata",
-    rating: 4.8,
-    tripsCount: 54,
-    captainName: "Kang Yanto",
-    capacityText: "Maks. 14 Penumpang",
-    safetyGear: "Binokular + Sound Guide",
-    engineSpecs: "Diesel Silent 40PK",
-    fareLabel: "Tarif Trip Laguna:",
-    price: 420000,
+    name: "KM Bahari Sejahtera 09",
+    boatTypeTag: "Kapal Kayu Tradisional",
+    rating: 4.7,
+    tripsCount: 66,
+    captainName: "Pak Joko",
+    capacityText: "Maks. 20 Penumpang",
+    safetyGear: "22 Jaket Pelampung SOLAS",
+    engineSpecs: "Diesel 40PK",
+    fareLabel: "Tarif PP Tanjung Intan:",
+    price: 350000
   },
   {
     id: "10000000-0000-4000-8000-000000000009",
-    name: "KM Ombak Selatan 09",
+    name: "KM Albatros 06",
     boatTypeTag: "Speedboat Fiber Cepat",
-    rating: 4.9,
-    tripsCount: 88,
-    captainName: "Mas Hendra",
-    capacityText: "Maks. 18 Penumpang",
-    safetyGear: "20 Pelampung + Life Raft",
-    engineSpecs: "Twin 150HP",
-    fareLabel: "Tarif PP Teluk Penyu:",
-    price: 620000,
+    rating: 4.7,
+    tripsCount: 44,
+    captainName: "Mas Rian",
+    capacityText: "Maks. 10 Penumpang",
+    safetyGear: "12 Pelampung + Life Raft",
+    engineSpecs: "Yamaha 85HP",
+    fareLabel: "Tarif PP Tanjung Intan:",
+    price: 500000
   },
   {
     id: "10000000-0000-4000-8000-000000000010",
-    name: "KM Teluk Indah 01",
-    boatTypeTag: "Kapal Kayu Tradisional",
-    rating: 4.7,
-    tripsCount: 65,
-    captainName: "Pak Maryono",
+    name: "KM Mangrove Explorer 02",
+    boatTypeTag: "Kapal Ekowisata",
+    rating: 4.8,
+    tripsCount: 52,
+    captainName: "Kang Udin",
     capacityText: "Maks. 12 Penumpang",
-    safetyGear: "15 Pelampung SOLAS",
-    engineSpecs: "Diesel 25PK",
-    fareLabel: "Tarif PP Teluk Penyu:",
-    price: 320000,
+    safetyGear: "Sound Guide + Binokular",
+    engineSpecs: "Mesin Diesel Silent 40PK",
+    fareLabel: "Tarif Trip Laguna:",
+    price: 425000
   },
   {
     id: "10000000-0000-4000-8000-000000000011",
-    name: "KM Berkah Bahari 06",
-    boatTypeTag: "Jukung Tradisional",
-    rating: 4.8,
-    tripsCount: 77,
-    captainName: "Pak Supri",
-    capacityText: "Maks. 10 Penumpang",
-    safetyGear: "12 Pelampung SOLAS",
-    engineSpecs: "Yamaha 15PK",
+    name: "KM Pesisir Indah 08",
+    boatTypeTag: "Kapal Kayu Tradisional",
+    rating: 4.6,
+    tripsCount: 29,
+    captainName: "Pak Warto",
+    capacityText: "Maks. 14 Penumpang",
+    safetyGear: "16 Jaket Pelampung SOLAS",
+    engineSpecs: "Diesel 30PK",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 350000,
+    price: 325000
   },
   {
     id: "10000000-0000-4000-8000-000000000012",
-    name: "KM Gelora Laut 03",
+    name: "KM Cahaya Selatan 10",
     boatTypeTag: "Speedboat Fiber Cepat",
     rating: 4.8,
-    tripsCount: 60,
-    captainName: "Mas Eko",
+    tripsCount: 78,
+    captainName: "Mas Fajar",
     capacityText: "Maks. 16 Penumpang",
     safetyGear: "18 Pelampung + Life Raft",
-    engineSpecs: "Twin 175HP",
+    engineSpecs: "Twin Yamaha 150HP",
     fareLabel: "Tarif PP Teluk Penyu:",
-    price: 580000,
+    price: 625000
   },
 ];
 
-// Rotasi warna kartu: teal, seafoam, koral, kuning matahari
-const ROTATING_COLORS: SuarCardColor[] = ["teal", "seafoam", "coral", "sun"];
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" },
+  },
+};
 
 export const ReadyFleetSection: React.FC = () => {
   const navigate = useNavigate();
   const [fleet] = useState<FleetBoat[]>(defaultFleet);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
+
+  const updateArrows = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 10);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  };
+
+  const scrollFleet = (dir: 1 | -1) => {
+    scrollRef.current?.scrollBy({ left: dir * 440, behavior: "smooth" });
+  };
+
+  // DEMO: pakai defaultFleet (12 kapal) langsung.
+  // Fetch Supabase dimatikan sementara, karena tabel boats di Supabase
+  // hanya berisi 3 kapal dengan nama/kapasitas berbeda, dan query lama
+  // memakai .limit(3) sehingga menimpa 12 kapal di atas.
+  // Setelah Hadist menjalankan seed-demo-12-kapal-8-paket.sql, tabel
+  // boats berisi 12 kapal ini (id UUID sama) — fetch boleh dinyalakan
+  // lagi, dan pemesanan online (RPC create_booking) bisa jalan.
+
 
   const openAssistantWith = (prompt: string) => {
     window.dispatchEvent(
@@ -216,6 +246,11 @@ export const ReadyFleetSection: React.FC = () => {
     }
   };
 
+  // PERBAIKAN 2026-11-18: "Chat Nelayan" di-gate login lewat popup
+  // AuthModal di landing (sama seperti section Tanya Juru Mudi).
+  // Sebelumnya: langsung navigate("/dashboard") yang melempar user belum
+  // login ke halaman /auth. Sekarang chat terbuka di landing, tanpa pindah
+  // halaman — baik untuk user login maupun yang baru saja login.
   const handleChatCaptain = async (boat: FleetBoat) => {
     const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
     try {
@@ -238,166 +273,194 @@ export const ReadyFleetSection: React.FC = () => {
   };
 
   return (
-    <section
-      id="armada-siap-berlayar"
-      className="py-18 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60"
-    >
+    <section id="armada-siap-berlayar" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60">
+      {/* Subtle Ambient Glow */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl pointer-events-none" />
+
+      {/* id="boats": target semua tautan #boats di landing */}
       <div id="boats" className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header Center (Sesuai Referensi Velin) */}
-        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-3 shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
-            <span>Armada Resmi Berlisensi KSOP</span>
+        {/* Section Header & KSOP Verified Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 sm:mb-14"
+        >
+          <div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+              Armada Siap Berlayar Hari Ini
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-slate-600">
+              Setiap kapal telah lolos inspeksi fisik lambung dan kelengkapan P3K laut.
+            </p>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-fredoka text-slate-900 tracking-tight">
-            Armada Siap Berlayar Hari Ini
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-600">
-            Semua kapal lolos inspeksi fisik lambung dan kelengkapan P3K laut.
-          </p>
+          {/* KSOP Verified Indicator Pill with Floating Animation */}
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+            className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-sky-100/80 border border-sky-200 text-sky-950 shadow-sm self-start md:self-auto"
+          >
+            <div className="p-1.5 rounded-xl bg-sky-500/20 text-sky-800">
+              <ShieldCheck className="h-6 w-6 text-sky-700" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-black tracking-tight leading-none text-sky-950">
+                12 Kapal
+              </span>
+              <span className="text-xs font-semibold text-sky-800">
+                Siap Berlayar Hari Ini
+              </span>
+            </div>
+          </motion.div>
+        </motion.div>
 
-          {/* Lencana Jumlah Kapal di Tengah */}
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100/80 border border-sky-200 text-sky-950 shadow-2xs">
-            <ShieldCheck className="h-4 w-4 text-sky-700" />
-            <span className="text-xs font-bold text-sky-950">
-              12 Kapal Siap Berlayar Hari Ini
-            </span>
-          </div>
+        {/* Slider armada: 12 kapal, geser untuk melihat semuanya */}
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <span className="text-xs font-semibold text-slate-500 mr-auto">
+            Geser untuk melihat {fleet.length} kapal
+          </span>
+          <button
+            type="button"
+            onClick={() => scrollFleet(-1)}
+            disabled={!canPrev}
+            aria-label="Kapal sebelumnya"
+            className="p-2.5 rounded-full border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollFleet(1)}
+            disabled={!canNext}
+            aria-label="Kapal berikutnya"
+            className="p-2.5 rounded-full border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
-
-        {/* Carousel Coverflow Mengipas Armada SuarCard */}
-        <SuarCarousel ariaLabel="Daftar Armada Kapal Suar" className="mt-2">
-          {fleet.map((boat, index) => {
-            const cardColor = ROTATING_COLORS[index % ROTATING_COLORS.length];
-            const isDark = cardColor === "teal" || cardColor === "coral" || cardColor === "navy";
-
-            // Nilai ringkas untuk 3 fakta cepat (Kapasitas, Keselamatan, Mesin)
-            const shortCapacity = boat.capacityText
-              .replace(/Maks\.\s*/i, "")
-              .replace(/Penumpang/i, "orang")
-              .trim();
-            const shortSafety = boat.safetyGear
-              .replace(/Jaket\s*/i, "")
-              .replace(/SOLAS/i, "")
-              .replace(/\+\s*Life\s*Raft/i, "")
-              .trim();
-            const shortEngine = boat.engineSpecs
-              .replace(/Marine/i, "")
-              .replace(/Mesin/i, "")
-              .replace(/Silent/i, "")
-              .trim();
-            const shortCaptain = boat.captainName.split("(")[0].trim();
-
-            return (
-              <SuarCard
-                key={boat.id}
-                color={cardColor}
-                title={boat.name}
-                blurb={`Nahkoda ${shortCaptain}`}
-                chips={[
-                  boat.boatTypeTag.replace(" Tradisional", "").replace(" Cepat", ""),
-                  `★ ${boat.rating.toFixed(1)} (${boat.tripsCount} trip)`,
-                ]}
-                illustration={
-                  <div className="w-full h-full rounded-[20px] sm:rounded-[22px] overflow-hidden">
-                    <BoatCardIllustration boatType={boat.boatTypeTag} />
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+        >
+        <div
+          ref={scrollRef}
+          onScroll={updateArrows}
+          className="flex gap-6 sm:gap-8 overflow-x-auto snap-x snap-mandatory pb-4 mb-6 [scrollbar-width:thin] [-ms-overflow-style:auto]"
+        >
+          {fleet.map((boat) => (
+            <motion.div
+              key={boat.id}
+              variants={cardVariants}
+              whileHover={{ y: -8, transition: { duration: 0.25 } }}
+              className="snap-start shrink-0 w-[85%] sm:w-[400px] lg:w-[calc(33.333%-22px)] bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm hover:shadow-2xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                {/* Header: Tag & Rating */}
+                <div className="flex items-center justify-between gap-2 mb-4">
+                  <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                    {boat.boatTypeTag}
+                  </span>
+                  <div className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <span>
+                      {boat.rating.toFixed(1)} ({boat.tripsCount} trip)
+                    </span>
                   </div>
-                }
-                footer={
-                  <div className="w-full text-center">
-                    {/* Tiga Fakta Singkat: Kapasitas, Alat Keselamatan, Mesin */}
-                    <div
-                      className={`grid grid-cols-3 gap-1 py-1.5 px-2 rounded-xl mb-3 border ${
-                        isDark
-                          ? "bg-black/15 border-white/20 text-white"
-                          : "bg-slate-900/5 border-slate-900/15 text-slate-900"
-                      }`}
-                    >
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <Users className="w-3.5 h-3.5 mb-0.5 opacity-75" />
-                        <span className="text-[10px] font-bold leading-tight">
-                          {shortCapacity}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center justify-center text-center border-x border-current/15 px-1">
-                        <ShieldCheck className="w-3.5 h-3.5 mb-0.5 opacity-75" />
-                        <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                          {shortSafety}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <Zap className="w-3.5 h-3.5 mb-0.5 opacity-75" />
-                        <span className="text-[10px] font-bold leading-tight line-clamp-1">
-                          {shortEngine}
-                        </span>
-                      </div>
-                    </div>
+                </div>
 
-                    {/* Tarif Besar Rata Tengah */}
-                    <div className="flex items-baseline justify-center gap-1 mb-3">
-                      <span
-                        className={`text-2xl font-black font-fredoka tracking-tight ${
-                          isDark ? "text-white" : "text-slate-950"
-                        }`}
-                      >
-                        Rp{boat.price.toLocaleString("id-ID")}
-                      </span>
-                    </div>
+                {/* Boat Name & Captain */}
+                <h3
+                  className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1 cursor-pointer hover:text-sky-700 transition-colors"
+                  onClick={() => navigate(`/boat/${boat.id}`)}
+                >
+                  {boat.name}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mb-6">
+                  Nahkoda: <span className="text-slate-700 font-semibold">{boat.captainName}</span>
+                </p>
 
-                    {/* Dua Tombol Aksi: Chat dan Pesan */}
-                    <div className="grid grid-cols-2 gap-2 w-full">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleChatCaptain(boat);
-                        }}
-                        className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl text-xs font-bold transition-all border cursor-pointer ${
-                          isDark
-                            ? "bg-white/10 hover:bg-white/20 text-white border-white/30"
-                            : "bg-slate-900/10 hover:bg-slate-900/15 text-slate-900 border-slate-900/20"
-                        }`}
-                      >
-                        <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-                        <span>Chat</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBookNow(boat.id);
-                        }}
-                        className={`flex items-center justify-center py-2.5 px-3 rounded-2xl text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer ${
-                          isDark
-                            ? "bg-white text-slate-950 hover:bg-slate-100"
-                            : "bg-[#0B1528] text-white hover:bg-slate-900"
-                        }`}
-                      >
-                        Pesan
-                      </button>
-                    </div>
+                {/* Specs List */}
+                <div className="space-y-2.5 text-xs sm:text-sm border-t border-slate-100 pt-4 mb-6">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Kapasitas Muat:</span>
+                    <span className="font-semibold text-slate-900">{boat.capacityText}</span>
                   </div>
-                }
-              />
-            );
-          })}
-        </SuarCarousel>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Alat Keselamatan:</span>
+                    <span className="font-semibold text-slate-900">{boat.safetyGear}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Mesin:</span>
+                    <span className="font-semibold text-slate-900">{boat.engineSpecs}</span>
+                  </div>
+                </div>
+              </div>
 
-        {/* Emergency SAR Quick-Response Banner */}
-        <div className="mt-8 rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-[#0B1528] via-[#0f2142] to-[#0B1528] text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xl relative overflow-hidden">
+              {/* Pricing & 2 Buttons */}
+              <div>
+                <div className="flex justify-between items-baseline mb-5 pt-3 border-t border-slate-100">
+                  <span className="text-xs text-slate-500 font-medium">{boat.fareLabel}</span>
+                  <span className="text-xl font-black text-slate-900">
+                    Rp {boat.price.toLocaleString("id-ID")}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleChatCaptain(boat)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-sky-50/50 hover:border-sky-300 text-slate-800 text-xs sm:text-sm font-bold transition-colors"
+                  >
+                    <MessageSquare className="h-4 w-4 text-slate-600" />
+                    <span>Chat Nelayan</span>
+                  </motion.button>
+
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleBookNow(boat.id)}
+                    className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                  >
+                    Pesan Sekarang
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        </motion.div>
+
+        {/* Emergency SAR Quick-Response Banner matching Image 4 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-[#0B1528] via-[#0f2142] to-[#0B1528] text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xl relative overflow-hidden"
+        >
           <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center gap-4 relative z-10">
-            <div className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/30 text-rose-400 flex-shrink-0 shadow-inner">
+            <motion.div
+              animate={{ scale: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/30 text-rose-400 flex-shrink-0 shadow-inner"
+            >
               <Radio className="h-6 w-6 text-rose-400" />
-            </div>
+            </motion.div>
             <div>
-              <h4 className="text-base sm:text-lg font-bold font-fredoka text-white tracking-tight">
+              <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
                 Jalur Cepat Darurat Maritim Terpadu
               </h4>
               <p className="text-xs sm:text-sm text-slate-300">
-                Pos Siaga Basarnas SAR Pelabuhan Cilacap &amp; Radio Nelayan
+                Pos Siaga Basarnas SAR Pelabuhan Cilacap & Radio Nelayan
               </p>
             </div>
           </div>
@@ -406,15 +469,17 @@ export const ReadyFleetSection: React.FC = () => {
             <span className="px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs font-mono font-bold text-slate-200">
               VHF Radio: CH 16
             </span>
-            <a
+            <motion.a
               href="tel:115"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-950/40 transition-colors"
             >
               <PhoneCall className="h-4 w-4" />
               <span>Hotline 115</span>
-            </a>
+            </motion.a>
           </div>
-        </div>
+        </motion.div>
       </div>
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
     </section>

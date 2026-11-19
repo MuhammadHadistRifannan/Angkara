@@ -184,6 +184,13 @@ describe("OperatorDashboard & BoatModal - Task 4 Manajemen Armada Operator", () 
       )
     );
 
+    // Buka tab Kapal Saya
+    await waitFor(() => {
+      const boatsTab = screen.getByRole("tab", { name: /Kapal Saya/i });
+      fireEvent.mouseDown(boatsTab, { button: 0 });
+      fireEvent.click(boatsTab);
+    });
+
     await waitFor(() => {
       const addBoatBtn = screen.getByRole("button", { name: /Tambah Kapal/i });
       expect(addBoatBtn).toBeDefined();
@@ -275,6 +282,13 @@ describe("OperatorDashboard & BoatModal - Task 4 Manajemen Armada Operator", () 
         React.createElement(OperatorDashboard)
       )
     );
+
+    // Buka tab Kapal Saya
+    await waitFor(() => {
+      const boatsTab = screen.getByRole("tab", { name: /Kapal Saya/i });
+      fireEvent.mouseDown(boatsTab, { button: 0 });
+      fireEvent.click(boatsTab);
+    });
 
     await waitFor(() => {
       // Temukan tombol toggle kelaikan pada KM Sri Rejeki 01

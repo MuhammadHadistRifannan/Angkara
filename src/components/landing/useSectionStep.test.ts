@@ -47,10 +47,11 @@ describe("getHeroSceneState", () => {
   it("maps hero step to pure scene state", () => {
     expect(HERO_STEP_COUNT).toBe(5);
 
-    // Step 0: only video
+    // Step 0: judul + form pencarian + chip cuaca langsung tampil
+    // (Opsi A, 2026-11-19: step 0 tidak lagi video saja).
     const s0 = getHeroSceneState(0);
-    expect(s0.titleVisible).toBe(false);
-    expect(s0.activeTitleIndex).toBeNull();
+    expect(s0.titleVisible).toBe(true);
+    expect(s0.activeTitleIndex).toBe(0);
     expect(s0.videoScale).toBe(1.90);
     expect(s0.overlayDarkness).toBe(0.15);
     expect(s0.isExit).toBe(false);

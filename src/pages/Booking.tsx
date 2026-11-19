@@ -6,10 +6,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Navbar from "@/components/Navbar";
-import { Calendar as CalendarIcon, Users, Clock, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, Users, Clock, DollarSign, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 import { mapBookingError } from "@/lib/bookingErrors";
 import { formatDateWib, isDateInPastWib } from "@/lib/bookingDate";
 import { DEMO_BOATS, findDemoBoat, findDemoPackage } from "@/lib/demoFallback";
@@ -35,6 +35,20 @@ interface PackageDetail {
   isDemo?: boolean;
 }
 
+// Prefill tanggal dari ?date=YYYY-MM-DD (dari popup Cari Kapal).
+// Dibangun sebagai tanggal lokal (bukan UTC) supaya tidak mundur sehari.
+// Mengembalikan undefined bila kosong / tidak valid / sudah lewat.
+const parseDateParam = (value: string | null): Date | undefined => {
+  if (!value) return undefined;
+  const parts = value.split("-").map((v) => parseInt(v, 10));
+  if (parts.length !== 3 || parts.some((v) => !Number.isFinite(v))) {
+    return undefined;
+  }
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (Number.isNaN(d.getTime()) || isDateInPastWib(d)) return undefined;
+  return d;
+};
+
 const Booking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -44,12 +58,20 @@ const Booking = () => {
   // Armada selalu membuka halaman dengan ringkasan pesanan kosong.
   const boatParam = searchParams.get("boatId") ?? searchParams.get("boat");
   const packageParam = searchParams.get("packageId");
+  // Prefill dari popup Cari Kapal: ?date=YYYY-MM-DD&passengers=N.
+  const dateParam = searchParams.get("date");
+  const paxParam = searchParams.get("passengers");
 
-  const [date, setDate] = useState<Date>();
+  const [date, setDate] = useState<Date | undefined>(() =>
+    parseDateParam(dateParam)
+  );
   const [boat, setBoat] = useState<BoatDetail | null>(null);
   const [pkg, setPkg] = useState<PackageDetail | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [passengers, setPassengers] = useState(1);
+  const [passengers, setPassengers] = useState(() => {
+    const n = parseInt(paxParam ?? "", 10);
+    return Number.isFinite(n) ? Math.min(100, Math.max(1, n)) : 1;
+  });
   const [departureTime, setDepartureTime] = useState("09:00");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -153,21 +175,26 @@ const Booking = () => {
   useEffect(() => {
     if (!packageParam) return;
     let cancelled = false;
-    supabase
-      .from("boats")
-      .select("id, name, base_price, capacity")
-      .eq("available", true)
-      .then(
-        ({ data }) => {
-          if (!cancelled && data && data.length > 0) {
-            setRealBoats(data as BoatDetail[]);
-            setSelectedBoatId((cur) =>
-              DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
-            );
-          }
-        },
-        () => {}
-      );
+    // PERBAIKAN 2026-11-19: pakai async/await + try/catch, bukan rantai
+    // then/catch. Query Supabase mengembalikan PromiseLike (bukan Promise
+    // asli), jadi then di sana tidak punya catch — VS Code menandai error
+    // "Property 'catch' does not exist on type 'PromiseLike<void>'".
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("boats")
+          .select("id, name, base_price, capacity")
+          .eq("available", true);
+        if (!cancelled && data && data.length > 0) {
+          setRealBoats(data as BoatDetail[]);
+          setSelectedBoatId((cur) =>
+            DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
+          );
+        }
+      } catch {
+        // Abaikan: daftar kapal demo tetap tampil.
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -191,6 +218,15 @@ const Booking = () => {
       ? boat.base_price * passengers
       : 0;
 
+  // Kembali ke Armada: ke halaman daftar kapal (/boats).
+  // Sebelumnya: window.location.href = "/#armada-siap-berlayar" (muat ulang,
+  // scroll anchor gagal → mendarat di atas landing), lalu navigate("/") +
+  // scroll tertunda ke section landing — tapi Adin minta kembalinya ke
+  // halaman /boats, bukan ke landing lagi.
+  const goToFleet = () => {
+    navigate("/boats");
+  };
+
   const handleBooking = async () => {
     if (!date || (!boat && !pkg)) {
       toast.error("Mohon lengkapi semua data");
@@ -207,7 +243,7 @@ const Booking = () => {
     // Setelah seed demo dijalankan, kapal ini terdaftar dan pemesanan jalan.
     if (bookingBoatIsDemo) {
       toast.error(
-        "Kapal ini memakai data demo dan belum terdaftar di sistem pemesanan. Minta operator menjalankan seed data demo (seed-demo-12-kapal-8-paket.sql) supaya pemesanan bisa diproses."
+        "Kapal ini belum terdaftar di sistem pemesanan online, jadi belum bisa dipesan. Silakan pilih kapal terdaftar dari daftar di atas."
       );
       return;
     }
@@ -245,6 +281,17 @@ const Booking = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
+        {/* PERBAIKAN 2026-11-18: tombol kembali ke armada. Sebelumnya halaman
+            Booking tidak punya jalan kembali ke daftar kapal / beranda selain
+            lewat navbar. */}
+        <Button
+          variant="ghost"
+          className="mb-4 -ml-2 text-slate-600 hover:text-slate-900"
+          onClick={goToFleet}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1.5" />
+          Kembali ke Armada Kapal
+        </Button>
         <div className="grid md:grid-cols-2 gap-8">
           <div>
             <h1 className="text-3xl font-bold mb-6">
@@ -293,7 +340,7 @@ const Booking = () => {
                           ))}
                         </optgroup>
                       )}
-                      <optgroup label="Kapal demo — tampil di landing">
+                      <optgroup label="Kapal lain — belum terdaftar">
                         {DEMO_BOATS.map((b) => (
                           <option key={b.id} value={b.id}>
                             {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
@@ -303,8 +350,8 @@ const Booking = () => {
                       </optgroup>
                     </select>
                     <p className="text-xs text-muted-foreground mt-1.5">
-                      Paket berlayar dengan kapal yang dipilih. Kapal demo bisa
-                      dipesan setelah operator menjalankan seed data demo.
+                      Paket berlayar dengan kapal yang dipilih. Pilih kapal
+                      terdaftar agar pemesanan bisa diproses secara online.
                     </p>
                   </div>
                 )}
@@ -372,9 +419,7 @@ const Booking = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => {
-                        window.location.href = "/#armada-siap-berlayar";
-                      }}
+                      onClick={goToFleet}
                     >
                       Lihat Armada Kapal
                     </Button>
@@ -440,6 +485,11 @@ const Booking = () => {
                     >
                       {loading ? "Memproses..." : "Lanjut ke Pembayaran"}
                     </Button>
+                    {!date && !loading && (
+                      <p className="text-xs text-center text-muted-foreground mt-2">
+                        Pilih tanggal berlayar di atas untuk melanjutkan ke pembayaran.
+                      </p>
+                    )}
                   </>
                 )}
 
@@ -524,6 +574,11 @@ const Booking = () => {
                     >
                       {loading ? "Memproses..." : "Lanjut ke Pembayaran"}
                     </Button>
+                    {!date && !loading && (
+                      <p className="text-xs text-center text-muted-foreground mt-2">
+                        Pilih tanggal berlayar di atas untuk melanjutkan ke pembayaran.
+                      </p>
+                    )}
                   </>
                 )}
               </CardContent>

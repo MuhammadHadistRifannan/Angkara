@@ -119,8 +119,8 @@ describe("Landing Page Components (SUAR Platform)", () => {
 
     expect(screen.getByRole("heading", { name: /Pilihan Paket Tour/i })).toBeDefined();
     expect(screen.getByText(/Semua Paket/i)).toBeDefined();
-    expect(screen.getByText(/Pantai Permisan/i)).toBeDefined();
-    expect(screen.getByText(/Hutan Mangrove/i)).toBeDefined();
+    expect(screen.getByText(/Penyeberangan Teluk Penyu/i)).toBeDefined();
+    expect(screen.getByText(/Jelajah Hutan Mangrove/i)).toBeDefined();
   });
 
   it("ReadyFleetSection merender armada kapal terverifikasi dan banner SAR 115", () => {

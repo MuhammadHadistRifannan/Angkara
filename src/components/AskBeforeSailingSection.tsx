@@ -130,13 +130,6 @@ export const AskBeforeSailingSection: React.FC = () => {
                     <Zap className="h-4 w-4 text-cyan-400" />
                   </div>
                   <span className="font-bold text-sm tracking-tight">Juru Mudi AI</span>
-                  <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300 border border-amber-400/40">
-                    Contoh
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-                  <span>Contoh percakapan</span>
                 </div>
               </div>
 

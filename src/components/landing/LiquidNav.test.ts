@@ -82,4 +82,26 @@ describe("LiquidNav slot-relative highlight navigation", () => {
     // Returns to Beranda
     expect(berandaBtn.className).toContain("text-slate-950");
   });
+
+  it("mempertahankan highlight pada menu yang diklik saat mouse meninggalkan navbar alih-alih reset ke Beranda", () => {
+    render(
+      React.createElement(LiquidNav, { show: true, isReducedMotion: true, isInHero: true })
+    );
+
+    const berandaBtn = screen.getByRole("button", { name: "Beranda" });
+    const cuacaBtn = screen.getByRole("button", { name: "Cuaca & Peta" });
+
+    // Klik Cuaca & Peta
+    fireEvent.click(cuacaBtn);
+
+    // Kursor mouse keluar dari navbar
+    const navOuter = berandaBtn.closest(".rounded-full");
+    if (navOuter) {
+      fireEvent.mouseLeave(navOuter);
+    }
+
+    // Cuaca & Peta tetap ter-highlight, tidak kembali ke Beranda
+    expect(cuacaBtn.className).toContain("text-slate-950");
+    expect(berandaBtn.className).not.toContain("text-slate-950");
+  });
 });

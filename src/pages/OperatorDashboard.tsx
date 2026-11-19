@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import {
   Ship,
   Calendar,
@@ -25,6 +27,14 @@ import {
   Compass,
   Sparkles,
   Trash2,
+  User as UserIcon,
+  LogOut,
+  Phone,
+  Mail,
+  Menu,
+  X,
+  Waves,
+  LayoutDashboard,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BoatModal, type OperatorBoatData } from "@/components/BoatModal";
@@ -53,7 +63,7 @@ interface OperatorBoat {
   id: string;
   operator_id: string;
   name: string;
-  type: "speedboat" | "kapal_kayu";
+  type: string;
   capacity: number;
   base_price: number;
   available: boolean;
@@ -107,11 +117,23 @@ const OperatorDashboard = () => {
   const [currentSafety, setCurrentSafety] = useState<SailingSafetyLevel>("aman");
   const [, setSafetyVerdict] = useState<SailingSafetyVerdict | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  // State navigasi tab, mobile sidebar drawer, dan profil operator
+  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editKsopCert, setEditKsopCert] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-    const handleOperatorUser = async (user: User) => {
-      if (!isMounted) return;
+  useEffect(() => {
+    const checkOperator = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
 
       // 1. Cari berdasarkan user_id
       let { data: operatorData } = await supabase
@@ -161,8 +183,6 @@ const OperatorDashboard = () => {
         }
       }
 
-      if (!isMounted) return;
-
       if (!operatorData) {
         toast.error("Anda belum terdaftar sebagai operator kapal");
         navigate("/dashboard");
@@ -170,67 +190,14 @@ const OperatorDashboard = () => {
       }
 
       setOperator(operatorData as OperatorData);
+      setEditCompanyName(operatorData.company_name || "");
+      setEditPhone(operatorData.phone || "");
+      setEditKsopCert(operatorData.ksop_certificate || "");
       fetchBoats(operatorData.id);
       fetchBookings(operatorData.id);
       fetchPackages(operatorData.id);
     };
-
-    const checkOperator = async () => {
-      // 1. Cek apakah ada parameter galat dari callback OAuth
-      const hashStr = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
-      const hashParams = new URLSearchParams(hashStr);
-      const searchParams = new URLSearchParams(window.location.search);
-      const oauthError = hashParams.get("error_description") || searchParams.get("error_description") || hashParams.get("error") || searchParams.get("error");
-      if (oauthError && isMounted) {
-        navigate(`/auth#${hashStr}`, { replace: true });
-        return;
-      }
-
-      // 2. Cek sesi aktif
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        await handleOperatorUser(session.user);
-        return;
-      }
-
-      const hasAuthParams =
-        typeof window !== "undefined" &&
-        (window.location.hash.includes("access_token") ||
-          window.location.search.includes("code"));
-
-      if (!hasAuthParams && isMounted) {
-        navigate("/auth");
-      }
-    };
-
     checkOperator();
-
-    const subscription =
-      typeof supabase.auth?.onAuthStateChange === "function"
-        ? supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (session?.user && isMounted) {
-              await handleOperatorUser(session.user);
-            } else if (!session && isMounted) {
-              const hasAuthParams =
-                typeof window !== "undefined" &&
-                (window.location.hash.includes("access_token") ||
-                  window.location.search.includes("code"));
-              if (!hasAuthParams) {
-                navigate("/auth");
-              }
-            }
-          })
-        : null;
-
-    return () => {
-      isMounted = false;
-      if (subscription?.data?.subscription) {
-        subscription.data.subscription.unsubscribe();
-      }
-    };
   }, [navigate]);
 
   // Langganan sinkronisasi realtime Supabase untuk booking, armada, dan paket wisata
@@ -554,6 +521,58 @@ const OperatorDashboard = () => {
     }
   };
 
+  // Simpan pembaharuan profil operator & registrasi KSOP
+  const handleUpdateOperatorProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!operator?.id) return;
+    if (!editCompanyName.trim()) {
+      toast.error("Nama usaha/operator tidak boleh kosong");
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      const { error } = await supabase
+        .from("operators")
+        .update({
+          company_name: editCompanyName.trim(),
+          phone: editPhone.trim(),
+          ksop_certificate: editKsopCert.trim() || null,
+        })
+        .eq("id", operator.id);
+
+      if (error) throw error;
+
+      setOperator((prev) =>
+        prev
+          ? {
+              ...prev,
+              company_name: editCompanyName.trim(),
+              phone: editPhone.trim(),
+              ksop_certificate: editKsopCert.trim() || null,
+            }
+          : null
+      );
+      toast.success("Profil dan legalitas operator berhasil diperbarui");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal menyimpan profil operator";
+      toast.error(msg);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  // Logout akun operator
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Berhasil keluar dari akun operator");
+      navigate("/");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gagal logout";
+      toast.error(msg);
+    }
+  };
+
   // Perhitungan filter
   const pendingCount = bookings.filter((b) => b.booking_status === "pending").length;
   const confirmedCount = bookings.filter((b) => b.booking_status === "confirmed").length;
@@ -566,130 +585,342 @@ const OperatorDashboard = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <Navbar />
-      <div className="container mx-auto px-4 sm:px-6 pt-24 pb-16">
-        {/* Header Konsol Operator */}
-        <div className="mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => {
+          setActiveTab(val);
+          setIsMobileSidebarOpen(false);
+        }}
+        className="flex-1 flex flex-col md:flex-row pt-20"
+      >
+        {/* Mobile Header Bar & Toggle Sidebar */}
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 border border-cyan-200">
+              <AvatarFallback className="bg-cyan-600 text-white font-bold text-xs">
+                {operator?.company_name ? operator.company_name.charAt(0).toUpperCase() : "O"}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-2">
-                <Anchor className="h-3.5 w-3.5 text-cyan-600" />
-                <span>Konsol Syahbandar & Mitra Operator</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-                Dashboard Operator
-              </h1>
-              <p className="text-slate-600 text-sm mt-1">
-                {operator?.company_name || "Kelola armada kapal, persetujuan booking, dan pelayaran."}
+              <p className="text-xs font-bold text-slate-900 line-clamp-1">
+                {operator?.company_name || "Operator Kapal"}
               </p>
+              <span className="text-[10px] text-cyan-600 font-semibold block">Mitra Operator SUAR</span>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+            className="p-1.5 h-9 w-9 rounded-xl"
+            aria-label="Toggle Menu Sidebar"
+          >
+            {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+        {/* Sidebar Navigasi & Profil Operator (Desktop & Mobile Drawer) - Full dari atas ke bawah */}
+        <aside
+          className={`
+            fixed md:sticky top-20 inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between shrink-0 transition-transform duration-200 ease-in-out md:translate-x-0
+            ${isMobileSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
+            min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-y-auto
+          `}
+        >
+          <div className="space-y-6">
+            {/* Kartu Profil Operator */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <Avatar className="h-12 w-12 border-2 border-cyan-400 shadow-sm">
+                  <AvatarFallback className="bg-cyan-600 text-white font-black text-sm">
+                    {operator?.company_name ? operator.company_name.slice(0, 2).toUpperCase() : "OP"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm text-white truncate">
+                    {operator?.company_name || "Operator Kapal"}
+                  </h3>
+                  <p className="text-[11px] text-slate-300 truncate">
+                    {operator?.email || "-"}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                    <Badge className="bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 text-[9px] px-1.5 py-0 font-semibold">
+                      Operator
+                    </Badge>
+                    {operator?.verified ? (
+                      <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] px-1.5 py-0 font-semibold flex items-center gap-1">
+                        <ShieldCheck className="h-2.5 w-2.5" />
+                        KSOP Terverifikasi
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] px-1.5 py-0 font-semibold">
+                        Pending
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {operator?.ksop_certificate && (
+                <div className="mt-3 pt-2.5 border-t border-slate-700/60 text-[10px] text-slate-300 flex items-center justify-between">
+                  <span className="text-slate-400">No. SKKSOP:</span>
+                  <span className="font-mono text-cyan-300 truncate ml-2">{operator.ksop_certificate}</span>
+                </div>
+              )}
             </div>
 
-            {operator?.verified && (
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                <span>Terverifikasi KSOP Kelas II Cilacap</span>
-              </div>
-            )}
+            {/* Menu Navigasi Tabs Sidebar */}
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
+                Konsol Syahbandar
+              </span>
+              <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1.5">
+                <TabsTrigger
+                  value="overview"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center gap-2.5"
+                >
+                  <LayoutDashboard className="h-4 w-4 text-cyan-600" />
+                  <span>Dashboard</span>
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="boats"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Ship className="h-4 w-4 text-cyan-600" />
+                    <span>Kapal Saya</span>
+                  </div>
+                  {boats.length > 0 && (
+                    <span className="h-5 px-1.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold flex items-center justify-center">
+                      {boats.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="packages"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="h-4 w-4 text-cyan-600" />
+                    <span>Paket Wisata</span>
+                  </div>
+                  {packages.length > 0 && (
+                    <span className="h-5 px-1.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-black flex items-center justify-center">
+                      {packages.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="bookings"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Ticket className="h-4 w-4 text-cyan-600" />
+                    <span>Booking</span>
+                  </div>
+                  {pendingCount > 0 && (
+                    <span className="h-5 px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center">
+                      {pendingCount}
+                    </span>
+                  )}
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="profile"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center gap-2.5"
+                >
+                  <UserIcon className="h-4 w-4 text-cyan-600" />
+                  <span>Profil & Legalitas</span>
+                </TabsTrigger></TabsList>
+            </div>
+
+            {/* Pintasan Bahari */}
+            <div className="pt-2 border-t border-slate-200/80 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
+                Pintasan Bahari
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  navigate("/#weather-map-section");
+                }}
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+              >
+                <Waves className="h-4 w-4 text-cyan-600" />
+                <span>Pantau Peta Cuaca</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  navigate("/boats");
+                }}
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+              >
+                <Ship className="h-4 w-4 text-cyan-600" />
+                <span>Katalog Armada Kapal</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  navigate("/tour-packages");
+                }}
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+              >
+                <Compass className="h-4 w-4 text-cyan-600" />
+                <span>Katalog Paket Tour</span>
+              </Button>
+            </div>
           </div>
-        </div>
 
-        {/* Papan Status Keselamatan Maritim Live BMKG / Open-Meteo */}
-        <div className="mb-8">
-          <OperatorWeatherAdvisory onStatusChange={handleWeatherStatusChange} />
-        </div>
+          {/* Tombol Logout di Footer Sidebar */}
+          <div className="pt-4 border-t border-slate-200/80">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="w-full justify-center text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300 gap-2 rounded-xl"
+            >
+              <LogOut className="h-4 w-4 text-rose-500" />
+              <span>Keluar dari Akun</span>
+            </Button>
+          </div>
+        </aside>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
-            <CardContent className="p-5 flex items-center justify-between">
+        {/* Konten Utama Dashboard (Sebelah Kanan Sidebar) */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full">
+          {/* TAB 1: Dashboard (Ringkasan, Keselamatan Maritim, Stats & Analitik) */}
+          <TabsContent value="overview" className="space-y-6 mt-0 animate-in fade-in duration-200">
+            {/* Header Konsol Operator */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Kapal</p>
-                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stats.totalBoats}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
-                <Ship className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Booking</p>
-                <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stats.totalBookings}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
-                <Calendar className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estimasi Omzet</p>
-                <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-                  Rp {(stats.totalRevenue / 1000000).toFixed(1)}jt
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-1">
+                  <Anchor className="h-3.5 w-3.5 text-cyan-600" />
+                  <span>Konsol Syahbandar & Mitra Operator</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                  Dashboard Operator
+                </h1>
+                <p className="text-slate-600 text-xs sm:text-sm mt-0.5">
+                  {operator?.company_name || "Ringkasan keselamatan maritim, armada, dan analitik bisnis pelayaran."}
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                <DollarSign className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perlu Persetujuan</p>
-                <p className="text-2xl sm:text-3xl font-black text-amber-600 mt-1">{stats.pendingBookings}</p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
-                <Users className="h-6 w-6" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {operator?.verified && (
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold self-start sm:self-auto">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <span>Terverifikasi KSOP Kelas II Cilacap</span>
+                </div>
+              )}
+            </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="boats" className="space-y-6">
-          <TabsList className="p-1 bg-slate-200/80 rounded-2xl h-11 inline-flex">
-            <TabsTrigger
-              value="boats"
-              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all"
-            >
-              Kapal Saya
-            </TabsTrigger>
-            <TabsTrigger
-              value="packages"
-              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
-            >
-              <span>Paket Wisata</span>
-              {packages.length > 0 && (
-                <span className="h-5 px-1.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-black flex items-center justify-center">
-                  {packages.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="bookings"
-              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
-            >
-              <span>Booking</span>
-              {pendingCount > 0 && (
-                <span className="h-5 px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-black flex items-center justify-center">
-                  {pendingCount}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="analytics"
-              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all"
-            >
-              Analitik
-            </TabsTrigger>
-          </TabsList>
+            {/* Papan Status Keselamatan Maritim Live BMKG / Open-Meteo */}
+            <div>
+              <OperatorWeatherAdvisory onStatusChange={handleWeatherStatusChange} />
+            </div>
+
+            {/* Stats Cards Ringkasan */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Kapal</p>
+                    <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stats.totalBoats}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
+                    <Ship className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Booking</p>
+                    <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stats.totalBookings}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                    <Calendar className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estimasi Omzet</p>
+                    <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+                      Rp {(stats.totalRevenue / 1000000).toFixed(1)}jt
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                    <DollarSign className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perlu Persetujuan</p>
+                    <p className="text-2xl sm:text-3xl font-black text-amber-600 mt-1">{stats.pendingBookings}</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                    <Users className="h-6 w-6" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Statistik Performa Pelayaran (Analitik) */}
+            <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+                  <TrendingUp className="h-5 w-5 text-cyan-600" />
+                  Statistik Performa & Utilisasi Armada
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Analitik utilisasi armada dan estimasi perputaran omzet bulanan operasional kapal Anda di Pelabuhan Cilacap.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl border border-cyan-100">
+                  <h4 className="font-bold text-sm text-slate-900 mb-3">Ringkasan Bulan Ini</h4>
+                  <div className="grid md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <div className="text-slate-500 font-medium">Total Booking Diterima</div>
+                      <div className="text-2xl font-black text-slate-900 mt-1">{stats.totalBookings} Trip</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500 font-medium">Estimasi Omzet</div>
+                      <div className="text-2xl font-black text-slate-900 mt-1">
+                        Rp {(stats.totalRevenue / 1000000).toFixed(1)}jt
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500 font-medium">Tingkat Utilisasi Armada</div>
+                      <div className="text-2xl font-black text-cyan-800 mt-1">
+                        {stats.totalBoats > 0
+                          ? Math.round((stats.totalBookings / stats.totalBoats) * 100)
+                          : 0}
+                        %
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* TAB 1: Kapal Saya */}
           <TabsContent value="boats" className="space-y-4 animate-in fade-in duration-200">
@@ -1197,47 +1428,91 @@ const OperatorDashboard = () => {
             )}
           </TabsContent>
 
-          {/* TAB 3: Analitik */}
-          <TabsContent value="analytics" className="space-y-4 animate-in fade-in duration-200">
+          {/* TAB 4: Profil & Legalitas KSOP */}
+          <TabsContent value="profile" className="space-y-4 animate-in fade-in duration-200">
             <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
-                  <TrendingUp className="h-5 w-5 text-cyan-600" />
-                  Statistik Performa Pelayaran
+                <CardTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
+                  <UserIcon className="h-5 w-5 text-cyan-600" />
+                  Profil Usaha & Legalitas KSOP
                 </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  Kelola identitas operator kapal, nomor kontak operasional, serta nomor registrasi kelaikan laut KSOP Kelas II Cilacap.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl border border-cyan-100">
-                    <h4 className="font-bold text-sm text-slate-900 mb-3">Ringkasan Bulan Ini</h4>
-                    <div className="grid md:grid-cols-3 gap-4 text-xs">
-                      <div>
-                        <div className="text-slate-500 font-medium">Total Booking Diterima</div>
-                        <div className="text-2xl font-black text-slate-900 mt-1">{stats.totalBookings} Trip</div>
-                      </div>
-                      <div>
-                        <div className="text-slate-500 font-medium">Estimasi Omzet</div>
-                        <div className="text-2xl font-black text-slate-900 mt-1">
-                          Rp {(stats.totalRevenue / 1000000).toFixed(1)}jt
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-slate-500 font-medium">Tingkat Utilisasi Armada</div>
-                        <div className="text-2xl font-black text-cyan-800 mt-1">
-                          {stats.totalBoats > 0
-                            ? Math.round((stats.totalBookings / stats.totalBoats) * 100)
-                            : 0}
-                          %
-                        </div>
-                      </div>
-                    </div>
+                <form onSubmit={handleUpdateOperatorProfile} className="space-y-4 max-w-xl">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="companyName" className="text-xs font-bold text-slate-700">
+                      Nama Usaha / Kelompok Nelayan / PO Kapal
+                    </Label>
+                    <Input
+                      id="companyName"
+                      value={editCompanyName}
+                      onChange={(e) => setEditCompanyName(e.target.value)}
+                      placeholder="cth. Koperasi Nelayan Pandanarang"
+                      className="rounded-xl border-slate-200 text-sm"
+                      required
+                    />
                   </div>
-                </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="operatorEmail" className="text-xs font-bold text-slate-700">
+                      Alamat Email Akun
+                    </Label>
+                    <Input
+                      id="operatorEmail"
+                      value={operator?.email || ""}
+                      disabled
+                      className="rounded-xl border-slate-200 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
+                    />
+                    <p className="text-[11px] text-slate-400">Email terikat pada akun autentikasi.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="operatorPhone" className="text-xs font-bold text-slate-700">
+                      Nomor Telepon / WhatsApp Operasional
+                    </Label>
+                    <Input
+                      id="operatorPhone"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="cth. 081234567890"
+                      className="rounded-xl border-slate-200 text-sm"
+                    />
+                    <p className="text-[11px] text-slate-400">Nomor ini digunakan wisatawan untuk koordinasi keberangkatan.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="operatorKsopCert" className="text-xs font-bold text-slate-700">
+                      Nomor Sertifikat / SKKSOP KSOP Kelas II Cilacap
+                    </Label>
+                    <Input
+                      id="operatorKsopCert"
+                      value={editKsopCert}
+                      onChange={(e) => setEditKsopCert(e.target.value)}
+                      placeholder="cth. KSOP.CLP/2026/04-A"
+                      className="rounded-xl border-slate-200 text-sm font-mono"
+                    />
+                    <p className="text-[11px] text-slate-400">Nomor registrasi kelaikan laut armada kapal Anda.</p>
+                  </div>
+
+                  <div className="pt-2 flex items-center gap-3">
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      disabled={isSavingProfile}
+                      className="rounded-xl font-bold text-xs"
+                    >
+                      {isSavingProfile ? "Menyimpan..." : "Simpan Perubahan Profil"}
+                    </Button>
+                  </div>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
-      </div>
+        </main>
+      </Tabs>
 
       {/* Modal Tambah / Edit Armada Kapal */}
       <BoatModal

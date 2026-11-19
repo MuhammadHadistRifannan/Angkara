@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -17,6 +20,13 @@ import {
   Sparkles,
   ShieldCheck,
   CheckCircle2,
+  User as UserIcon,
+  LogOut,
+  Phone,
+  Mail,
+  Menu,
+  X,
+  Compass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { checkIsOperator } from "@/lib/authRoles";
@@ -38,22 +48,34 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("tickets");
   const [selectedBooking, setSelectedBooking] = useState<UserBooking | null>(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
 
-    const handleUser = async (user: User) => {
-      if (!isMounted) return;
+      // Bila terdeteksi sebagai operator kapal, otomatis arahkan ke dashboard operator
       const isOp = await checkIsOperator(user.id, user.email, user.user_metadata);
-      if (!isMounted) return;
       if (isOp) {
         navigate("/operator-dashboard", { replace: true });
         return;
       }
 
       setCurrentUser(user);
+      setProfileName(user.user_metadata?.full_name || "");
+      setProfilePhone(user.user_metadata?.phone || "");
       fetchBookings(user.id);
 
+      // Cek apakah ada prompt tertunda yang memicu pembukaan tab AI chat secara otomatis
       try {
         const pendingPrompt = sessionStorage.getItem("pending_assistant_prompt");
         if (pendingPrompt) {
@@ -63,66 +85,7 @@ const Dashboard = () => {
         console.warn("Gagal mengecek pending prompt:", err);
       }
     };
-
-    const checkAuth = async () => {
-      // 1. Cek apakah ada parameter galat dari callback OAuth
-      const hashStr = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
-      const hashParams = new URLSearchParams(hashStr);
-      const searchParams = new URLSearchParams(window.location.search);
-      const oauthError = hashParams.get("error_description") || searchParams.get("error_description") || hashParams.get("error") || searchParams.get("error");
-      if (oauthError && isMounted) {
-        navigate(`/auth#${hashStr}`, { replace: true });
-        return;
-      }
-
-      // 2. Cek sesi aktif
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        await handleUser(session.user);
-        return;
-      }
-
-      // Periksa apakah URL saat ini membawa token atau kode OAuth
-      const hasAuthParams =
-        typeof window !== "undefined" &&
-        (window.location.hash.includes("access_token") ||
-          window.location.search.includes("code"));
-
-      // Jika ada token OAuth di URL, jangan langsung redirect ke /auth;
-      // biarkan onAuthStateChange memproses pertukaran sesi.
-      if (!hasAuthParams && isMounted) {
-        navigate("/auth");
-      }
-    };
-
     checkAuth();
-
-    const subscription =
-      typeof supabase.auth?.onAuthStateChange === "function"
-        ? supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (session?.user && isMounted) {
-              await handleUser(session.user);
-            } else if (!session && isMounted) {
-              const hasAuthParams =
-                typeof window !== "undefined" &&
-                (window.location.hash.includes("access_token") ||
-                  window.location.search.includes("code"));
-              if (!hasAuthParams) {
-                navigate("/auth");
-              }
-            }
-          })
-        : null;
-
-    return () => {
-      isMounted = false;
-      if (subscription?.data?.subscription) {
-        subscription.data.subscription.unsubscribe();
-      }
-    };
   }, [navigate]);
 
   const fetchBookings = async (userId: string) => {
@@ -176,7 +139,32 @@ const Dashboard = () => {
     window.open(`https://wa.me/6281234567890?text=${message}`, "_blank");
   };
 
-  // Kalkulasi statistik ringkas perjalanan wisatawan
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          full_name: profileName,
+          phone: profilePhone,
+        },
+      });
+      if (error) throw error;
+      if (data?.user) {
+        setCurrentUser(data.user);
+        toast.success("Profil wisatawan berhasil disimpan!");
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Gagal memperbarui profil");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
   const activeTripsCount = bookings.filter(
     (b) => b.booking_status === "confirmed" || b.booking_status === "pending"
   ).length;
@@ -188,57 +176,178 @@ const Dashboard = () => {
   const totalSpent = bookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       <Navbar />
-      <div className="container mx-auto px-4 sm:px-6 pt-24 pb-16">
-        {/* Header Dashboard */}
-        <div className="mb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-2">
-                <Sparkles className="h-3.5 w-3.5 text-cyan-600" />
-                <span>Portal Wisatawan Terintegrasi</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-                Dashboard Wisatawan
-              </h1>
-              <p className="text-slate-600 text-sm mt-1">
-                Kelola tiket penyeberangan, cek status cuaca, dan konsultasi pelayaran dengan AI.
-              </p>
-            </div>
 
-            <Button
-              variant="outline"
-              onClick={() => navigate("/#weather-map-section")}
-              className="gap-2 bg-white text-xs font-bold border-slate-300 hover:bg-slate-100 rounded-xl shadow-sm"
-            >
-              <Waves className="h-4 w-4 text-cyan-600" />
-              <span>Pantau Peta Cuaca</span>
-            </Button>
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => {
+          setActiveTab(val);
+          setIsMobileSidebarOpen(false);
+        }}
+        className="flex-1 flex flex-col md:flex-row pt-20"
+      >
+        {/* Mobile Header Bar & Toggle Sidebar */}
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 border border-cyan-200">
+              <AvatarFallback className="bg-cyan-600 text-white font-bold text-xs">
+                {(profileName || currentUser?.email || "W").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-xs font-bold text-slate-900 line-clamp-1">
+                {profileName || currentUser?.email || "Wisatawan"}
+              </p>
+              <span className="text-[10px] text-cyan-600 font-semibold block">Wisatawan SUAR</span>
+            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+            className="p-1.5 h-9 w-9 rounded-xl"
+            aria-label="Toggle Menu Sidebar"
+          >
+            {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
         </div>
 
-        {/* Tabs Utama Dashboard */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-slate-200/80 rounded-2xl h-11">
-            <TabsTrigger
-              value="tickets"
-              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all flex items-center gap-2"
-            >
-              <Ticket className="h-4 w-4 text-cyan-600" />
-              <span>Tiket & Riwayat</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="ai-chat"
-              className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-[#090D16] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all flex items-center gap-2"
-            >
-              <Bot className="h-4 w-4 text-cyan-400" />
-              <span>Juru Mudi AI</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Sidebar Navigasi & Profil (Desktop & Mobile Drawer) */}
+        <aside
+          className={`
+            fixed md:sticky top-20 inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between shrink-0 transition-transform duration-200 ease-in-out md:translate-x-0
+            ${isMobileSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
+            min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-y-auto
+          `}
+        >
+          <div className="space-y-6">
+            {/* Kartu Profil Wisatawan */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10">
+                <Avatar className="h-12 w-12 border-2 border-cyan-400 shadow-sm">
+                  <AvatarFallback className="bg-cyan-600 text-white font-black text-sm">
+                    {(profileName || currentUser?.email || "W").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm text-white truncate">
+                    {profileName || "Wisatawan Bahari"}
+                  </h3>
+                  <p className="text-[11px] text-slate-300 truncate">
+                    {currentUser?.email || "wisatawan@suar.id"}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <Badge className="bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 text-[9px] px-1.5 py-0 font-semibold">
+                      Wisatawan
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
 
+            {/* Menu Navigasi Tabs Sidebar */}
+            <div className="space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
+                Menu Utama
+              </span>
+              <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1.5">
+                <TabsTrigger
+                  value="tickets"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Ticket className="h-4 w-4 text-cyan-600" />
+                    <span>Tiket & Riwayat</span>
+                  </div>
+                  {activeTripsCount > 0 && (
+                    <span className="h-5 px-1.5 rounded-full bg-cyan-600 text-white text-[10px] font-bold flex items-center justify-center">
+                      {activeTripsCount}
+                    </span>
+                  )}
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="ai-chat"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-[#090D16] data-[state=active]:text-white transition-all flex items-center gap-2.5"
+                >
+                  <Bot className="h-4 w-4 text-cyan-400" />
+                  <span>Juru Mudi AI</span>
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="profile"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center gap-2.5"
+                >
+                  <UserIcon className="h-4 w-4 text-cyan-600" />
+                  <span>Profil Wisatawan</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Pintasan Eksternal */}
+            <div className="pt-2 border-t border-slate-200/80 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
+                Pintasan Bahari
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  navigate("/#weather-map-section");
+                }}
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+              >
+                <Waves className="h-4 w-4 text-cyan-600" />
+                <span>Pantau Peta Cuaca</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  navigate("/boats");
+                }}
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+              >
+                <Ship className="h-4 w-4 text-cyan-600" />
+                <span>Katalog Armada Kapal</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsMobileSidebarOpen(false);
+                  navigate("/tour-packages");
+                }}
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+              >
+                <Compass className="h-4 w-4 text-cyan-600" />
+                <span>Katalog Paket Tour</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Tombol Logout di Footer Sidebar */}
+          <div className="pt-4 border-t border-slate-200/80">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="w-full justify-center text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300 gap-2 rounded-xl"
+            >
+              <LogOut className="h-4 w-4 text-rose-500" />
+              <span>Keluar dari Akun</span>
+            </Button>
+          </div>
+        </aside>
+
+        {/* Konten Utama Dashboard (Sebelah Kanan Sidebar) */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full">
           {/* TAB 1: Tiket & Riwayat Saya */}
-          <TabsContent value="tickets" className="space-y-6 animate-in fade-in duration-200">
+          <TabsContent value="tickets" className="space-y-6 mt-0 animate-in fade-in duration-200">
             {/* Kartu Ringkasan Aktivitas (Trip Stats) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card className="rounded-2xl border-slate-200/80 shadow-sm bg-white">
@@ -492,12 +601,134 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
-          {/* TAB 2: Juru Mudi AI (Opsi B: Full-Page ChatGPT/Gemini Style) */}
-          <TabsContent value="ai-chat" className="animate-in fade-in duration-200">
+          {/* TAB 2: Juru Mudi AI (Full-Page ChatGPT/Gemini Style) */}
+          <TabsContent value="ai-chat" className="mt-0 animate-in fade-in duration-200">
             <FullPageAssistant />
           </TabsContent>
-        </Tabs>
-      </div>
+
+          {/* TAB 3: Profil Wisatawan */}
+          <TabsContent value="profile" className="space-y-6 mt-0 animate-in fade-in duration-200">
+            <div className="pb-2 border-b border-slate-200">
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                Profil & Akun Wisatawan
+              </h1>
+              <p className="text-slate-600 text-xs sm:text-sm mt-0.5">
+                Kelola identitas diri dan informasi kontak resmi untuk lembar manifes pelayaran KSOP.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Kartu Ringkasan Akun */}
+              <Card className="rounded-2xl border-slate-200 bg-white shadow-sm p-6 space-y-4">
+                <div className="text-center">
+                  <Avatar className="h-20 w-20 mx-auto border-4 border-cyan-100 shadow-md">
+                    <AvatarFallback className="bg-cyan-600 text-white font-black text-2xl">
+                      {(profileName || currentUser?.email || "W").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <h3 className="font-bold text-lg text-slate-900 mt-3">
+                    {profileName || "Wisatawan Bahari"}
+                  </h3>
+                  <p className="text-xs text-slate-500">{currentUser?.email}</p>
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Akun Wisatawan Aktif</span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>ID Pengguna:</span>
+                    <span className="font-mono text-slate-900 font-semibold truncate max-w-[150px]">
+                      {currentUser?.id.slice(0, 12)}...
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>Status Verifikasi:</span>
+                    <span className="font-semibold text-emerald-600">Terdaftar Resmi</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>Total Booking:</span>
+                    <span className="font-bold text-slate-900">{bookings.length} Pesanan</span>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Form Pengaturan Data Profil */}
+              <Card className="lg:col-span-2 rounded-2xl border-slate-200 bg-white shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold text-slate-900">
+                    Informasi Kontak & Manifes
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-500">
+                    Pastikan nama dan nomor WhatsApp sesuai untuk verifikasi manifes di Pos Dermaga Pandanarang.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="fullname" className="text-xs font-bold text-slate-700">
+                        Nama Lengkap Sesuai KTP
+                      </Label>
+                      <Input
+                        id="fullname"
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        placeholder="Contoh: Budi Santoso"
+                        className="rounded-xl text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-xs font-bold text-slate-700">
+                        Alamat Email
+                      </Label>
+                      <Input
+                        id="email"
+                        value={currentUser?.email || ""}
+                        disabled
+                        className="rounded-xl text-sm bg-slate-100 text-slate-500 cursor-not-allowed"
+                      />
+                      <span className="text-[10px] text-slate-400">
+                        Alamat email terikat pada otentikasi akun.
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone" className="text-xs font-bold text-slate-700">
+                        Nomor WhatsApp Aktif
+                      </Label>
+                      <div className="relative">
+                        <Phone className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          id="phone"
+                          value={profilePhone}
+                          onChange={(e) => setProfilePhone(e.target.value)}
+                          placeholder="Contoh: 081234567890"
+                          className="rounded-xl text-sm pl-9"
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-500">
+                        Digunakan oleh nakhoda kapal untuk koordinasi penjemputan dermaga.
+                      </span>
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <Button
+                        type="submit"
+                        disabled={isSavingProfile}
+                        className="rounded-xl font-bold text-xs px-5 shadow-sm"
+                      >
+                        {isSavingProfile ? "Menyimpan..." : "Simpan Perubahan"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </main>
+      </Tabs>
 
       {/* Modal Digital E-Tiket */}
       <ETicketModal
@@ -506,7 +737,7 @@ const Dashboard = () => {
         onOpenChange={setIsTicketModalOpen}
       />
 
-      {/* Floating Assistant Widget (Tetap aktif sebagai jalan pintas cepat di pojok kanan bawah) */}
+      {/* Floating Assistant Widget */}
       <AssistantWidget />
     </div>
   );

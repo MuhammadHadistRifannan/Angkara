@@ -70,9 +70,14 @@ export function getHeroSceneState(step: number): HeroSceneState {
 
   switch (clamped) {
     case 0:
+      // OPSI A (2026-11-19): judul pertama langsung tampil di step 0.
+      // Sebelumnya titleVisible false di sini, jadi layar pertama hanya
+      // video tanpa judul/nav/form — juri mengira situs belum termuat.
+      // Step 0 dan step 1 sama-sama menampilkan judul 0, jadi tidak ada
+      // transisi saat mulai scroll; judul 1 dan 2 tetap di step 2 dan 3.
       return {
-        titleVisible: false,
-        activeTitleIndex: null,
+        titleVisible: true,
+        activeTitleIndex: 0,
         videoScale: 1.90,
         overlayDarkness: 0.15,
         isExit: false,

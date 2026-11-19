@@ -22,6 +22,8 @@ const Navbar = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
   const guideRef = useRef<HTMLDivElement>(null);
+  const isNavigatingRef = useRef(false);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,7 +75,8 @@ const Navbar = () => {
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
-      if (location.pathname === "/" && window.scrollY < 300) {
+      if (isNavigatingRef.current) return;
+      if (location.pathname === "/" && window.scrollY < 200 && (!location.hash || location.hash === "#beranda")) {
         setActiveId("beranda");
       }
     };
@@ -84,6 +87,7 @@ const Navbar = () => {
     const sectionIds = ["how-it-works", "weather-map-section", "pilihan-paket-tour"];
     const observer = new IntersectionObserver(
       (entries) => {
+        if (isNavigatingRef.current) return;
         for (const entry of entries) {
           if (entry.isIntersecting) setActiveId(entry.target.id);
         }
@@ -95,6 +99,12 @@ const Navbar = () => {
       if (el) observer.observe(el);
     });
 
+    // Inisialisasi activeId berdasarkan hash jika berada di landing page
+    if (location.pathname === "/" && location.hash) {
+      const hashId = location.hash.replace(/^#/, "");
+      if (hashId) setActiveId(hashId);
+    }
+
     // Halaman terpisah: link yang cocok dengan URL jadi aktif.
     if (location.pathname === "/permit-info") setActiveId("permit-info");
     if (location.pathname.startsWith("/boats")) setActiveId("boats");
@@ -105,22 +115,33 @@ const Navbar = () => {
       window.removeEventListener("scroll", handleScroll);
       observer.disconnect();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, location.hash]);
 
   const goToSection = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     setActiveId(id);
     setIsMenuOpen(false);
     setGuideOpen(false);
+    isNavigatingRef.current = true;
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    navTimerRef.current = setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1200);
+
     if (id === "beranda") {
-      if (!isLandingPage) navigate("/");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!isLandingPage) {
+        navigate("/");
+      } else {
+        window.history.pushState(null, "", "/");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
       return;
     }
     if (!isLandingPage) {
       navigate(`/#${id}`);
       return;
     }
+    window.history.pushState(null, "", `/#${id}`);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -128,6 +149,11 @@ const Navbar = () => {
     e.preventDefault();
     setIsMenuOpen(false);
     setGuideOpen(false);
+    if (!user) {
+      setAuthTab("signin");
+      setAuthOpen(true);
+      return;
+    }
     window.dispatchEvent(
       new CustomEvent("open-assistant", {
         detail: {

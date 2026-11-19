@@ -154,16 +154,16 @@ export const HeroTitle: React.FC<HeroTitleProps> = ({
         {isCurrentActive ? `${currentItem.line1} ${currentItem.line2}` : ""}
       </div>
 
-      {/* Kontainer visual judul di area langit (tepat di pusat 30-34% tinggi layar) */}
+      {/* Kontainer visual judul di hero (center aligned) */}
       <div
         aria-hidden="true"
-        className={`absolute left-0 right-0 top-[32%] -translate-y-1/2 z-20 flex justify-center px-4 pointer-events-none transition-all duration-300 ease-out ${
+        className={`relative z-20 flex justify-center w-full max-w-5xl mx-auto px-4 pointer-events-none transition-all duration-300 ease-out ${
           isCurrentActive
-            ? "opacity-100 blur-0 translate-y-[-50%]"
-            : "opacity-0 blur-[8px] translate-y-[-60%]"
+            ? "opacity-100 blur-0 translate-y-0"
+            : "opacity-0 blur-[8px] -translate-y-4"
         }`}
       >
-        <div className="relative text-center w-full max-w-5xl mx-auto">
+        <div className="relative text-center w-full mx-auto">
           {/* Overlapping grid: Placeholder tak terlihat dari ketiga judul untuk menjamin ZERO layout shift */}
           <div className="invisible select-none leading-[1.08] tracking-[-0.035em] font-semibold text-[clamp(2.25rem,5.5vw,5rem)] font-display">
             <div className="sm:whitespace-nowrap">Berlayar lebih tenang.</div>

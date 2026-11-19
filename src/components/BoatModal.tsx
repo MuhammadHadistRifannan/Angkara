@@ -18,7 +18,7 @@ export interface OperatorBoatData {
   id?: string;
   operator_id?: string;
   name: string;
-  type: "speedboat" | "kapal_kayu";
+  type: string;
   capacity: number;
   base_price: number;
   location?: string;
@@ -55,7 +55,7 @@ export const BoatModal: React.FC<BoatModalProps> = ({
   const isEdit = Boolean(boatToEdit?.id);
 
   const [name, setName] = useState("");
-  const [type, setType] = useState<"speedboat" | "kapal_kayu">("kapal_kayu");
+  const [type, setType] = useState<string>("kapal_kayu");
   const [capacity, setCapacity] = useState<number | string>(10);
   const [basePrice, setBasePrice] = useState<number | string>(350000);
   const [location, setLocation] = useState("Dermaga Pandanarang, Teluk Penyu");
@@ -67,7 +67,7 @@ export const BoatModal: React.FC<BoatModalProps> = ({
   useEffect(() => {
     if (boatToEdit) {
       setName(boatToEdit.name || "");
-      setType((boatToEdit.type as "speedboat" | "kapal_kayu") || "kapal_kayu");
+      setType(boatToEdit.type || "kapal_kayu");
       setCapacity(boatToEdit.capacity || 10);
       setBasePrice(boatToEdit.base_price || 350000);
       setLocation(boatToEdit.location || "Dermaga Pandanarang, Teluk Penyu");
@@ -221,7 +221,7 @@ export const BoatModal: React.FC<BoatModalProps> = ({
               <select
                 id="boat-type"
                 value={type}
-                onChange={(e) => setType(e.target.value as "speedboat" | "kapal_kayu")}
+                onChange={(e) => setType(e.target.value)}
                 className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="kapal_kayu">Kapal Kayu Tradisional</option>

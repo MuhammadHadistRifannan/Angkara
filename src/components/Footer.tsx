@@ -9,10 +9,7 @@ import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
 const Footer: React.FC = () => {
   return (
-    <footer
-      className="bg-[#090D16] text-white"
-      style={{ "--section-footer-bg": "#090D16" } as React.CSSProperties}
-    >
+    <footer className="bg-[#090D16] text-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -57,22 +54,22 @@ const Footer: React.FC = () => {
             <h3 className="font-bold text-base mb-4 text-white">Layanan Pelayaran</h3>
             <ul className="space-y-2.5 text-sm text-slate-300">
               <li>
-                <a href="#boats" className="hover:text-cyan-300 transition-colors">
+                <a href="/#boats" className="hover:text-cyan-300 transition-colors">
                   Armada Kapal Siap Berlayar
                 </a>
               </li>
               <li>
-                <a href="#pilihan-paket-tour" className="hover:text-cyan-300 transition-colors">
+                <a href="/#pilihan-paket-tour" className="hover:text-cyan-300 transition-colors">
                   Pilihan Paket Tour Nusakambangan
                 </a>
               </li>
               <li>
-                <a href="#destinasi-ikonik" className="hover:text-cyan-300 transition-colors">
+                <a href="/#destinasi-ikonik" className="hover:text-cyan-300 transition-colors">
                   Destinasi Ikonik Pesisir
                 </a>
               </li>
               <li>
-                <a href="#weather-map-section" className="hover:text-cyan-300 transition-colors">
+                <a href="/#weather-map-section" className="hover:text-cyan-300 transition-colors">
                   Peta Cuaca Maritim & Telemetri
                 </a>
               </li>
@@ -89,12 +86,12 @@ const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="#how-it-works" className="hover:text-cyan-300 transition-colors">
+                <a href="/#how-it-works" className="hover:text-cyan-300 transition-colors">
                   Cara Kerja Platform SUAR
                 </a>
               </li>
               <li>
-                <a href="#tanya-sebelum-berlayar" className="hover:text-cyan-300 transition-colors">
+                <a href="/#tanya-sebelum-berlayar" className="hover:text-cyan-300 transition-colors">
                   Konsultasi AI Juru Mudi
                 </a>
               </li>

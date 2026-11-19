@@ -1,29 +1,29 @@
 import React from "react";
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  ShieldCheck,
-  CalendarCheck2,
+  Shield,
+  Calendar,
   Anchor,
   FileText,
-  CloudSun,
-  Wallet,
-  StarHalf,
-  BotMessageSquare,
-  Sailboat,
+  Cloud,
+  CreditCard,
+  Star,
+  MessageCircle,
+  Package,
   BarChart3,
   Sparkles,
 } from "lucide-react";
 
 const features = [
   {
-    icon: ShieldCheck,
+    icon: Shield,
     tag: "KSOP Resmi",
     title: "Listing Terverifikasi",
     description:
       "Semua operator kapal terverifikasi KSOP dengan dokumen legalitas lengkap, uji kelaikan berkala, dan badge resmi.",
   },
   {
-    icon: CalendarCheck2,
+    icon: Calendar,
     tag: "Anti-Overbooking",
     title: "Kalender Booking",
     description:
@@ -44,35 +44,35 @@ const features = [
       "Panduan lengkap kepatuhan undang-undang pelayaran, sertifikasi nakhoda, dan checklist keselamatan untuk setiap rute perjalanan.",
   },
   {
-    icon: CloudSun,
+    icon: Cloud,
     tag: "BMKG & Open-Meteo",
     title: "Peringatan Cuaca",
     description:
       "Pemantauan parameter tinggi gelombang, kecepatan angin, dan petir dengan kalkulasi keselamatan deterministik aman/waspada/tunda.",
   },
   {
-    icon: Wallet,
+    icon: CreditCard,
     tag: "Escrow Aman",
     title: "Pembayaran Online",
     description:
       "Opsi pembayaran DP 30% via e-wallet dan transfer bank terlindungi sistem escrow untuk jaminan kepastian berangkat.",
   },
   {
-    icon: StarHalf,
+    icon: Star,
     tag: "GPS Verified",
     title: "Rating Terverifikasi",
     description:
       "Ulasan otentik pasca-perjalanan dari wisatawan asli dengan verifikasi GPS untuk transparansi reputasi operator perahu.",
   },
   {
-    icon: BotMessageSquare,
+    icon: MessageCircle,
     tag: "Asisten Cerdas",
     title: "Chat Real-time",
     description:
       "Komunikasi langsung dengan nahkoda kapal serta konsultasi instan bersama AI Juru Mudi untuk rekomendasi trip.",
   },
   {
-    icon: Sailboat,
+    icon: Package,
     tag: "Rute Populer",
     title: "Paket Wisata",
     description:
@@ -87,7 +87,7 @@ const features = [
   },
 ];
 
-const containerVariants: Variants = {
+const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -98,7 +98,7 @@ const containerVariants: Variants = {
   },
 };
 
-const cardVariants: Variants = {
+const cardVariants = {
   hidden: { opacity: 0, y: 28 },
   visible: {
     opacity: 1,

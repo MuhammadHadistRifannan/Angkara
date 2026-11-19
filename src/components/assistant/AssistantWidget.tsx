@@ -7,7 +7,6 @@ import { sendMessage, AssistantError } from "@/lib/assistantClient";
 import { loadDraft } from "@/lib/bookingDraft";
 import type { ChatMessage } from "../../../supabase/functions/_shared/contracts";
 import { Bot, Send, X, RefreshCw, AlertCircle, Compass, Zap } from "lucide-react";
-import { Mascot } from "@/components/illustrations/Mascot";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthModal } from "@/components/AuthModal";
 
@@ -46,27 +45,28 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Periksa dan pulihkan draf pemesanan saat inisialisasi
+  // Periksa dan pulihkan draf pemesanan saat inisialisasi jika sudah login
   useEffect(() => {
-    const draft = loadDraft();
-    if (draft) {
-      setMessages([
-        {
-          id: "draft-restore",
-          role: "assistant",
-          content:
-            "Selamat datang kembali! Draf pemesanan Anda sebelumnya telah dipulihkan. Silakan tinjau dan klik 'Pesan Sekarang' untuk melanjutkan.",
-          cards: [draft],
-        },
-      ]);
-      setIsOpen(true);
-    }
-
-    if (typeof supabase.auth.getSession === "function") {
-      supabase.auth.getSession().then(({ data }) => {
-        const loggedIn = !!data?.session;
+    if (typeof supabase.auth.getUser === "function") {
+      supabase.auth.getUser().then(({ data }) => {
+        const loggedIn = !!data?.user;
         setAuthed(loggedIn);
         if (!loggedIn) return;
+
+        const draft = loadDraft();
+        if (draft) {
+          setMessages([
+            {
+              id: "draft-restore",
+              role: "assistant",
+              content:
+                "Selamat datang kembali! Draf pemesanan Anda sebelumnya telah dipulihkan. Silakan tinjau dan klik 'Pesan Sekarang' untuk melanjutkan.",
+              cards: [draft],
+            },
+          ]);
+          setIsOpen(true);
+        }
+
         try {
           const pendingPrompt = sessionStorage.getItem("pending_assistant_prompt");
           if (pendingPrompt) {
@@ -79,22 +79,30 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
         }
       });
     }
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthed(!!session);
+      setAuthed(!!session?.user);
     });
     return () => {
       listener.subscription.unsubscribe();
     };
   }, []);
 
-  // Dengarkan event eksternal "open-assistant" (misal dari tombol "Tanya Juru Mudi AI" di peta)
+  // Dengarkan event eksternal "open-assistant" (misal dari tombol "Tanya Juru Mudi AI" di peta atau Navbar)
   useEffect(() => {
     const onOpenEvent = (e: Event) => {
       const customEvent = e as CustomEvent<{ prompt?: string }>;
-      // Prompt sudah disimpan pemanggil di sessionStorage; kalau belum login,
-      // buka popup login dulu, chat dibuka setelah login berhasil.
-      supabase.auth.getSession().then(({ data }) => {
-        if (!data.session) {
+      // Prompt disimpan pemanggil di sessionStorage; kalau belum login,
+      // buka popup login (AuthModal) dulu, chat dibuka setelah login berhasil.
+      supabase.auth.getUser().then(({ data }) => {
+        if (!data?.user) {
+          if (customEvent.detail?.prompt) {
+            try {
+              sessionStorage.setItem("pending_assistant_prompt", customEvent.detail.prompt);
+            } catch (err) {
+              console.warn("Gagal menyimpan pending prompt:", err);
+            }
+          }
           setAuthOpen(true);
           return;
         }
@@ -123,8 +131,8 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
     if (!textToSend || isLoading) return;
 
     // Chat butuh login: simpan pesan, buka popup login, jangan kirim.
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
       try {
         sessionStorage.setItem("pending_assistant_prompt", textToSend);
       } catch (e) {
@@ -199,8 +207,8 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
   };
 
   const handleOpenClick = async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
       setAuthOpen(true);
       return;
     }
@@ -228,7 +236,7 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
           onClick={handleOpenClick}
           aria-label="Buka Chat Juru Mudi AI"
         >
-          <Mascot mood="wave" size={42} />
+          <Bot className="h-7 w-7 text-white" aria-hidden="true" />
         </Button>
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
       </>
@@ -242,8 +250,8 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
       <CardHeader className="bg-[#0B1528] text-white px-5 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-            <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-cyan-950/70 border border-cyan-400/30">
-              <Mascot mood="happy" size={28} />
+            <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+              <Zap className="h-4 w-4 text-cyan-400" aria-hidden="true" />
             </span>
             <span>Juru Mudi AI</span>
           </CardTitle>
@@ -268,13 +276,13 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
       {/* Konten Pesan */}
       {messages.length === 0 ? (
         <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center text-center space-y-4">
-          <div className="flex items-center justify-center -mb-1" aria-hidden="true">
-            <Mascot mood="happy" size={72} />
+          <div className="h-12 w-12 rounded-full bg-[#0B1528]/10 flex items-center justify-center text-[#0B1528]">
+            <Compass className="h-6 w-6 animate-pulse" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="font-bold text-sm text-slate-900">Halo! Saya Si Suar (Juru Mudi AI)</h3>
+            <h3 className="font-semibold text-sm">Halo! Saya Juru Mudi AI</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-[260px] leading-relaxed">
-              Asisten pintar pelayaran dan wisata bahari SUAR di perairan Cilacap &amp; Nusakambangan.
+              Asisten pintar pelayaran dan wisata bahari SUAR di perairan Cilacap & Nusakambangan.
             </p>
           </div>
 
@@ -307,7 +315,7 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
       {errorMessage && (
         <div className="p-3 bg-destructive/10 border-t border-destructive/20 text-destructive text-xs flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-1.5 overflow-hidden">
-            <Mascot mood="worried" size={24} className="shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="truncate">{errorMessage}</span>
           </div>
           <Button

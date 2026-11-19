@@ -1,73 +1,76 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import React from "react";
 import { SecondaryFeatures } from "./SecondaryFeatures";
 import { SECONDARY_FEATURES } from "./data";
 
-describe("SecondaryFeatures 4-Card Section (Dan Masih Banyak Lagi)", () => {
+describe("SecondaryFeatures sliding card carousel", () => {
   afterEach(() => {
     cleanup();
   });
-
-  it("renders section title and clean subtext without coordinate pill", () => {
+  it("renders section header, badge, and slider controls", () => {
     render(React.createElement(SecondaryFeatures, { features: SECONDARY_FEATURES }));
 
-    // Section title
+    expect(screen.getByText("Ekosistem Maritim Lengkap")).toBeDefined();
     expect(screen.getByText("Dan Masih Banyak Lagi")).toBeDefined();
-    // Subtext ringkas
-    expect(
-      screen.getByText("Semua yang dibutuhkan sebelum dan sesudah berlayar.")
-    ).toBeDefined();
 
-    // Pastikan kapsul koordinat lama sudah dihapus
-    expect(screen.queryByText(/7°44'S 109°00'E/i)).toBeNull();
-    expect(screen.queryByText("Ekosistem Maritim Lengkap")).toBeNull();
+    // Check navigation controls
+    const prevBtn = screen.getByRole("button", { name: /kartu sebelumnya/i });
+    const nextBtn = screen.getByRole("button", { name: /kartu berikutnya/i });
+    expect(prevBtn).toBeDefined();
+    expect(nextBtn).toBeDefined();
+
+    // Initial state: index 0
+    expect(prevBtn.hasAttribute("disabled")).toBe(true);
+    expect(nextBtn.hasAttribute("disabled")).toBe(false);
+    expect(screen.getAllByText("01").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("active-step-counter").textContent).toContain("01");
   });
 
-  it("renders all 4 feature cards with exact labels, titles, and descriptions", () => {
+  it("advances active card when next button is clicked and enables prev button", () => {
     render(React.createElement(SecondaryFeatures, { features: SECONDARY_FEATURES }));
 
-    // 1. Asuransi
-    expect(screen.getByText("Asuransi")).toBeDefined();
-    expect(screen.getByText("E-Tiket & Asuransi")).toBeDefined();
-    expect(
-      screen.getByText("Tiket QR digital, sudah termasuk asuransi kecelakaan laut.")
-    ).toBeDefined();
+    const prevBtn = screen.getByRole("button", { name: /kartu sebelumnya/i });
+    const nextBtn = screen.getByRole("button", { name: /kartu berikutnya/i });
 
-    // 2. Cuaca
-    expect(screen.getByText("Cuaca")).toBeDefined();
-    expect(screen.getByText("Peringatan Cuaca BMKG")).toBeDefined();
-    expect(
-      screen.getByText(
-        "Cuaca laut real-time, dijelaskan sederhana: aman, waspada, atau tunda."
-      )
-    ).toBeDefined();
+    expect(prevBtn.hasAttribute("disabled")).toBe(true);
 
-    // 3. Ulasan
-    expect(screen.getByText("Ulasan")).toBeDefined();
-    expect(screen.getByText("Ulasan Terverifikasi")).toBeDefined();
-    expect(
-      screen.getByText("Hanya dari penumpang yang benar-benar sudah berlayar.")
-    ).toBeDefined();
+    // Click next -> advances to card 2 (Peringatan Cuaca BMKG)
+    fireEvent.click(nextBtn);
 
-    // 4. Asisten AI
-    expect(screen.getByText("Asisten AI")).toBeDefined();
-    expect(screen.getByText("Juru Mudi, Asisten AI")).toBeDefined();
-    expect(
-      screen.getByText(
-        "Tanya waktu berlayar terbaik dan kapal yang cocok, kapan saja."
-      )
-    ).toBeDefined();
+    expect(prevBtn.hasAttribute("disabled")).toBe(false);
+    expect(screen.getByTestId("active-step-counter").textContent).toContain("02");
+
+    // Click next again -> card 3
+    fireEvent.click(nextBtn);
+    expect(screen.getByTestId("active-step-counter").textContent).toContain("03");
+
+    // Click next again -> card 4
+    fireEvent.click(nextBtn);
+    expect(screen.getByTestId("active-step-counter").textContent).toContain("04");
+    expect(nextBtn.hasAttribute("disabled")).toBe(true);
+
+    // Click prev -> back to card 3
+    fireEvent.click(prevBtn);
+    expect(screen.getByTestId("active-step-counter").textContent).toContain("03");
   });
 
-  it("does not render old number badges 01-04 or footer rows", () => {
+  it("switches active card directly when clicking step tabs", () => {
     render(React.createElement(SecondaryFeatures, { features: SECONDARY_FEATURES }));
 
-    // Nomor kecil "01-04" di footer sudah dihapus
-    expect(screen.queryByText("01")).toBeNull();
-    expect(screen.queryByText("02")).toBeNull();
-    expect(screen.queryByText("03")).toBeNull();
-    expect(screen.queryByText("04")).toBeNull();
+    const tab03 = screen.getByRole("tab", { name: /pilih kartu 03/i });
+    fireEvent.click(tab03);
+
+    expect(screen.getByTestId("active-step-counter").textContent).toContain("03");
+  });
+
+  it("renders all 4 feature cards with their numbers and titles", () => {
+    render(React.createElement(SecondaryFeatures, { features: SECONDARY_FEATURES }));
+
+    expect(screen.getAllByText("E-Tiket & Asuransi Resmi").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Peringatan Cuaca BMKG").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Rating Terverifikasi").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Asisten AI Juru Mudi").length).toBeGreaterThan(0);
   });
 });
