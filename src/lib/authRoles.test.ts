@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { checkIsOperator, getDashboardRedirectPath } from "./authRoles";
+import { checkIsOperator, checkIsAdmin, getDashboardRedirectPath } from "./authRoles";
 import { supabase } from "@/integrations/supabase/client";
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -120,6 +120,29 @@ describe("authRoles Utilities", () => {
       };
       const path = await getDashboardRedirectPath(user);
       expect(path).toBe("/dashboard");
+    });
+
+    it("mengarahkan admin ke /admin", async () => {
+      const user = {
+        id: "admin-user",
+        email: "admin@angkara.id",
+        user_metadata: { role: "admin" },
+      };
+      const path = await getDashboardRedirectPath(user);
+      expect(path).toBe("/admin");
+    });
+  });
+
+  describe("checkIsAdmin", () => {
+    it("mengembalikan true jika user_metadata.role adalah 'admin'", () => {
+      expect(checkIsAdmin({ role: "admin" })).toBe(true);
+    });
+
+    it("mengembalikan false jika metadata null, undefined, atau role bukan admin", () => {
+      expect(checkIsAdmin(null)).toBe(false);
+      expect(checkIsAdmin(undefined)).toBe(false);
+      expect(checkIsAdmin({ role: "operator" })).toBe(false);
+      expect(checkIsAdmin({ role: "tourist" })).toBe(false);
     });
   });
 });

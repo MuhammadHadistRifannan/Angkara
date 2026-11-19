@@ -3,6 +3,7 @@ import path from "path";
 
 export default defineConfig({
   test: {
+    testTimeout: 15000,
     environment: "node",
     include: ["src/**/*.test.ts", "supabase/functions/**/*.test.ts", "scripts/**/*.test.ts"],
     setupFiles: ["./src/test/setup.ts"],

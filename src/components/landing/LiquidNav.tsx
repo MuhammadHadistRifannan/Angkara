@@ -4,6 +4,7 @@ import { Home, Ship, Compass, CloudSun, Bot, BookOpen, User } from "lucide-react
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthModal } from "@/components/AuthModal";
+import { checkIsAdmin, getDashboardRedirectPath } from "@/lib/authRoles";
 
 interface LiquidNavProps {
   show: boolean;
@@ -219,13 +220,20 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
     },
     {
       id: "auth",
-      label: user ? "Dashboard" : "Masuk / Akun",
+      label: user
+        ? checkIsAdmin((user as { user_metadata?: Record<string, unknown> })?.user_metadata)
+          ? "Dashboard Admin"
+          : "Dashboard"
+        : "Masuk / Akun",
       icon: User,
-      action: () => {
+      action: async () => {
         setGuideOpen(false);
         selectAndLock("auth");
         if (user) {
-          navigate("/dashboard");
+          const target = await getDashboardRedirectPath(
+            user as { id: string; email?: string | null; user_metadata?: Record<string, unknown> }
+          );
+          navigate(target);
         } else {
           setAuthOpen(true);
         }
@@ -234,7 +242,8 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         selectedId === "auth" ||
         location.pathname === "/auth" ||
         location.pathname === "/dashboard" ||
-        location.pathname === "/operator-dashboard",
+        location.pathname === "/operator-dashboard" ||
+        location.pathname === "/admin",
     },
   ];
 

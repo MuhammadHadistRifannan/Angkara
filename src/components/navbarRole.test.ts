@@ -136,6 +136,37 @@ describe("Navbar role-based dashboard links", () => {
     });
   });
 
+  it("menampilkan tombol 'Dashboard Admin' untuk akun admin dan mengarahkan ke /admin saat diklik", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "admin-789",
+          email: "admin@suar.id",
+          user_metadata: { role: "admin" },
+        },
+      },
+    } as unknown as { data: { user: null }; error: null });
+
+    vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    } as unknown as { data: { subscription: { unsubscribe: () => void } } });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Navbar)
+      )
+    );
+
+    await waitFor(() => {
+      const adminBtns = screen.getAllByRole("button", { name: /Dashboard Admin/i });
+      expect(adminBtns.length).toBeGreaterThanOrEqual(1);
+      adminBtns[0].click();
+      expect(mockNavigate).toHaveBeenCalledWith("/admin");
+    });
+  });
+
   it("navbar selain landing page tetap memiliki background gelap solid (bukan transparan)", async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },

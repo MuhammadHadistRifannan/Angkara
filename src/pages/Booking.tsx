@@ -33,6 +33,8 @@ interface PackageDetail {
   unit: string;
   includes: string[];
   isDemo?: boolean;
+  max_participants?: number | null;
+  operator_id?: string | null;
 }
 
 // Prefill tanggal dari ?date=YYYY-MM-DD (dari popup Cari Kapal).
@@ -88,7 +90,7 @@ const Booking = () => {
         try {
           const { data } = await supabase
             .from("tour_packages")
-            .select("id, name, description, duration_hours, price, includes")
+            .select("id, name, description, duration_hours, price, includes, max_participants, operator_id")
             .eq("id", packageParam)
             .single();
           if (data) {
@@ -103,6 +105,8 @@ const Booking = () => {
               unit: "/ orang",
               includes: (data.includes as string[]) || [],
               isDemo: false,
+              max_participants: data.max_participants ?? null,
+              operator_id: data.operator_id ?? null,
             };
           }
         } catch {
@@ -121,6 +125,8 @@ const Booking = () => {
               unit: demo.unit,
               includes: demo.includes,
               isDemo: true,
+              max_participants: (demo as Record<string, unknown>).max_participants as number ?? 10,
+              operator_id: null,
             };
           }
         }
@@ -169,27 +175,34 @@ const Booking = () => {
     };
   }, [boatParam, packageParam]);
 
-  // Mode paket: ambil kapal asli dari Supabase untuk dropdown pilihan kapal.
-  // Kalau ada kapal asli, jadikan pilihan default supaya pemesanan paket
-  // bisa diproses RPC (kapal demo belum terdaftar di database).
+  // Mode paket: otomatis pasangkan armada kapal milik operator paket ini.
+  // Wisatawan tidak perlu/tidak bisa memilih kapal sendiri karena paket
+  // sudah dibundel oleh operator.
   useEffect(() => {
     if (!packageParam) return;
     let cancelled = false;
-    // PERBAIKAN 2026-11-19: pakai async/await + try/catch, bukan rantai
-    // then/catch. Query Supabase mengembalikan PromiseLike (bukan Promise
-    // asli), jadi then di sana tidak punya catch — VS Code menandai error
-    // "Property 'catch' does not exist on type 'PromiseLike<void>'".
     (async () => {
       try {
+        if (pkg?.operator_id) {
+          const { data: opBoats } = await supabase
+            .from("boats")
+            .select("id, name, base_price, capacity")
+            .eq("operator_id", pkg.operator_id)
+            .eq("available", true);
+          if (!cancelled && opBoats && opBoats.length > 0) {
+            setRealBoats(opBoats as BoatDetail[]);
+            setSelectedBoatId(opBoats[0].id);
+            return;
+          }
+        }
+
         const { data } = await supabase
           .from("boats")
           .select("id, name, base_price, capacity")
           .eq("available", true);
         if (!cancelled && data && data.length > 0) {
           setRealBoats(data as BoatDetail[]);
-          setSelectedBoatId((cur) =>
-            DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
-          );
+          setSelectedBoatId(data[0].id);
         }
       } catch {
         // Abaikan: daftar kapal demo tetap tampil.
@@ -198,7 +211,7 @@ const Booking = () => {
     return () => {
       cancelled = true;
     };
-  }, [packageParam]);
+  }, [packageParam, pkg?.operator_id]);
 
   const selectedBoat =
     realBoats.find((b) => b.id === selectedBoatId) ||
@@ -209,7 +222,19 @@ const Booking = () => {
   const bookingBoatIsDemo = boat
     ? !!boat.isDemo
     : !realBoats.some((b) => b.id === selectedBoatId);
-  const effectiveCapacity = boat?.capacity ?? selectedBoat?.capacity ?? 100;
+  const effectiveCapacity = pkg
+    ? Math.min(
+        pkg.max_participants || 10,
+        selectedBoat?.capacity || (pkg.max_participants || 10)
+      )
+    : (boat?.capacity ?? 100);
+
+  // Pastikan jumlah penumpang tidak melebihi kapasitas kemampuan kapal yang diset operator
+  useEffect(() => {
+    if (effectiveCapacity > 0 && passengers > effectiveCapacity) {
+      setPassengers(effectiveCapacity);
+    }
+  }, [effectiveCapacity, passengers]);
   const totalPrice = pkg
     ? pkg.unit === "/ orang"
       ? pkg.price * passengers
@@ -235,6 +260,13 @@ const Booking = () => {
 
     if (isDateInPastWib(date)) {
       toast.error("Tanggal keberangkatan sudah lewat.");
+      return;
+    }
+
+    if (passengers > effectiveCapacity) {
+      toast.error(
+        `Jumlah penumpang melebihi kapasitas maksimal (${effectiveCapacity} orang) yang ditentukan operator.`
+      );
       return;
     }
 
@@ -321,43 +353,13 @@ const Booking = () => {
                 <CardTitle>Detail Booking</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {pkg && (
-                  <div>
-                    <Label htmlFor="boat-select">Pilih Kapal untuk Paket Ini</Label>
-                    <select
-                      id="boat-select"
-                      value={selectedBoatId}
-                      onChange={(e) => setSelectedBoatId(e.target.value)}
-                      className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {realBoats.length > 0 && (
-                        <optgroup label="Kapal terdaftar — bisa dipesan online">
-                          {realBoats.map((b) => (
-                            <option key={b.id} value={b.id}>
-                              {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
-                              {b.capacity} penumpang
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      <optgroup label="Kapal lain — belum terdaftar">
-                        {DEMO_BOATS.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
-                            {b.capacity} penumpang
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    <p className="text-xs text-muted-foreground mt-1.5">
-                      Paket berlayar dengan kapal yang dipilih. Pilih kapal
-                      terdaftar agar pemesanan bisa diproses secara online.
-                    </p>
-                  </div>
-                )}
-
                 <div>
-                  <Label htmlFor="passengers">Jumlah Penumpang</Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="passengers">Jumlah Penumpang</Label>
+                    <span className="text-xs text-muted-foreground">
+                      Maks. {effectiveCapacity} orang
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2 mt-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <Input
@@ -366,9 +368,29 @@ const Booking = () => {
                       min="1"
                       max={effectiveCapacity}
                       value={passengers}
-                      onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") {
+                          setPassengers(1);
+                          return;
+                        }
+                        const val = parseInt(raw, 10);
+                        if (isNaN(val) || val < 1) {
+                          setPassengers(1);
+                        } else if (val > effectiveCapacity) {
+                          setPassengers(effectiveCapacity);
+                          toast.error(
+                            `Kapasitas maksimal yang ditentukan operator adalah ${effectiveCapacity} penumpang`
+                          );
+                        } else {
+                          setPassengers(val);
+                        }
+                      }}
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Maksimal {effectiveCapacity} penumpang sesuai kapasitas {pkg ? "paket wisata yang disiapkan operator" : "kapal"}.
+                  </p>
                 </div>
 
                 <div>
@@ -522,15 +544,15 @@ const Booking = () => {
                       {pkg.unit === "/ orang" && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Jumlah penumpang</span>
-                          <span>{passengers} orang</span>
+                          <span>{passengers} orang (maks. {effectiveCapacity})</span>
                         </div>
                       )}
-                      {selectedBoat && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Kapal</span>
-                          <span>{selectedBoat.name}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Armada Kapal</span>
+                        <span className="font-medium text-slate-800">
+                          {selectedBoat ? `${selectedBoat.name} (Paket Operator)` : "Disediakan oleh Operator"}
+                        </span>
+                      </div>
                       {date && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Tanggal</span>

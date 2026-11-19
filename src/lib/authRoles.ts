@@ -77,6 +77,16 @@ export async function checkIsOperator(
 }
 
 /**
+ * Menentukan apakah pengguna memiliki peran sebagai Admin platform SUAR.
+ * Ditunjuk manual via Supabase Dashboard (user_metadata.role = "admin").
+ */
+export function checkIsAdmin(
+  metadata?: Record<string, unknown> | null
+): boolean {
+  return metadata?.role === "admin";
+}
+
+/**
  * Mengembalikan rute dashboard tujuan yang tepat sesuai role pengguna.
  */
 export async function getDashboardRedirectPath(user: {
@@ -84,6 +94,9 @@ export async function getDashboardRedirectPath(user: {
   email?: string | null;
   user_metadata?: Record<string, unknown> | null;
 }): Promise<string> {
+  if (checkIsAdmin(user.user_metadata)) {
+    return "/admin";
+  }
   const isOp = await checkIsOperator(user.id, user.email, user.user_metadata);
   return isOp ? "/operator-dashboard" : "/dashboard";
 }

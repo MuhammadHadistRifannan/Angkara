@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { checkIsOperator } from "@/lib/authRoles";
+import { checkIsOperator, checkIsAdmin } from "@/lib/authRoles";
 import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 import { AuthModal } from "@/components/AuthModal";
 
@@ -17,6 +17,7 @@ const Navbar = () => {
   const [guideOpen, setGuideOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isOperator, setIsOperator] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string>("beranda");
   const [authOpen, setAuthOpen] = useState(false);
@@ -49,6 +50,8 @@ const Navbar = () => {
     const updateUserRole = async (currentUser: User | null) => {
       setUser(currentUser);
       if (currentUser) {
+        const isAdm = checkIsAdmin(currentUser.user_metadata);
+        setIsAdmin(isAdm);
         const isOp = await checkIsOperator(
           currentUser.id,
           currentUser.email,
@@ -56,6 +59,7 @@ const Navbar = () => {
         );
         setIsOperator(isOp);
       } else {
+        setIsAdmin(false);
         setIsOperator(false);
       }
     };
@@ -171,8 +175,16 @@ const Navbar = () => {
         : "text-slate-200/90 hover:text-cyan-300 hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
     }`;
 
-  const dashboardPath = isOperator ? "/operator-dashboard" : "/dashboard";
-  const dashboardLabel = isOperator ? "Dashboard Operator" : "Dashboard";
+  const dashboardPath = isAdmin
+    ? "/admin"
+    : isOperator
+    ? "/operator-dashboard"
+    : "/dashboard";
+  const dashboardLabel = isAdmin
+    ? "Dashboard Admin"
+    : isOperator
+    ? "Dashboard Operator"
+    : "Dashboard";
 
   return (
     <nav
