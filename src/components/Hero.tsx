@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { HeroVideo } from "./landing/HeroVideo";
+import { HeroSearchBar } from "./landing/HeroSearchBar";
+import { HeroWeatherChip } from "./landing/HeroWeatherChip";
 import { HeroTitle } from "./landing/HeroTitle";
 import { LiquidNav } from "./landing/LiquidNav";
 import {
@@ -13,7 +15,10 @@ import { updateDebugOverlay } from "./landing/debugStore";
 
 const Hero: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
-  const [showNavbar, setShowNavbar] = useState(false);
+  // OPSI A (2026-11-19): navbar langsung tampil sejak step 0.
+  // Sebelumnya navbar baru muncul di step >= 1, jadi di layar pertama
+  // pengunjung tidak bisa navigasi / masuk / daftar tanpa scroll dulu.
+  const [showNavbar, setShowNavbar] = useState(true);
   const [isInHero, setIsInHero] = useState(true);
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
@@ -79,10 +84,6 @@ const Hero: React.FC = () => {
           setScrollProgress(currentProgress);
         }
 
-        // Jika user scroll kembali ke paling atas halaman (Step 0)
-        if (window.scrollY <= 15) {
-          setShowNavbar(false);
-        }
 
         // Sinkronisasi ke Debug Overlay
         updateDebugOverlay("hero", {
@@ -109,13 +110,10 @@ const Hero: React.FC = () => {
     }
   }, [activeStep]);
 
-  // Jika user scroll ke Step 2, 3, atau 4, pastikan navbar tetap tampil
+  // Navbar selalu tampil di semua step hero (Opsi A 2026-11-19).
+  // Sebelumnya step 0 menyembunyikan navbar.
   useEffect(() => {
-    if (activeStep >= 2) {
-      setShowNavbar(true);
-    } else if (activeStep === 0) {
-      setShowNavbar(false);
-    }
+    setShowNavbar(true);
   }, [activeStep]);
 
   const sceneState = getHeroSceneState(activeStep);
@@ -179,6 +177,23 @@ const Hero: React.FC = () => {
             if (activeStep >= 1) setShowNavbar(true);
           }}
         />
+
+        {/*
+          OPSI A (2026-11-19): chip cuaca live + form Cari Kapal langsung
+          terlihat di step 0, di bawah judul. Tampil di step 0–2, lalu
+          memudar saat judul ke-3 / exit (step 3–4) supaya tidak menumpuk
+          transisi keluar hero. Scrollcraft-nya tetap jalan seperti biasa.
+        */}
+        <div
+          className={`absolute left-0 right-0 top-[54%] z-20 flex flex-col items-center gap-3 px-4 transition-all duration-500 ${
+            activeStep <= 2
+              ? "opacity-100 translate-y-0"
+              : "opacity-0 translate-y-4 pointer-events-none"
+          }`}
+        >
+          <HeroWeatherChip />
+          <HeroSearchBar />
+        </div>
 
         {/* Unified Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
         {typeof document !== "undefined" &&
