@@ -83,7 +83,7 @@ const Waves: React.FC<{ y?: number; opacity?: number }> = ({
 );
 
 /** Bintang kilauan kecil */
-const Sparkle: React.FC<{ cx: number; cy: number; size?: number; color?: string }> = ({
+const Sparkle: React.FC<{ cx: number | string; cy: number | string; size?: number | string; color?: string }> = ({
   cx,
   cy,
   size = 6,

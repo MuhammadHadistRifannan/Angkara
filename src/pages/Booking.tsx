@@ -157,15 +157,17 @@ const Booking = () => {
       .from("boats")
       .select("id, name, base_price, capacity")
       .eq("available", true)
-      .then(({ data }) => {
-        if (!cancelled && data && data.length > 0) {
-          setRealBoats(data as BoatDetail[]);
-          setSelectedBoatId((cur) =>
-            DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
-          );
-        }
-      })
-      .catch(() => {});
+      .then(
+        ({ data }) => {
+          if (!cancelled && data && data.length > 0) {
+            setRealBoats(data as BoatDetail[]);
+            setSelectedBoatId((cur) =>
+              DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
+            );
+          }
+        },
+        () => {}
+      );
     return () => {
       cancelled = true;
     };

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import {
   Ship,
   Calendar,
@@ -52,7 +53,7 @@ interface OperatorBoat {
   id: string;
   operator_id: string;
   name: string;
-  type: string;
+  type: "speedboat" | "kapal_kayu";
   capacity: number;
   base_price: number;
   available: boolean;

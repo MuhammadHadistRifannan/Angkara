@@ -79,7 +79,7 @@ const HowItWorks: React.FC = () => {
   const [activeStep, setActiveStep] = useState<number>(0);
   const [litSteps, setLitSteps] = useState<Set<number>>(new Set([0]));
   const [isReducedMotion, setIsReducedMotion] = useState<boolean>(false);
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const stepRefs = useRef<(HTMLElement | null)[]>([]);
 
   // Deteksi preferensi reduced motion
   useEffect(() => {

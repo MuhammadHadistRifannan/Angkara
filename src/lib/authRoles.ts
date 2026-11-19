@@ -21,10 +21,10 @@ export async function checkIsOperator(
 
   try {
     // 2. Cek tabel operators berdasarkan user_id
-    const userQuery = supabase
+    const userQuery = (supabase
       .from("operators")
       .select("id")
-      .eq("user_id", userId) as {
+      .eq("user_id", userId) as unknown) as {
         maybeSingle?: () => Promise<{ data: unknown; error: unknown }>;
         then?: (resolve: (val: unknown) => unknown) => unknown;
       };
@@ -43,10 +43,10 @@ export async function checkIsOperator(
     // 3. Fallback: Cek tabel operators berdasarkan email
     if (userEmail) {
       const normalizedEmail = userEmail.trim().toLowerCase();
-      const emailQuery = supabase
+      const emailQuery = (supabase
         .from("operators")
         .select("id, user_id")
-        .eq("email", normalizedEmail) as {
+        .eq("email", normalizedEmail) as unknown) as {
           maybeSingle?: () => Promise<{ data: { id: string; user_id?: string | null } | null; error: unknown }>;
           then?: (resolve: (val: unknown) => unknown) => unknown;
         };
