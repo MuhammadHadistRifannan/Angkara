@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Star, Users, Clock, MapPin, Shield, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
 import { toast } from "sonner";
 // import boatSpeedboat1 from "@/assets/boat-speedboat-1.jpg";
 // import boatTraditional1 from "@/assets/boat-traditional-1.jpg";
@@ -195,6 +196,7 @@ const BoatsListing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">

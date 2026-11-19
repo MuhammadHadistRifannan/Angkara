@@ -18,6 +18,7 @@ import boatTraditional1 from "@/assets/boat-traditional-1.jpg";
 import boatSpeedboat2 from "@/assets/boat-speedboat-2.jpg";
 import boatTraditional2 from "@/assets/boat-traditional-2.jpg";
 import boatSpeedboat3 from "@/assets/boat-speedboat-3.jpg";
+import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -200,7 +201,8 @@ const BoatDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-          <div className="container mx-auto px-4 pt-24 pb-12">
+        <Navbar />
+        <div className="container mx-auto px-4 pt-24 pb-12">
           <p className="text-center text-muted-foreground">Memuat...</p>
         </div>
       </div>
@@ -213,6 +215,7 @@ const BoatDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <Button
           variant="ghost"

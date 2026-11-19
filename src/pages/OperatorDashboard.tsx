@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -511,6 +512,7 @@ const OperatorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Navbar />
       <div className="container mx-auto px-4 sm:px-6 pt-24 pb-16">
         {/* Header Konsol Operator */}
         <div className="mb-6">

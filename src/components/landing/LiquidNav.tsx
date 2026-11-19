@@ -107,14 +107,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         if (mapEl) {
           mapEl.scrollIntoView({ behavior: "smooth" });
         } else if (location.pathname !== "/") {
-          // navigate("/#...") saja tidak scroll (React Router tidak
-          // auto-scroll ke hash), jadi pindah dulu lalu scroll manual.
-          navigate("/");
-          window.setTimeout(() => {
-            document
-              .getElementById("weather-map-section")
-              ?.scrollIntoView({ behavior: "smooth" });
-          }, 600);
+          navigate("/#weather-map-section");
         } else {
           window.scrollTo({ top: window.innerHeight * 2.8, behavior: "smooth" });
         }
@@ -380,14 +373,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                       setGuideOpen(false);
                       const el = document.getElementById("how-it-works");
                       if (el) el.scrollIntoView({ behavior: "smooth" });
-                      else {
-                        navigate("/");
-                        window.setTimeout(() => {
-                          document
-                            .getElementById("how-it-works")
-                            ?.scrollIntoView({ behavior: "smooth" });
-                        }, 600);
-                      }
+                      else navigate("/#how-it-works");
                     }}
                     className={`block w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors ${
                       isInHero

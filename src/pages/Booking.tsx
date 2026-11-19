@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, Users, Clock, DollarSign, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 import { mapBookingError } from "@/lib/bookingErrors";
 import { formatDateWib, isDateInPastWib } from "@/lib/bookingDate";
 import { DEMO_BOATS, findDemoBoat, findDemoPackage } from "@/lib/demoFallback";
@@ -217,6 +218,15 @@ const Booking = () => {
       ? boat.base_price * passengers
       : 0;
 
+  // Kembali ke Armada: ke halaman daftar kapal (/boats).
+  // Sebelumnya: window.location.href = "/#armada-siap-berlayar" (muat ulang,
+  // scroll anchor gagal → mendarat di atas landing), lalu navigate("/") +
+  // scroll tertunda ke section landing — tapi Adin minta kembalinya ke
+  // halaman /boats, bukan ke landing lagi.
+  const goToFleet = () => {
+    navigate("/boats");
+  };
+
   const handleBooking = async () => {
     if (!date || (!boat && !pkg)) {
       toast.error("Mohon lengkapi semua data");
@@ -233,7 +243,7 @@ const Booking = () => {
     // Setelah seed demo dijalankan, kapal ini terdaftar dan pemesanan jalan.
     if (bookingBoatIsDemo) {
       toast.error(
-        "Kapal ini memakai data demo dan belum terdaftar di sistem pemesanan. Minta operator menjalankan seed data demo (seed-demo-12-kapal-8-paket.sql) supaya pemesanan bisa diproses."
+        "Kapal ini belum terdaftar di sistem pemesanan online, jadi belum bisa dipesan. Silakan pilih kapal terdaftar dari daftar di atas."
       );
       return;
     }
@@ -269,6 +279,7 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         {/* PERBAIKAN 2026-11-18: tombol kembali ke armada. Sebelumnya halaman
             Booking tidak punya jalan kembali ke daftar kapal / beranda selain
@@ -276,9 +287,7 @@ const Booking = () => {
         <Button
           variant="ghost"
           className="mb-4 -ml-2 text-slate-600 hover:text-slate-900"
-          onClick={() => {
-            window.location.href = "/#armada-siap-berlayar";
-          }}
+          onClick={goToFleet}
         >
           <ArrowLeft className="h-4 w-4 mr-1.5" />
           Kembali ke Armada Kapal
@@ -331,7 +340,7 @@ const Booking = () => {
                           ))}
                         </optgroup>
                       )}
-                      <optgroup label="Kapal demo — tampil di landing">
+                      <optgroup label="Kapal lain — belum terdaftar">
                         {DEMO_BOATS.map((b) => (
                           <option key={b.id} value={b.id}>
                             {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
@@ -341,8 +350,8 @@ const Booking = () => {
                       </optgroup>
                     </select>
                     <p className="text-xs text-muted-foreground mt-1.5">
-                      Paket berlayar dengan kapal yang dipilih. Kapal demo bisa
-                      dipesan setelah operator menjalankan seed data demo.
+                      Paket berlayar dengan kapal yang dipilih. Pilih kapal
+                      terdaftar agar pemesanan bisa diproses secara online.
                     </p>
                   </div>
                 )}
@@ -410,9 +419,7 @@ const Booking = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => {
-                        window.location.href = "/#armada-siap-berlayar";
-                      }}
+                      onClick={goToFleet}
                     >
                       Lihat Armada Kapal
                     </Button>
@@ -478,6 +485,11 @@ const Booking = () => {
                     >
                       {loading ? "Memproses..." : "Lanjut ke Pembayaran"}
                     </Button>
+                    {!date && !loading && (
+                      <p className="text-xs text-center text-muted-foreground mt-2">
+                        Pilih tanggal berlayar di atas untuk melanjutkan ke pembayaran.
+                      </p>
+                    )}
                   </>
                 )}
 
@@ -562,6 +574,11 @@ const Booking = () => {
                     >
                       {loading ? "Memproses..." : "Lanjut ke Pembayaran"}
                     </Button>
+                    {!date && !loading && (
+                      <p className="text-xs text-center text-muted-foreground mt-2">
+                        Pilih tanggal berlayar di atas untuk melanjutkan ke pembayaran.
+                      </p>
+                    )}
                   </>
                 )}
               </CardContent>

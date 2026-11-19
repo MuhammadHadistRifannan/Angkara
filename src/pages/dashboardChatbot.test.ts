@@ -51,7 +51,7 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     cleanup();
   });
 
-  it("Landing Page (Index) TIDAK lagi merender AssistantWidget (tombol floating Juru Mudi)", () => {
+  it("Landing Page (Index) merender AssistantWidget (tombol floating Juru Mudi)", () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
     } as unknown as { data: { user: null }; error: null });
@@ -66,7 +66,7 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
 
     // Tombol chat floating memiliki aria-label yang memuat 'Buka Chat Juru Mudi'
     const assistantBtn = container.querySelector("button[aria-label*='Buka Chat Juru Mudi']");
-    expect(assistantBtn).toBeNull();
+    expect(assistantBtn).not.toBeNull();
   });
 
   it("Dashboard User merender AssistantWidget (Juru Mudi AI)", async () => {

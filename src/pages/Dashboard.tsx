@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { checkIsOperator } from "@/lib/authRoles";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { FullPageAssistant } from "@/components/assistant/FullPageAssistant";
 import { ETicketModal, type ETicketData } from "@/components/ETicketModal";
 import type { User } from "@supabase/supabase-js";
@@ -134,6 +136,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Navbar />
       <div className="container mx-auto px-4 sm:px-6 pt-24 pb-16">
         {/* Header Dashboard */}
         <div className="mb-8">
@@ -451,6 +454,7 @@ const Dashboard = () => {
       />
 
       {/* Floating Assistant Widget (Tetap aktif sebagai jalan pintas cepat di pojok kanan bawah) */}
+      <AssistantWidget />
     </div>
   );
 };
