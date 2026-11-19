@@ -49,43 +49,33 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID || vars.NETLIFY_SITE_ID }}
         run: |
-          if [ -z "$NETLIFY_AUTH_TOKEN" ]; then
-            echo "::error::NETLIFY_AUTH_TOKEN tidak ditemukan di secrets GitHub!"
-          fi
-          if [ -z "$NETLIFY_SITE_ID" ]; then
-            echo "::error::NETLIFY_SITE_ID tidak ditemukan di secrets atau vars GitHub!"
-          fi
-
           deploy_success=false
+          last_err=""
           for i in 1 2 3; do
             echo "Percobaan deploy ke Netlify ke-$i..."
+            # Jalankan deploy dan tangkap stdout serta stderr
             if npx --yes netlify-cli@27.16.3 deploy \
               --dir=dist \
               --prod \
               --no-build \
               --message "$GITHUB_SHA" \
-              --auth="$NETLIFY_AUTH_TOKEN" \
-              --site="$NETLIFY_SITE_ID" \
+              ${NETLIFY_SITE_ID:+--site="$NETLIFY_SITE_ID"} \
+              ${NETLIFY_AUTH_TOKEN:+--auth="$NETLIFY_AUTH_TOKEN"} \
               --json > deploy-output.json 2> deploy-error.log; then
               deploy_success=true
               echo "Deploy ke Netlify berhasil pada percobaan ke-$i."
               break
             else
-              echo "Percobaan deploy ke-$i gagal. Output stdout:"
+              echo "Percobaan deploy ke-$i gagal."
               cat deploy-output.json || true
-              echo "Output stderr:"
               cat deploy-error.log || true
-              sleep 10
+              last_err=$(cat deploy-error.log deploy-output.json 2>/dev/null | tr '\n' ' ' | head -c 400)
+              sleep 5
             fi
           done
 
           if [ "$deploy_success" = false ]; then
-            echo "Deploy ke Netlify gagal setelah 3 percobaan."
-            echo "### ❌ Netlify Deploy Error" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat deploy-error.log >> $GITHUB_STEP_SUMMARY || true
-            cat deploy-output.json >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "::error::Netlify Deploy Gagal: $last_err"
             exit 1
           fi
 
