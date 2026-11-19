@@ -27,6 +27,9 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: {
       getUser: vi.fn(),
+      onAuthStateChange: vi.fn().mockReturnValue({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      }),
       signOut: vi.fn(),
     },
     from: vi.fn(),
@@ -96,6 +99,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.confirm = vi.fn().mockReturnValue(true);
+    vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    } as unknown as ReturnType<typeof supabase.auth.onAuthStateChange>);
   });
 
   afterEach(() => {
@@ -142,6 +148,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
         return {
           select: vi.fn().mockReturnValue({
             order: vi.fn().mockResolvedValue({ data: mockOperators, error: null }),
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
           }),
         } as unknown as ReturnType<typeof supabase.from>;
       }
@@ -176,6 +185,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
       return {
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
         }),
       } as unknown as ReturnType<typeof supabase.from>;
     });
@@ -214,6 +226,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
         return {
           select: vi.fn().mockReturnValue({
             order: vi.fn().mockResolvedValue({ data: mockOperators, error: null }),
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
           }),
           update: mockUpdate,
         } as unknown as ReturnType<typeof supabase.from>;
@@ -221,6 +236,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
       return {
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
         }),
       } as unknown as ReturnType<typeof supabase.from>;
     });
@@ -273,6 +291,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
       return {
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
         }),
       } as unknown as ReturnType<typeof supabase.from>;
     });
@@ -319,6 +340,9 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
     vi.mocked(supabase.from).mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
       }),
     } as unknown as ReturnType<typeof supabase.from>);
 
