@@ -42,17 +42,8 @@ const Auth = () => {
     });
   }, [navigate]);
 
-  const isSupabaseConfigured = () => {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    return Boolean(url && !url.includes("placeholder.supabase.co"));
-  };
-
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isSupabaseConfigured()) {
-      toast.error("Koneksi database belum dikonfigurasi di Netlify/hosting (VITE_SUPABASE_URL). Hubungi admin.");
-      return;
-    }
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     const email = formData.get("signup-email") as string;
@@ -117,10 +108,6 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isSupabaseConfigured()) {
-      toast.error("Koneksi database belum dikonfigurasi di Netlify/hosting (VITE_SUPABASE_URL). Hubungi admin.");
-      return;
-    }
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     const email = formData.get("signin-email") as string;
@@ -142,10 +129,6 @@ const Auth = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!isSupabaseConfigured()) {
-      toast.error("Koneksi database belum dikonfigurasi di Netlify/hosting (VITE_SUPABASE_URL). Hubungi admin.");
-      return;
-    }
     setLoading(true);
     const { error } = await signInWithGoogle();
     if (error) {
