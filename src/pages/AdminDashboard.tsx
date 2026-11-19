@@ -32,8 +32,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 interface OperatorItem {
   id: string;
   name: string;
+  company_name?: string;
   contact?: string | null;
+  phone?: string | null;
   ksop_permit_number?: string | null;
+  ksop_certificate?: string | null;
   verified?: boolean | null;
   created_at?: string;
 }
@@ -43,19 +46,23 @@ interface BoatItem {
   name: string;
   type: string;
   capacity: number;
+  available?: boolean | null;
   is_available: boolean;
   operator_id?: string;
-  operators?: { name: string } | null;
+  operators?: { name?: string; company_name?: string } | null;
 }
 
 interface TourPackageItem {
   id: string;
   title: string;
+  name?: string;
   price: number;
   duration?: string | null;
+  duration_hours?: number | null;
+  available?: boolean | null;
   is_active: boolean;
   operator_id?: string;
-  operators?: { name: string } | null;
+  operators?: { name?: string; company_name?: string } | null;
 }
 
 interface ReviewItem {
@@ -131,24 +138,111 @@ const AdminDashboard: React.FC = () => {
     setIsRefreshing(true);
     try {
       const [
-        { data: opsData },
-        { data: boatsData },
-        { data: toursData },
-        { data: reviewsData },
-        { data: bookingsData },
+        { data: opsData, error: opsError },
+        { data: boatsData, error: boatsError },
+        { data: toursData, error: toursError },
+        { data: reviewsData, error: reviewsError },
+        { data: bookingsData, error: bookingsError },
       ] = await Promise.all([
         supabase.from("operators").select("*").order("created_at", { ascending: false }),
-        supabase.from("boats").select("id, name, type, capacity, is_available, operator_id, operators(name)").order("name", { ascending: true }),
-        supabase.from("tour_packages").select("id, title, price, duration, is_active, operator_id, operators(name)").order("title", { ascending: true }),
-        supabase.from("reviews").select("id, rating, comment, created_at, boats(name)").order("created_at", { ascending: false }),
-        supabase.from("bookings").select("id, booking_date, departure_time, passengers, total_price, booking_status, boats(name)").order("booking_date", { ascending: false }),
+        supabase.from("boats").select("*, operators(*)").order("name", { ascending: true }),
+        supabase.from("tour_packages").select("*, operators(*)").order("created_at", { ascending: false }),
+        supabase.from("reviews").select("*, boats(name)").order("created_at", { ascending: false }),
+        supabase.from("bookings").select("*, boats(name)").order("booking_date", { ascending: false }),
       ]);
 
-      if (opsData) setOperators(opsData as OperatorItem[]);
-      if (boatsData) setBoats(boatsData as unknown as BoatItem[]);
-      if (toursData) setTourPackages(toursData as unknown as TourPackageItem[]);
-      if (reviewsData) setReviews(reviewsData as unknown as ReviewItem[]);
-      if (bookingsData) setBookings(bookingsData as unknown as BookingItem[]);
+      if (opsError) console.warn("Notice loading operators:", opsError);
+      if (boatsError) console.warn("Notice loading boats:", boatsError);
+      if (toursError) console.warn("Notice loading tours:", toursError);
+      if (reviewsError) console.warn("Notice loading reviews:", reviewsError);
+      if (bookingsError) console.warn("Notice loading bookings:", bookingsError);
+
+      if (opsData) {
+        const mappedOps: OperatorItem[] = (opsData as Record<string, unknown>[]).map((op) => ({
+          id: op.id as string,
+          name: (op.company_name as string) || (op.name as string) || "Operator",
+          company_name: (op.company_name as string) || (op.name as string),
+          contact: (op.phone as string) || (op.contact as string) || (op.email as string) || "—",
+          phone: (op.phone as string) || (op.contact as string),
+          ksop_permit_number: (op.ksop_certificate as string) || (op.ksop_permit_number as string) || "Belum dilampirkan",
+          ksop_certificate: (op.ksop_certificate as string) || (op.ksop_permit_number as string),
+          verified: !!op.verified,
+          created_at: op.created_at as string,
+        }));
+        setOperators(mappedOps);
+      }
+
+      if (boatsData) {
+        const mappedBoats: BoatItem[] = (boatsData as Record<string, unknown>[]).map((b) => {
+          const op = b.operators as Record<string, unknown> | null;
+          const opName = (op?.company_name as string) || (op?.name as string) || "—";
+          const isAvail = b.available !== undefined ? !!b.available : (b.is_available !== undefined ? !!b.is_available : true);
+          return {
+            id: b.id as string,
+            name: (b.name as string) || "Kapal Wisata",
+            type: (b.type as string) || "kapal_kayu",
+            capacity: Number(b.capacity) || 10,
+            available: isAvail,
+            is_available: isAvail,
+            operator_id: b.operator_id as string,
+            operators: { name: opName, company_name: opName },
+          };
+        });
+        setBoats(mappedBoats);
+      }
+
+      if (toursData) {
+        const mappedTours: TourPackageItem[] = (toursData as Record<string, unknown>[]).map((t) => {
+          const op = t.operators as Record<string, unknown> | null;
+          const opName = (op?.company_name as string) || (op?.name as string) || "—";
+          const isAvail = t.available !== undefined ? !!t.available : (t.is_active !== undefined ? !!t.is_active : true);
+          const title = (t.name as string) || (t.title as string) || "Paket Wisata";
+          const duration = (t.duration as string) || (t.duration_hours ? `${t.duration_hours} Jam` : "Fleksibel");
+          return {
+            id: t.id as string,
+            title,
+            name: title,
+            price: Number(t.price) || 0,
+            duration,
+            duration_hours: Number(t.duration_hours) || null,
+            available: isAvail,
+            is_active: isAvail,
+            operator_id: t.operator_id as string,
+            operators: { name: opName, company_name: opName },
+          };
+        });
+        setTourPackages(mappedTours);
+      }
+
+      if (reviewsData) {
+        const mappedReviews: ReviewItem[] = (reviewsData as Record<string, unknown>[]).map((r) => {
+          const boat = r.boats as Record<string, unknown> | null;
+          return {
+            id: r.id as string,
+            rating: Number(r.rating) || 5,
+            comment: r.comment as string | null,
+            created_at: (r.created_at as string) || new Date().toISOString(),
+            boats: { name: (boat?.name as string) || "Kapal" },
+          };
+        });
+        setReviews(mappedReviews);
+      }
+
+      if (bookingsData) {
+        const mappedBookings: BookingItem[] = (bookingsData as Record<string, unknown>[]).map((b) => {
+          const boat = b.boats as Record<string, unknown> | null;
+          return {
+            id: b.id as string,
+            booking_date: (b.booking_date as string) || "",
+            departure_time: (b.departure_time as string) || "",
+            passengers: Number(b.passengers) || 1,
+            total_price: Number(b.total_price) || 0,
+            booking_status: (b.booking_status as string) || "pending",
+            boats: { name: (boat?.name as string) || "—" },
+          };
+        });
+        setBookings(mappedBookings);
+      }
     } catch (err) {
       console.error("Gagal memuat data platform admin:", err);
       toast.error("Gagal memuat sebagian data platform.");
@@ -193,13 +287,13 @@ const AdminDashboard: React.FC = () => {
     try {
       const { error } = await supabase
         .from("boats")
-        .update({ is_available: newStatus })
+        .update({ available: newStatus } as Record<string, unknown>)
         .eq("id", boatId);
 
       if (error) throw error;
 
       setBoats((prev) =>
-        prev.map((b) => (b.id === boatId ? { ...b, is_available: newStatus } : b))
+        prev.map((b) => (b.id === boatId ? { ...b, available: newStatus, is_available: newStatus } : b))
       );
       toast.success(
         newStatus
@@ -217,13 +311,13 @@ const AdminDashboard: React.FC = () => {
     try {
       const { error } = await supabase
         .from("tour_packages")
-        .update({ is_active: newStatus })
+        .update({ available: newStatus } as Record<string, unknown>)
         .eq("id", tourId);
 
       if (error) throw error;
 
       setTourPackages((prev) =>
-        prev.map((t) => (t.id === tourId ? { ...t, is_active: newStatus } : t))
+        prev.map((t) => (t.id === tourId ? { ...t, available: newStatus, is_active: newStatus } : t))
       );
       toast.success(
         newStatus
