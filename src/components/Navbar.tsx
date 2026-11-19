@@ -73,7 +73,7 @@ const Navbar = () => {
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
-      if (location.pathname === "/" && window.scrollY < 300) {
+      if (location.pathname === "/" && window.scrollY < 200 && (!location.hash || location.hash === "#beranda")) {
         setActiveId("beranda");
       }
     };
@@ -95,6 +95,12 @@ const Navbar = () => {
       if (el) observer.observe(el);
     });
 
+    // Inisialisasi activeId berdasarkan hash jika berada di landing page
+    if (location.pathname === "/" && location.hash) {
+      const hashId = location.hash.replace(/^#/, "");
+      if (hashId) setActiveId(hashId);
+    }
+
     // Halaman terpisah: link yang cocok dengan URL jadi aktif.
     if (location.pathname === "/permit-info") setActiveId("permit-info");
     if (location.pathname.startsWith("/boats")) setActiveId("boats");
@@ -105,7 +111,7 @@ const Navbar = () => {
       window.removeEventListener("scroll", handleScroll);
       observer.disconnect();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, location.hash]);
 
   const goToSection = (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -113,14 +119,19 @@ const Navbar = () => {
     setIsMenuOpen(false);
     setGuideOpen(false);
     if (id === "beranda") {
-      if (!isLandingPage) navigate("/");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!isLandingPage) {
+        navigate("/");
+      } else {
+        window.history.pushState(null, "", "/");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
       return;
     }
     if (!isLandingPage) {
       navigate(`/#${id}`);
       return;
     }
+    window.history.pushState(null, "", `/#${id}`);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
