@@ -167,28 +167,33 @@ const Hero: React.FC = () => {
           style={{ opacity: sceneState.isExit ? 1 : 0 }}
         />
 
-        {/* Judul & Animasi Typing di Area Langit (30-34% tinggi layar) */}
-        <HeroTitle
-          step={activeStep}
-          isReducedMotion={isReducedMotion}
-          onLine2Start={handleLine2Start}
-          onFirstTitleComplete={() => {
-            if (activeStep >= 1) setShowNavbar(true);
-          }}
-        />
-
         {/*
-          Chip cuaca live maritim (kecepatan angin, tinggi gelombang, kelaikan pelayaran)
-          tampil di bawah judul pada step 0–2, memudar saat keluar hero (step 3–4).
+          Kontainer Utama Hero: Judul & Chip Cuaca Maritim (Arah Angin, Gelombang, Kelaikan)
+          dibuat tepat di TENGAH (center aligned secara vertikal & horizontal di viewport).
         */}
-        <div
-          className={`absolute left-0 right-0 top-[47%] sm:top-[45%] z-20 flex flex-col items-center px-4 transition-all duration-500 ${
-            activeStep <= 2
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-4 pointer-events-none"
-          }`}
-        >
-          <HeroWeatherChip />
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center px-4 pt-16 sm:pt-20 pointer-events-none">
+          <HeroTitle
+            step={activeStep}
+            isReducedMotion={isReducedMotion}
+            onLine2Start={handleLine2Start}
+            onFirstTitleComplete={() => {
+              if (activeStep >= 1) setShowNavbar(true);
+            }}
+          />
+
+          {/*
+            Chip cuaca live maritim (kecepatan angin, tinggi gelombang, kelaikan pelayaran)
+            tampil pas di bawah judul pada step 0–2, memudar saat keluar hero (step 3–4).
+          */}
+          <div
+            className={`pointer-events-auto mt-6 sm:mt-8 flex flex-col items-center transition-all duration-500 ${
+              activeStep <= 2
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-4 pointer-events-none"
+            }`}
+          >
+            <HeroWeatherChip />
+          </div>
         </div>
 
         {/* Unified Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}

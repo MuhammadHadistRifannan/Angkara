@@ -69,6 +69,29 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     expect(assistantBtn).not.toBeNull();
   });
 
+  it("tombol floating Juru Mudi di Landing Page memicu AuthModal ketika diklik oleh pengunjung yang belum login", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: null },
+    } as unknown as { data: { user: null }; error: null });
+
+    const { container } = render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Index)
+      )
+    );
+
+    const assistantBtn = container.querySelector("button[aria-label*='Buka Chat Juru Mudi']");
+    expect(assistantBtn).not.toBeNull();
+    fireEvent.click(assistantBtn!);
+
+    await waitFor(() => {
+      // AuthModal muncul menampilkan prompt masuk untuk bertanya ke Juru Mudi AI
+      expect(screen.getByText(/Masuk dulu untuk bertanya ke Juru Mudi AI/i)).toBeDefined();
+    });
+  });
+
   it("Dashboard User merender AssistantWidget (Juru Mudi AI)", async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: {

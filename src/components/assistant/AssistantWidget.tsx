@@ -45,27 +45,28 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Periksa dan pulihkan draf pemesanan saat inisialisasi
+  // Periksa dan pulihkan draf pemesanan saat inisialisasi jika sudah login
   useEffect(() => {
-    const draft = loadDraft();
-    if (draft) {
-      setMessages([
-        {
-          id: "draft-restore",
-          role: "assistant",
-          content:
-            "Selamat datang kembali! Draf pemesanan Anda sebelumnya telah dipulihkan. Silakan tinjau dan klik 'Pesan Sekarang' untuk melanjutkan.",
-          cards: [draft],
-        },
-      ]);
-      setIsOpen(true);
-    }
-
-    if (typeof supabase.auth.getSession === "function") {
-      supabase.auth.getSession().then(({ data }) => {
-        const loggedIn = !!data?.session;
+    if (typeof supabase.auth.getUser === "function") {
+      supabase.auth.getUser().then(({ data }) => {
+        const loggedIn = !!data?.user;
         setAuthed(loggedIn);
         if (!loggedIn) return;
+
+        const draft = loadDraft();
+        if (draft) {
+          setMessages([
+            {
+              id: "draft-restore",
+              role: "assistant",
+              content:
+                "Selamat datang kembali! Draf pemesanan Anda sebelumnya telah dipulihkan. Silakan tinjau dan klik 'Pesan Sekarang' untuk melanjutkan.",
+              cards: [draft],
+            },
+          ]);
+          setIsOpen(true);
+        }
+
         try {
           const pendingPrompt = sessionStorage.getItem("pending_assistant_prompt");
           if (pendingPrompt) {
@@ -78,22 +79,30 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
         }
       });
     }
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthed(!!session);
+      setAuthed(!!session?.user);
     });
     return () => {
       listener.subscription.unsubscribe();
     };
   }, []);
 
-  // Dengarkan event eksternal "open-assistant" (misal dari tombol "Tanya Juru Mudi AI" di peta)
+  // Dengarkan event eksternal "open-assistant" (misal dari tombol "Tanya Juru Mudi AI" di peta atau Navbar)
   useEffect(() => {
     const onOpenEvent = (e: Event) => {
       const customEvent = e as CustomEvent<{ prompt?: string }>;
-      // Prompt sudah disimpan pemanggil di sessionStorage; kalau belum login,
-      // buka popup login dulu, chat dibuka setelah login berhasil.
-      supabase.auth.getSession().then(({ data }) => {
-        if (!data.session) {
+      // Prompt disimpan pemanggil di sessionStorage; kalau belum login,
+      // buka popup login (AuthModal) dulu, chat dibuka setelah login berhasil.
+      supabase.auth.getUser().then(({ data }) => {
+        if (!data?.user) {
+          if (customEvent.detail?.prompt) {
+            try {
+              sessionStorage.setItem("pending_assistant_prompt", customEvent.detail.prompt);
+            } catch (err) {
+              console.warn("Gagal menyimpan pending prompt:", err);
+            }
+          }
           setAuthOpen(true);
           return;
         }
@@ -122,8 +131,8 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
     if (!textToSend || isLoading) return;
 
     // Chat butuh login: simpan pesan, buka popup login, jangan kirim.
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
       try {
         sessionStorage.setItem("pending_assistant_prompt", textToSend);
       } catch (e) {
@@ -198,8 +207,8 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
   };
 
   const handleOpenClick = async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
       setAuthOpen(true);
       return;
     }

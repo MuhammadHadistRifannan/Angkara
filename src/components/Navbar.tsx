@@ -22,6 +22,8 @@ const Navbar = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
   const guideRef = useRef<HTMLDivElement>(null);
+  const isNavigatingRef = useRef(false);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,6 +75,7 @@ const Navbar = () => {
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+      if (isNavigatingRef.current) return;
       if (location.pathname === "/" && window.scrollY < 200 && (!location.hash || location.hash === "#beranda")) {
         setActiveId("beranda");
       }
@@ -84,6 +87,7 @@ const Navbar = () => {
     const sectionIds = ["how-it-works", "weather-map-section", "pilihan-paket-tour"];
     const observer = new IntersectionObserver(
       (entries) => {
+        if (isNavigatingRef.current) return;
         for (const entry of entries) {
           if (entry.isIntersecting) setActiveId(entry.target.id);
         }
@@ -118,6 +122,12 @@ const Navbar = () => {
     setActiveId(id);
     setIsMenuOpen(false);
     setGuideOpen(false);
+    isNavigatingRef.current = true;
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    navTimerRef.current = setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1200);
+
     if (id === "beranda") {
       if (!isLandingPage) {
         navigate("/");
@@ -139,6 +149,11 @@ const Navbar = () => {
     e.preventDefault();
     setIsMenuOpen(false);
     setGuideOpen(false);
+    if (!user) {
+      setAuthTab("signin");
+      setAuthOpen(true);
+      return;
+    }
     window.dispatchEvent(
       new CustomEvent("open-assistant", {
         detail: {

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Home, Ship, Compass, CloudSun, Bot, BookOpen, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthModal } from "@/components/AuthModal";
 
 interface LiquidNavProps {
   show: boolean;
@@ -26,9 +27,13 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string>("home");
   const [guideOpen, setGuideOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
   const [user, setUser] = useState<unknown>(null);
   const guideRef = useRef<HTMLDivElement>(null);
+  const isNavigatingRef = useRef(false);
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -58,6 +63,72 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
     return () => subscription.unsubscribe();
   }, []);
 
+  // Sinkronisasi selectedId berdasarkan rute dan posisi scroll landing page
+  useEffect(() => {
+    if (location.pathname === "/permit-info") {
+      setSelectedId("guide");
+      return;
+    }
+    if (location.pathname.startsWith("/boats")) {
+      setSelectedId("boats");
+      return;
+    }
+    if (location.pathname.startsWith("/tour-packages")) {
+      setSelectedId("tours");
+      return;
+    }
+    if (location.pathname === "/" && location.hash) {
+      const hash = location.hash.replace(/^#/, "");
+      if (hash === "weather-map-section") setSelectedId("weather");
+      else if (hash === "how-it-works") setSelectedId("guide");
+      else if (hash === "beranda") setSelectedId("home");
+      return;
+    }
+
+    if (location.pathname === "/") {
+      const handleScroll = () => {
+        if (isNavigatingRef.current) return;
+        if (window.scrollY < 300) {
+          setSelectedId("home");
+        }
+      };
+
+      window.addEventListener("scroll", handleScroll, { passive: true });
+
+      const sectionObserver = new IntersectionObserver(
+        (entries) => {
+          if (isNavigatingRef.current) return;
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              if (entry.target.id === "weather-map-section") setSelectedId("weather");
+              if (entry.target.id === "how-it-works") setSelectedId("guide");
+            }
+          }
+        },
+        { rootMargin: "-30% 0px -40% 0px" }
+      );
+
+      const weatherEl = document.getElementById("weather-map-section");
+      const guideEl = document.getElementById("how-it-works");
+      if (weatherEl) sectionObserver.observe(weatherEl);
+      if (guideEl) sectionObserver.observe(guideEl);
+
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+        sectionObserver.disconnect();
+      };
+    }
+  }, [location.pathname, location.hash]);
+
+  const selectAndLock = (id: string) => {
+    setSelectedId(id);
+    isNavigatingRef.current = true;
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    navTimerRef.current = setTimeout(() => {
+      isNavigatingRef.current = false;
+    }, 1200);
+  };
+
   const navItems: NavItem[] = [
     {
       id: "home",
@@ -65,17 +136,14 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       icon: Home,
       action: () => {
         setGuideOpen(false);
+        selectAndLock("home");
         if (location.pathname === "/") {
           window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
           navigate("/");
         }
       },
-      isActive:
-        location.pathname === "/" &&
-        (typeof window !== "undefined"
-          ? window.scrollY < window.innerHeight * 1.5
-          : true),
+      isActive: selectedId === "home",
     },
     {
       id: "boats",
@@ -83,9 +151,10 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       icon: Ship,
       action: () => {
         setGuideOpen(false);
+        selectAndLock("boats");
         navigate("/boats");
       },
-      isActive: location.pathname.startsWith("/boats"),
+      isActive: selectedId === "boats" || location.pathname.startsWith("/boats"),
     },
     {
       id: "tours",
@@ -93,9 +162,10 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       icon: Compass,
       action: () => {
         setGuideOpen(false);
+        selectAndLock("tours");
         navigate("/tour-packages");
       },
-      isActive: location.pathname.startsWith("/tour-packages"),
+      isActive: selectedId === "tours" || location.pathname.startsWith("/tour-packages"),
     },
     {
       id: "weather",
@@ -103,6 +173,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       icon: CloudSun,
       action: () => {
         setGuideOpen(false);
+        selectAndLock("weather");
         const mapEl = document.getElementById("weather-map-section");
         if (mapEl) {
           mapEl.scrollIntoView({ behavior: "smooth" });
@@ -112,14 +183,20 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           window.scrollTo({ top: window.innerHeight * 2.8, behavior: "smooth" });
         }
       },
-      isActive: false,
+      isActive: selectedId === "weather",
     },
     {
       id: "juru-mudi",
       label: "Juru Mudi",
       icon: Bot,
-      action: () => {
+      action: async () => {
         setGuideOpen(false);
+        selectAndLock("juru-mudi");
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) {
+          setAuthOpen(true);
+          return;
+        }
         window.dispatchEvent(
           new CustomEvent("open-assistant", {
             detail: {
@@ -128,16 +205,17 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           })
         );
       },
-      isActive: false,
+      isActive: selectedId === "juru-mudi",
     },
     {
       id: "guide",
       label: "Panduan",
       icon: BookOpen,
       action: () => {
+        selectAndLock("guide");
         setGuideOpen((prev) => !prev);
       },
-      isActive: location.pathname === "/permit-info",
+      isActive: selectedId === "guide" || location.pathname === "/permit-info",
     },
     {
       id: "auth",
@@ -145,21 +223,22 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       icon: User,
       action: () => {
         setGuideOpen(false);
+        selectAndLock("auth");
         if (user) {
           navigate("/dashboard");
         } else {
-          navigate("/auth");
+          setAuthOpen(true);
         }
       },
       isActive:
+        selectedId === "auth" ||
         location.pathname === "/auth" ||
         location.pathname === "/dashboard" ||
         location.pathname === "/operator-dashboard",
     },
   ];
 
-  const activeItem = navItems.find((item) => item.isActive) || navItems[0];
-  const currentHighlightedId = hoveredId || activeItem.id;
+  const currentHighlightedId = hoveredId || selectedId;
   const highlightedIndex = Math.max(
     0,
     navItems.findIndex((item) => item.id === currentHighlightedId)
@@ -371,6 +450,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                     type="button"
                     onClick={() => {
                       setGuideOpen(false);
+                      selectAndLock("guide");
                       const el = document.getElementById("how-it-works");
                       if (el) el.scrollIntoView({ behavior: "smooth" });
                       else navigate("/#how-it-works");
@@ -387,6 +467,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                     type="button"
                     onClick={() => {
                       setGuideOpen(false);
+                      selectAndLock("guide");
                       navigate("/permit-info");
                     }}
                     className={`block w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors ${
@@ -401,6 +482,11 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
               </div>
             )}
           </div>
+          <AuthModal
+            open={authOpen}
+            onClose={() => setAuthOpen(false)}
+            onSuccess={() => setAuthOpen(false)}
+          />
         </motion.nav>
       )}
     </AnimatePresence>
