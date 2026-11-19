@@ -75,10 +75,6 @@ const HowItWorks: React.FC = () => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-3"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-100/70 border border-cyan-200/80 text-cyan-950 text-xs font-semibold uppercase tracking-wider shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
-            <span>Alur Navigasi &amp; Reservasi Resmi</span>
-          </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Cara Kerja{" "}

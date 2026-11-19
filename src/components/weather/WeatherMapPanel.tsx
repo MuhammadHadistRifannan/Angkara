@@ -154,10 +154,6 @@ export const WeatherMapPanel: React.FC = () => {
   return (
     <section id="weather-map-section" className="pt-20 sm:pt-24 pb-0 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-2.5 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
-          <span>Telemetri Cuaca BMKG &amp; Open-Meteo</span>
-        </div>
 
         {/* Judul — disamakan dengan section lain */}
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900">

@@ -37,11 +37,6 @@ export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
         Sederhana dan langsung ke poin.
       */}
       <div className="max-w-3xl mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 shadow-sm backdrop-blur-md mb-3">
-          <Anchor className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Ekosistem Maritim Lengkap</span>
-          <span className="text-cyan-500/60 font-mono text-[10px] hidden sm:inline">• 7°44&apos;S 109°00&apos;E</span>
-        </div>
         <h4 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white tracking-tight mt-1">
           Dan Masih Banyak Lagi
         </h4>
