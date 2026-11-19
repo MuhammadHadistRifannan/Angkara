@@ -307,7 +307,23 @@ export const findDemoBoat = (
 ): DemoBoat | undefined =>
   !id ? undefined : DEMO_BOATS.find((b) => b.id === id);
 
+const PACKAGE_SLUG_MAP: Record<string, string> = {
+  "pkg-teluk-penyu": "20000000-0000-4000-8000-000000000001",
+  "pkg-segara-anakan": "20000000-0000-4000-8000-000000000002",
+  "pkg-mancing-mercusuar": "20000000-0000-4000-8000-000000000003",
+  "pkg-sunset-karang-bolong": "20000000-0000-4000-8000-000000000004",
+  "pkg-snorkeling-karang-bolong": "20000000-0000-4000-8000-000000000005",
+  "pkg-susur-tambak": "20000000-0000-4000-8000-000000000006",
+  "pkg-mancing-malam": "20000000-0000-4000-8000-000000000007",
+  "pkg-nusakambangan-sehari": "20000000-0000-4000-8000-000000000008",
+};
+
 export const findDemoPackage = (
   id: string | null | undefined
-): DemoPackage | undefined =>
-  !id ? undefined : DEMO_PACKAGES.find((p) => p.id === id);
+): DemoPackage | undefined => {
+  if (!id) return undefined;
+  const direct = DEMO_PACKAGES.find((p) => p.id === id);
+  if (direct) return direct;
+  const mappedId = PACKAGE_SLUG_MAP[id];
+  return mappedId ? DEMO_PACKAGES.find((p) => p.id === mappedId) : undefined;
+};

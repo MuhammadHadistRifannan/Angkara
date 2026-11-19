@@ -4,9 +4,11 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AuthModal } from "@/components/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Users, Package as PackageIcon, Star, MapPin } from "lucide-react";
+import { Clock, Users, Package as PackageIcon, Star, MapPin, Compass } from "lucide-react";
 import { DEMO_PACKAGES } from "@/lib/demoFallback";
+import { toast } from "sonner";
 
 interface PagePackage {
   id: string;
@@ -35,10 +37,31 @@ const mapRowToPackage = (row: any): PagePackage => ({
 const TourPackages = () => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<PagePackage[]>([]);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingPackageId, setPendingPackageId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPackages();
   }, []);
+
+  const handleBookingClick = async (pkgId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Silakan masuk ke akun Anda terlebih dahulu untuk memesan paket ini.");
+      setPendingPackageId(pkgId);
+      setAuthOpen(true);
+      return;
+    }
+    navigate(`/booking?packageId=${encodeURIComponent(pkgId)}`);
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    if (pendingPackageId) {
+      navigate(`/booking?packageId=${encodeURIComponent(pendingPackageId)}`);
+      setPendingPackageId(null);
+    }
+  };
 
   const fetchPackages = async () => {
     try {
@@ -147,9 +170,23 @@ const TourPackages = () => {
                       </div>
                     </div>
                   </div>
-                  <Button variant="hero" className="w-full" onClick={() => navigate(`/booking?packageId=${pkg.id}`)}>
-                    Booking Sekarang
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      className="w-full text-xs sm:text-sm font-semibold border-primary/30 hover:bg-primary/10"
+                      onClick={() => navigate(`/route/${pkg.id}`)}
+                    >
+                      <Compass className="w-3.5 h-3.5 mr-1 text-primary" />
+                      Detail Rute
+                    </Button>
+                    <Button
+                      variant="hero"
+                      className="w-full text-xs sm:text-sm font-semibold"
+                      onClick={() => handleBookingClick(pkg.id)}
+                    >
+                      Booking Sekarang
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -168,6 +205,12 @@ const TourPackages = () => {
           </Card>
         )}
       </div>
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };

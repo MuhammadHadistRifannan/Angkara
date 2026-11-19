@@ -323,8 +323,8 @@ export const TourPackagesSection: React.FC = () => {
                   type="button"
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => navigate("/tour-packages")}
-                  className="px-3.5 py-2 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs font-bold shadow-xs hover:shadow-md transition-all"
+                  onClick={() => navigate(`/route/${pkg.id}`)}
+                  className="px-3.5 py-2 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
                 >
                   Detail Rute
                 </motion.button>

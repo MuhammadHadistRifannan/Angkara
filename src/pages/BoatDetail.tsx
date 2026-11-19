@@ -19,6 +19,7 @@ import boatSpeedboat2 from "@/assets/boat-speedboat-2.jpg";
 import boatTraditional2 from "@/assets/boat-traditional-2.jpg";
 import boatSpeedboat3 from "@/assets/boat-speedboat-3.jpg";
 import Navbar from "@/components/Navbar";
+import { AuthModal } from "@/components/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -86,6 +87,25 @@ const BoatDetail = () => {
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
+
+  const handleBookingClick = async () => {
+    if (!boat) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Silakan masuk ke akun Anda terlebih dahulu untuk memesan kapal ini.");
+      setAuthOpen(true);
+      return;
+    }
+    navigate(`/booking?boatId=${boat.id}`);
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    if (boat) {
+      navigate(`/booking?boatId=${boat.id}`);
+    }
+  };
 
   useEffect(() => {
     // Check user auth status
@@ -312,7 +332,7 @@ const BoatDetail = () => {
                   variant="hero"
                   size="lg"
                   className="w-full"
-                  onClick={() => navigate(`/booking?boatId=${boat.id}`)}
+                  onClick={handleBookingClick}
                 >
                   Booking Sekarang
                 </Button>
@@ -417,6 +437,12 @@ const BoatDetail = () => {
           )}
         </div>
       </div>
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };

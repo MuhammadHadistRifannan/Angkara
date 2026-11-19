@@ -15,6 +15,7 @@ import PermitInfo from "./pages/PermitInfo";
 import BoatsListing from "./pages/BoatsListing";
 import BoatDetail from "./pages/BoatDetail";
 import AdminDashboard from "./pages/AdminDashboard";
+import RouteDetail from "./pages/RouteDetail";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,8 @@ const App = () => (
           <Route path="/operator-dashboard" element={<OperatorDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/tour-packages" element={<TourPackages />} />
+          <Route path="/route/:id" element={<RouteDetail />} />
+          <Route path="/tour-package/:id" element={<RouteDetail />} />
           <Route path="/permit-info" element={<PermitInfo />} />
           <Route path="/boats" element={<BoatsListing />} />
           <Route path="/boat/:id" element={<BoatDetail />} />
