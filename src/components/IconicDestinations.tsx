@@ -70,7 +70,11 @@ export const IconicDestinations: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <section id="destinasi-ikonik" className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden">
+    <section id="destinasi-ikonik" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60">
+      {/* Subtle Coastal Glow */}
+      <div className="absolute top-1/3 -right-24 w-96 h-96 bg-cyan-200/25 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -left-24 w-96 h-96 bg-sky-200/25 rounded-full blur-3xl pointer-events-none" />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
         <motion.div
@@ -80,6 +84,11 @@ export const IconicDestinations: React.FC = () => {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="text-center max-w-3xl mx-auto mb-14 sm:mb-16"
         >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-4 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+            <span>Eksplorasi Bahari Nusakambangan</span>
+          </div>
+
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Destinasi Ikonik
             <span className="block mt-1">di Pesisir Cilacap</span>
@@ -107,7 +116,7 @@ export const IconicDestinations: React.FC = () => {
                 variants={cardVariants}
                 whileHover={{ y: -10, transition: { duration: 0.3 } }}
                 onClick={() => navigate("/tour-packages")}
-                className="group relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/60"
+                className="group relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/70 hover:border-cyan-400/50"
               >
                 {/* Background Image with Zoom */}
                 <img
@@ -117,12 +126,12 @@ export const IconicDestinations: React.FC = () => {
                 />
 
                 {/* Dark Gradient Overlay for optimal legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/65 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
 
                 {/* Card Content placed at the bottom */}
                 <div className="absolute inset-0 p-6 sm:p-7 flex flex-col justify-end text-white">
                   {/* Badge */}
-                  <div className="flex items-center gap-1.5 text-cyan-400 text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-2.5">
+                  <div className="flex items-center gap-1.5 text-cyan-300 text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-2.5">
                     <Icon className="h-3.5 w-3.5 animate-pulse" />
                     <span>{item.tag}</span>
                   </div>
@@ -133,7 +142,7 @@ export const IconicDestinations: React.FC = () => {
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-3 group-hover:text-slate-100 transition-colors">
+                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3 group-hover:text-white transition-colors">
                     {item.description}
                   </p>
                 </div>

@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 
-export const SNAP_ASSIST = true;
+// Dinonaktifkan: snap otomatis setelah scroll berhenti terasa melawan pengguna
+// (halaman "ditarik" sendiri) dan menambah kesan scroll berat.
+export const SNAP_ASSIST = false;
 
 interface SnapAssistOptions {
   enabled?: boolean;

@@ -48,6 +48,7 @@ const Hero: React.FC = () => {
 
   // Update status isInHero & hitung scroll progress
   const [scrollProgress, setScrollProgress] = useState(0);
+  const lastProgressRef = useRef(0);
 
   useEffect(() => {
     let rafId: number | null = null;
@@ -68,7 +69,15 @@ const Hero: React.FC = () => {
           totalScrollable > 0
             ? Math.max(0, Math.min(1, -rect.top / totalScrollable))
             : 0;
-        setScrollProgress(currentProgress);
+        // Hindari render ulang tiap frame: perbarui hanya bila berubah cukup berarti
+        if (
+          Math.abs(currentProgress - lastProgressRef.current) >= 0.004 ||
+          currentProgress === 0 ||
+          currentProgress === 1
+        ) {
+          lastProgressRef.current = currentProgress;
+          setScrollProgress(currentProgress);
+        }
 
         // Jika user scroll kembali ke paling atas halaman (Step 0)
         if (window.scrollY <= 15) {
@@ -119,7 +128,7 @@ const Hero: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[450svh] md:h-[500vh] bg-slate-950"
+      className="relative w-full h-[300svh] md:h-[340vh] bg-slate-950"
       aria-label="Hero Pelayaran Suar"
     >
       {/* 

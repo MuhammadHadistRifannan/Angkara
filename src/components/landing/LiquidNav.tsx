@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Ship, CloudSun, Bot, User } from "lucide-react";
+import { Home, Ship, Compass, CloudSun, Bot, BookOpen, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,7 +26,23 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [user, setUser] = useState<unknown>(null);
+  const guideRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (guideRef.current && !guideRef.current.contains(event.target as Node)) {
+        setGuideOpen(false);
+      }
+    };
+    if (guideOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [guideOpen]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -48,31 +64,50 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       label: "Beranda",
       icon: Home,
       action: () => {
+        setGuideOpen(false);
         if (location.pathname === "/") {
           window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
           navigate("/");
         }
       },
-      isActive: location.pathname === "/" && (typeof window !== "undefined" ? window.scrollY < window.innerHeight * 1.5 : true),
+      isActive:
+        location.pathname === "/" &&
+        (typeof window !== "undefined"
+          ? window.scrollY < window.innerHeight * 1.5
+          : true),
     },
     {
       id: "boats",
       label: "Armada Kapal",
       icon: Ship,
-      action: () => navigate("/boats"),
+      action: () => {
+        setGuideOpen(false);
+        navigate("/boats");
+      },
       isActive: location.pathname.startsWith("/boats"),
+    },
+    {
+      id: "tours",
+      label: "Paket Tour",
+      icon: Compass,
+      action: () => {
+        setGuideOpen(false);
+        navigate("/tour-packages");
+      },
+      isActive: location.pathname.startsWith("/tour-packages"),
     },
     {
       id: "weather",
       label: "Cuaca & Peta",
       icon: CloudSun,
       action: () => {
+        setGuideOpen(false);
         const mapEl = document.getElementById("weather-map-section");
         if (mapEl) {
           mapEl.scrollIntoView({ behavior: "smooth" });
         } else if (location.pathname !== "/") {
-          navigate("/#weather-map");
+          navigate("/#weather-map-section");
         } else {
           window.scrollTo({ top: window.innerHeight * 2.8, behavior: "smooth" });
         }
@@ -84,6 +119,7 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       label: "Juru Mudi",
       icon: Bot,
       action: () => {
+        setGuideOpen(false);
         window.dispatchEvent(
           new CustomEvent("open-assistant", {
             detail: {
@@ -95,17 +131,30 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
       isActive: false,
     },
     {
+      id: "guide",
+      label: "Panduan",
+      icon: BookOpen,
+      action: () => {
+        setGuideOpen((prev) => !prev);
+      },
+      isActive: location.pathname === "/permit-info",
+    },
+    {
       id: "auth",
       label: user ? "Dashboard" : "Masuk / Akun",
       icon: User,
       action: () => {
+        setGuideOpen(false);
         if (user) {
           navigate("/dashboard");
         } else {
           navigate("/auth");
         }
       },
-      isActive: location.pathname === "/auth" || location.pathname === "/dashboard",
+      isActive:
+        location.pathname === "/auth" ||
+        location.pathname === "/dashboard" ||
+        location.pathname === "/operator-dashboard",
     },
   ];
 
@@ -169,7 +218,10 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         >
           {/* Pill Kaca Translucent Frosted Glass (Unified Floating Glass Bar) */}
           <div
-            onMouseLeave={() => setHoveredId(null)}
+            onMouseLeave={() => {
+              setHoveredId(null);
+              setGuideOpen(false);
+            }}
             className={`relative flex items-center justify-between p-1 sm:p-1.5 rounded-full w-full max-w-[840px] md:max-w-[940px] lg:max-w-[980px] transition-all duration-300 select-none ${
               isInHero
                 ? "bg-white/25 backdrop-blur-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.22),inset_0_1.5px_1.5px_rgba(255,255,255,0.85),inset_0_-1px_1px_rgba(0,0,0,0.08)]"
@@ -301,6 +353,53 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
                 );
               })}
             </div>
+
+            {/* Dropdown Panduan Floating Glass */}
+            {guideOpen && (
+              <div
+                ref={guideRef}
+                className="absolute top-full pt-2 right-12 sm:right-28 z-50 min-w-[170px] animate-in fade-in slide-in-from-top-1 duration-150"
+              >
+                <div
+                  className={`py-2 px-2.5 rounded-2xl shadow-2xl space-y-1 ${
+                    isInHero
+                      ? "bg-slate-900/95 backdrop-blur-2xl border border-white/20 text-white"
+                      : "bg-white/95 backdrop-blur-2xl border border-slate-200 text-slate-800 shadow-xl"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGuideOpen(false);
+                      const el = document.getElementById("how-it-works");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                      else navigate("/#how-it-works");
+                    }}
+                    className={`block w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors ${
+                      isInHero
+                        ? "hover:bg-white/10 hover:text-cyan-300"
+                        : "hover:bg-cyan-50 hover:text-cyan-800"
+                    }`}
+                  >
+                    Cara Kerja Platform
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGuideOpen(false);
+                      navigate("/permit-info");
+                    }}
+                    className={`block w-full text-left px-3 py-2 text-xs font-semibold rounded-xl transition-colors ${
+                      isInHero
+                        ? "hover:bg-white/10 hover:text-cyan-300"
+                        : "hover:bg-cyan-50 hover:text-cyan-800"
+                    }`}
+                  >
+                    Perizinan KSOP
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </motion.nav>
       )}

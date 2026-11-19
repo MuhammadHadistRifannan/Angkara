@@ -61,8 +61,11 @@ const HowItWorks: React.FC = () => {
   return (
     <section
       id="how-it-works"
-      className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60"
+      className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden border-t border-slate-200/60"
     >
+      {/* Subtle Ambient Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-sky-100/30 rounded-full blur-3xl pointer-events-none" />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header Section matching SUAR Coastal Theme */}
         <motion.div
@@ -70,8 +73,12 @@ const HowItWorks: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-4"
+          className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-3"
         >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-100/70 border border-cyan-200/80 text-cyan-950 text-xs font-semibold uppercase tracking-wider shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-600 animate-pulse" />
+            <span>Alur Navigasi &amp; Reservasi Resmi</span>
+          </div>
 
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Cara Kerja{" "}
@@ -112,9 +119,9 @@ const HowItWorks: React.FC = () => {
                   whileHover={{ y: -8, transition: { duration: 0.25 } }}
                   className="relative group flex"
                 >
-                  <div className="relative p-7 pt-8 rounded-3xl bg-white border border-slate-200/90 hover:border-sky-300 hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full w-full">
+                  <div className="relative p-7 pt-8 rounded-3xl bg-[#F8FAFC]/90 border border-slate-200/90 hover:border-sky-300 hover:bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full w-full">
                     {/* Floating Number Badge */}
-                    <div className="absolute -top-4 -left-3 bg-[#090D16] text-white rounded-2xl w-12 h-12 flex items-center justify-center font-black text-lg shadow-md border border-slate-800 group-hover:scale-110 group-hover:bg-sky-800 transition-all duration-300">
+                    <div className="absolute -top-4 -left-3 bg-[#0B1528] text-white rounded-2xl w-12 h-12 flex items-center justify-center font-black text-lg shadow-md border border-cyan-400/20 group-hover:scale-110 group-hover:bg-sky-800 transition-all duration-300">
                       {step.number}
                     </div>
 

@@ -43,14 +43,77 @@ type Boat = {
 //   '/src/assets/boat-speedboat-3.jpg': boatSpeedboat3,
 // };
 
+import { DEMO_BOATS } from "@/lib/demoFallback";
+
 const imageMap: Record<string, string> = {
   "boat-speedboat-1.jpg": boatSpeedboat1,
   "boat-speedboat-2.jpg": boatSpeedboat2,
   "boat-speedboat-3.jpg": boatSpeedboat3,
   "boat-traditional-1.jpg": boatTraditional1,
   "boat-traditional-2.jpg": boatTraditional2,
+  "/src/assets/boat-speedboat-1.jpg": boatSpeedboat1,
+  "/src/assets/boat-traditional-1.jpg": boatTraditional1,
+  "/src/assets/boat-speedboat-2.jpg": boatSpeedboat2,
+  "/src/assets/boat-traditional-2.jpg": boatTraditional2,
+  "/src/assets/boat-speedboat-3.jpg": boatSpeedboat3,
 };
 
+const getDemoBoatsList = (): Boat[] => {
+  const images = [
+    boatTraditional1,
+    boatSpeedboat1,
+    boatTraditional2,
+    boatSpeedboat2,
+    boatTraditional1,
+    boatSpeedboat3,
+    boatSpeedboat1,
+    boatTraditional2,
+    boatSpeedboat2,
+    boatTraditional1,
+    boatTraditional2,
+    boatSpeedboat3,
+  ];
+
+  return DEMO_BOATS.map((demo, idx) => ({
+    id: demo.id,
+    name: demo.name,
+    description: demo.description,
+    type: demo.type,
+    capacity: demo.capacity,
+    base_price: demo.base_price,
+    location: demo.location,
+    features: [
+      demo.boatTypeTag,
+      "Jaket Pelampung SOLAS",
+      "Nakhoda Berlisensi KSOP",
+      "P3K & Radio Maritim",
+    ],
+    image_url: images[idx % images.length],
+  }));
+};
+
+const getBoatImage = (boat: Boat, index: number) => {
+  if (boat.image_url && boat.image_url !== "null") {
+    if (imageMap[boat.image_url]) return imageMap[boat.image_url];
+    const filename = boat.image_url.split("/").pop();
+    if (filename && filename in imageMap) return imageMap[filename];
+    if (
+      boat.image_url.startsWith("http") ||
+      boat.image_url.startsWith("/assets") ||
+      boat.image_url.startsWith("data:") ||
+      boat.image_url.startsWith("/")
+    ) {
+      return boat.image_url;
+    }
+  }
+  // Foto maritim default jika image_url null / tidak valid
+  if (boat.type === "speedboat") {
+    const speedboatImages = [boatSpeedboat1, boatSpeedboat2, boatSpeedboat3];
+    return speedboatImages[index % speedboatImages.length];
+  }
+  const traditionalImages = [boatTraditional1, boatTraditional2];
+  return traditionalImages[index % traditionalImages.length];
+};
 
 const BoatsListing = () => {
   const navigate = useNavigate();
@@ -72,16 +135,35 @@ const BoatsListing = () => {
 
   const fetchBoats = async () => {
     try {
+      const demoList = getDemoBoatsList();
       const { data, error } = await supabase
         .from("boats")
         .select("*")
-        .eq("available", true)
-        .order("created_at", { ascending: false });
+        .eq("available", true);
 
       if (error) throw error;
-      setBoats(data || []);
-    } catch (error: any) {
-      toast.error("Gagal memuat kapal: " + error.message);
+      if (data && data.length > 0) {
+        // Sinkronkan tepat 12 armada resmi dengan data database (jika ada update perizinan/harga)
+        const dbMap = new Map(data.map((b) => [b.id, b]));
+        const syncedList = demoList.map((demo) => {
+          const dbItem = dbMap.get(demo.id);
+          if (dbItem) {
+            return {
+              ...demo,
+              ...dbItem,
+              image_url: dbItem.image_url || demo.image_url,
+            };
+          }
+          return demo;
+        });
+
+        setBoats(syncedList);
+      } else {
+        setBoats(demoList);
+      }
+    } catch {
+      // Fallback sinkronisasi armada jika koneksi offline / tabel belum terisi
+      setBoats(getDemoBoatsList());
     } finally {
       setLoading(false);
     }
@@ -186,7 +268,7 @@ const BoatsListing = () => {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredBoats.map((boat) => (
+            {filteredBoats.map((boat, idx) => (
               <Card
                 key={boat.id}
                 className="overflow-hidden hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/50 cursor-pointer"
@@ -194,17 +276,11 @@ const BoatsListing = () => {
               >
                 {/* Image */}
                 <div className="relative h-64 overflow-hidden bg-muted">
-                  {boat.image_url ? (
-                    <img
-                      src={imageMap[boat.image_url] || boat.image_url}
-                      alt={boat.name}
-                      className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <MapPin className="h-16 w-16 text-muted-foreground" />
-                    </div>
-                  )}
+                  <img
+                    src={getBoatImage(boat, idx)}
+                    alt={boat.name}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  />
                   <Badge className="absolute top-4 right-4 bg-accent text-white border-0">
                     <Shield className="h-3 w-3 mr-1" />
                     Terverifikasi

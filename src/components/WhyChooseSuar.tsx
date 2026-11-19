@@ -1,24 +1,21 @@
 import React from "react";
 import { motion, type Variants } from "framer-motion";
-import { Brain, Handshake, ShieldCheck, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const reasons = [
   {
     number: "01",
-    icon: Brain,
+    tag: "Telemetri Maritim",
     title: "Analisis AI & BMKG Terpadu",
     description:
       "Sistem kami memadukan data prakiraan gelombang terbaru dengan riwayat arus Teluk Penyu. Status pelayaran Aman, Waspada, atau Tunda mengikuti data terbaru, supaya nahkoda dan wisatawan bisa memutuskan sebelum berangkat.",
-    // PERBAIKAN 2026-11-18: label lama "Pelajari model keselamatan"
-    // menyesatkan — tombol ini hanya scroll ke peta cuaca, tidak
-    // membuka halaman/model keselamatan apa pun.
     linkText: "Lihat Peta Cuaca Maritim",
     action: "scroll-weather",
   },
   {
     number: "02",
-    icon: Handshake,
+    tag: "Ekonomi Nelayan",
     title: "Ekonomi Nelayan Berkelanjutan",
     description:
       "Tanpa perantara dan tanpa calo di dermaga. Harga tertera di depan, dan biaya sewa dibayar langsung kepada nelayan yang bertugas saat Anda berlayar.",
@@ -27,7 +24,7 @@ const reasons = [
   },
   {
     number: "03",
-    icon: ShieldCheck,
+    tag: "Lisensi KSOP",
     title: "Standar Keamanan Bahari Ketat",
     description:
       "Setiap armada perahu kayu maupun speedboat melalui verifikasi fisik berkala: kelengkapan rompi pelampung standar ISO, kotak P3K maritim, GPS beacon darurat, serta izin syahbandar.",
@@ -48,11 +45,11 @@ const containerVariants: Variants = {
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 32 },
+  hidden: { opacity: 0, y: 28 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.55, ease: "easeOut" },
+    transition: { duration: 0.5, ease: "easeOut" },
   },
 };
 
@@ -72,22 +69,38 @@ export const WhyChooseSuar: React.FC = () => {
   };
 
   return (
-    <section className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden">
+    <section className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
+      {/* Subtle Ambient Lighting */}
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl pointer-events-none" />
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Title with Scroll-Reveal Animation */}
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
           className="text-center max-w-3xl mx-auto mb-14 sm:mb-16"
         >
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/90 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-3.5 shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+            <span>Komitmen Keamanan &amp; Pemberdayaan</span>
+          </div>
+
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
             Mengapa Wisatawan Memilih Platform SUAR?
           </h2>
+
+          <p className="mt-3 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+            Standar pelayaran wisata pesisir Cilacap dengan perlindungan keselamatan terpadu dan keadilan tarif bagi nelayan lokal.
+          </p>
         </motion.div>
 
-        {/* 3 Cards matching Image 2 with Staggered In-View Animation */}
+        {/* 
+          3 Cards: Icon dan Background Icon Dihilangkan,
+          Fokus pada nomor monospaced elegan, tag maritim, judul tegas, dan deskripsi rapi.
+        */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -96,32 +109,34 @@ export const WhyChooseSuar: React.FC = () => {
           className="grid md:grid-cols-3 gap-6 sm:gap-8"
         >
           {reasons.map((item, index) => {
-            const Icon = item.icon;
             return (
               <motion.div
                 key={index}
                 variants={cardVariants}
-                whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                className="group rounded-2xl p-7 sm:p-8 bg-white border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between"
+                whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                className="group rounded-3xl p-7 sm:p-8 bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
               >
-                <div>
-                  {/* Top Icon with Light Blue Container */}
-                  <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-primary mb-6 group-hover:bg-sky-100 group-hover:scale-110 transition-all duration-300 shadow-sm">
-                    <Icon className="h-6 w-6 text-sky-700" />
-                  </div>
+                {/* Top Subtle Shimmer Highlight on Hover */}
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                  {/* Number */}
-                  <div className="text-xs font-bold text-slate-400 tracking-wider mb-2 group-hover:text-sky-600 transition-colors">
-                    {item.number}
+                <div>
+                  {/* Top Bar: Nomor Besar & Tag Maritim (Tanpa Icon & Tanpa Background Icon) */}
+                  <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-slate-100">
+                    <span className="font-mono text-3xl sm:text-4xl font-black text-sky-700 tracking-tight group-hover:text-sky-600 transition-colors">
+                      {item.number}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold tracking-wide uppercase bg-sky-50 border border-sky-200/60 text-sky-800">
+                      {item.tag}
+                    </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight group-hover:text-sky-800 transition-colors">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 tracking-tight group-hover:text-sky-800 transition-colors">
                     {item.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-sm text-slate-600 leading-relaxed">
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
                     {item.description}
                   </p>
                 </div>
@@ -134,7 +149,7 @@ export const WhyChooseSuar: React.FC = () => {
                     className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-800 hover:text-sky-700 transition-colors group/btn"
                   >
                     <span>{item.linkText}</span>
-                    <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1.5 transition-transform" />
+                    <ArrowRight className="h-4 w-4 group-hover/btn:translate-x-1.5 transition-transform text-sky-600" />
                   </button>
                 </div>
               </motion.div>

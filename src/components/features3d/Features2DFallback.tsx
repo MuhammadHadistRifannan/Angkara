@@ -25,11 +25,11 @@ export const Features2DFallback = () => {
             Fitur Utama Suar
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-display font-semibold tracking-[-0.03em] leading-[1.12] mb-4 text-white">
-            <span>Lima alasan </span>
-            <span className="text-white/70">berlayar tanpa ragu.</span>
+            <span>Cara Suar mengurus </span>
+            <span className="text-white/70">satu perjalanan.</span>
           </h2>
           <p className="text-base md:text-lg text-slate-300 max-w-xl mx-auto">
-            Dari verifikasi sampai pembayaran, semuanya terjaga.
+            Lima bagian sistem, dari daftar kapal sampai pembayaran.
           </p>
         </div>
 

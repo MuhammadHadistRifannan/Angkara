@@ -152,20 +152,25 @@ export const WeatherMapPanel: React.FC = () => {
     );
 
   return (
-    <section id="weather-map-section" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Judul — disamakan dengan section lain (3xl/4xl, bukan 5xl) */}
-        <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
+    <section id="weather-map-section" className="pt-20 sm:pt-24 pb-0 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider mb-2.5 shadow-2xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+          <span>Telemetri Cuaca BMKG &amp; Open-Meteo</span>
+        </div>
+
+        {/* Judul — disamakan dengan section lain */}
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900">
           Peta Kelaikan Pelayaran
         </h2>
         <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
           Peta nyata perairan Cilacap &amp; Nusakambangan dengan prakiraan gelombang live.
         </p>
 
-        <div className="grid lg:grid-cols-5 gap-5 mt-8 items-start">
+        <div className="grid lg:grid-cols-5 gap-6 mt-8 items-start">
           {/* Kiri: peta ASLI */}
-          <Card className="lg:col-span-3 overflow-hidden shadow-md">
-            <CardContent className="p-4 sm:p-5">
+          <Card className="lg:col-span-3 overflow-hidden shadow-sm rounded-3xl border border-slate-200/90 bg-white">
+            <CardContent className="p-5 sm:p-6">
               <div className="flex flex-wrap gap-2 mb-3">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                   <span className="h-2 w-2 rounded-full bg-slate-900" />
@@ -283,7 +288,7 @@ export const WeatherMapPanel: React.FC = () => {
 
           {/* Kanan: gelombang + rekomendasi */}
           <div className="space-y-4 lg:col-span-2">
-            <Card className="shadow-md">
+            <Card className="shadow-sm rounded-3xl border border-slate-200/90 bg-white">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -330,7 +335,7 @@ export const WeatherMapPanel: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-emerald-500 shadow-sm">
+            <Card className="border-l-4 border-l-emerald-500 shadow-sm rounded-2xl bg-white">
               <CardContent className="flex items-start justify-between gap-3 p-4">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 sm:text-base">
@@ -346,7 +351,7 @@ export const WeatherMapPanel: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card className="border-l-4 border-l-amber-500 shadow-sm">
+            <Card className="border-l-4 border-l-amber-500 shadow-sm rounded-2xl bg-white">
               <CardContent className="flex items-start justify-between gap-3 p-4">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 sm:text-base">
@@ -364,7 +369,7 @@ export const WeatherMapPanel: React.FC = () => {
 
             <Button
               size="sm"
-              className="w-full"
+              className="w-full h-11 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white font-bold shadow-md transition-all text-xs sm:text-sm"
               onClick={() =>
                 window.dispatchEvent(
                   new CustomEvent("open-assistant", {
@@ -381,6 +386,22 @@ export const WeatherMapPanel: React.FC = () => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Wave Transition Ke Footer Latar Hitam Laut Dalam */}
+      <div className="relative w-full overflow-hidden leading-none -mb-px mt-16 sm:mt-20" aria-hidden="true">
+        <svg
+          viewBox="0 0 1440 96"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-12 sm:h-20 block"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,48 C360,96 720,0 1080,48 C1260,72 1380,48 1440,32 L1440,96 L0,96 Z"
+            fill="#090D16"
+          />
+        </svg>
       </div>
     </section>
   );

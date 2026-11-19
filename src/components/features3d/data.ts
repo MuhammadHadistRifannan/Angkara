@@ -4,7 +4,7 @@ import {
   CreditCard,
   BarChart3,
   Anchor,
-  Calculator,
+  Ticket,
   Cloud,
   Star,
   MessageCircle,
@@ -16,9 +16,10 @@ import { MODEL_CONFIG } from "./modelConfig";
 export const MAIN_FEATURES_3D: Feature3DItem[] = [
   {
     id: "listing-terverifikasi",
+    audience: "Wisatawan",
     title: "Listing Terverifikasi",
     description:
-      "Operator terverifikasi KSOP Cilacap dengan kelaikan armada, dokumen resmi, dan sertifikasi nakhoda.",
+      "Kapal dan nakhoda baru tampil di daftar setelah dokumen, kelaikan armada, dan sertifikasinya diperiksa.",
     modelUrl: MODEL_CONFIG["listing-terverifikasi"].url,
     icon: Shield,
     targetHeight: MODEL_CONFIG["listing-terverifikasi"].targetHeight,
@@ -26,9 +27,10 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
   },
   {
     id: "kalender-booking",
+    audience: "Wisatawan",
     title: "Kalender Booking",
     description:
-      "Sistem minimal kuota penumpang otomatis dengan opsi sharing trip pintar untuk efisiensi biaya.",
+      "Pilih tanggal dan lihat sisa kursi. Bila kuota minimal belum terpenuhi, trip bisa digabung agar biaya terbagi.",
     modelUrl: MODEL_CONFIG["kalender-booking"].url,
     icon: Calendar,
     targetHeight: MODEL_CONFIG["kalender-booking"].targetHeight,
@@ -36,9 +38,10 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
   },
   {
     id: "pembayaran-online",
+    audience: "Wisatawan",
     title: "Pembayaran Online",
     description:
-      "Pembayaran uang muka fleksibel via QRIS dan e-wallet dengan sistem garansi penampungan dana aman (escrow).",
+      "Bayar uang muka lewat QRIS atau e-wallet. Dana ditampung dengan sistem escrow.",
     modelUrl: MODEL_CONFIG["pembayaran-online"].url,
     icon: CreditCard,
     targetHeight: MODEL_CONFIG["pembayaran-online"].targetHeight,
@@ -46,9 +49,10 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
   },
   {
     id: "dashboard-analitik",
+    audience: "Operator kapal",
     title: "Dashboard Analitik",
     description:
-      "Pusat pemantauan data performa armada bahari dan okupansi rute wisata untuk operator kapal.",
+      "Operator kapal memantau okupansi rute dan performa armada dalam satu halaman.",
     modelUrl: MODEL_CONFIG["dashboard-analitik"].url,
     icon: BarChart3,
     targetHeight: MODEL_CONFIG["dashboard-analitik"].targetHeight,
@@ -56,9 +60,10 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
   },
   {
     id: "paket-wisata",
+    audience: "Wisatawan",
     title: "Paket Wisata Bahari",
     description:
-      "Pilihan paket wisata bahari kurasi lokal siap pesan: sunset cruise Teluk Penyu dan susur mangrove.",
+      "Paket kurasi lokal yang siap dipesan, misalnya sunset Teluk Penyu dan susur mangrove.",
     modelUrl: MODEL_CONFIG["paket-wisata"].url,
     icon: Anchor,
     targetHeight: MODEL_CONFIG["paket-wisata"].targetHeight,
@@ -69,15 +74,15 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
 // 4 fitur pelengkap di bawah panggung (Card Slider interaktif)
 export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
   {
-    id: "kalkulator-tarif",
-    title: "Kalkulator Tarif",
+    id: "etiket-asuransi",
+    title: "E-Tiket & Asuransi Resmi",
     description:
-      "Estimasi biaya transparan dengan breakdown detail bahan bakar, jasa nakhoda, dan sewa kapal tanpa biaya tersembunyi.",
-    icon: Calculator,
-    href: "#armada",
-    tag: "Transparansi Biaya",
-    badge: "Nol Biaya Tersembunyi",
-    actionText: "Hitung Tarif Sekarang",
+      "Tiket digital QR tervalidasi dermaga terpadu dengan premi asuransi resmi kecelakaan laut PT Jasa Raharja Putra.",
+    icon: Ticket,
+    href: "#",
+    tag: "Perlindungan Penumpang",
+    badge: "Asuransi Resmi KSOP",
+    actionText: "Cek Ketentuan Asuransi",
   },
   {
     id: "peringatan-cuaca",

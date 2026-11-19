@@ -20,8 +20,10 @@ import boatTraditional2 from "@/assets/boat-traditional-2.jpg";
 import boatSpeedboat3 from "@/assets/boat-speedboat-3.jpg";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { ReviewForm } from "@/components/ReviewForm";
+import { findDemoBoat, DEMO_BOATS } from "@/lib/demoFallback";
 
 type Boat = {
   id: string;
@@ -52,6 +54,28 @@ const imageMap: Record<string, string> = {
   '/src/assets/boat-speedboat-2.jpg': boatSpeedboat2,
   '/src/assets/boat-traditional-2.jpg': boatTraditional2,
   '/src/assets/boat-speedboat-3.jpg': boatSpeedboat3,
+  'boat-speedboat-1.jpg': boatSpeedboat1,
+  'boat-traditional-1.jpg': boatTraditional1,
+  'boat-speedboat-2.jpg': boatSpeedboat2,
+  'boat-traditional-2.jpg': boatTraditional2,
+  'boat-speedboat-3.jpg': boatSpeedboat3,
+};
+
+const getBoatDetailImage = (boat: Boat) => {
+  if (boat.image_url) {
+    if (imageMap[boat.image_url]) return imageMap[boat.image_url];
+    const filename = boat.image_url.split("/").pop();
+    if (filename && imageMap[filename]) return imageMap[filename];
+    if (
+      boat.image_url.startsWith("http") ||
+      boat.image_url.startsWith("data:") ||
+      boat.image_url.startsWith("/assets") ||
+      boat.image_url.startsWith("/")
+    ) {
+      return boat.image_url;
+    }
+  }
+  return boat.type === "speedboat" ? boatSpeedboat1 : boatTraditional1;
 };
 
 const BoatDetail = () => {
@@ -61,7 +85,7 @@ const BoatDetail = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Check user auth status
@@ -83,11 +107,56 @@ const BoatDetail = () => {
         .eq("id", id)
         .single();
 
-      if (error) throw error;
+      if (error || !data) throw error || new Error("Kapal tidak ditemukan di server");
       setBoat(data);
-    } catch (error: any) {
-      toast.error("Gagal memuat detail kapal: " + error.message);
-      navigate("/boats");
+    } catch {
+      // Fallback sinkronisasi armada jika kapal belum terdaftar di database online
+      const demo = findDemoBoat(id);
+      if (demo) {
+        const demoIndex = DEMO_BOATS.findIndex((d) => d.id === demo.id);
+        const images = [
+          boatTraditional1,
+          boatSpeedboat1,
+          boatTraditional2,
+          boatSpeedboat2,
+          boatTraditional1,
+          boatSpeedboat3,
+          boatSpeedboat1,
+          boatTraditional2,
+          boatSpeedboat2,
+          boatTraditional1,
+          boatTraditional2,
+          boatSpeedboat3,
+        ];
+        const boatImg =
+          demoIndex >= 0
+            ? images[demoIndex % images.length]
+            : demo.type === "speedboat"
+            ? boatSpeedboat1
+            : boatTraditional1;
+
+        setBoat({
+          id: demo.id,
+          name: demo.name,
+          description: demo.description,
+          type: demo.type,
+          capacity: demo.capacity,
+          base_price: demo.base_price,
+          location: demo.location,
+          features: [
+            demo.boatTypeTag,
+            "Jaket Pelampung SOLAS",
+            "Nakhoda Berlisensi KSOP",
+            "Radio Komunikasi VHF",
+            "Kotak P3K Maritim",
+          ],
+          min_passengers: 2,
+          image_url: boatImg,
+        });
+      } else {
+        toast.error("Kapal tidak ditemukan");
+        navigate("/boats");
+      }
     } finally {
       setLoading(false);
     }
@@ -103,7 +172,7 @@ const BoatDetail = () => {
 
       if (error) throw error;
       setReviews(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching reviews:", error);
     } finally {
       setReviewsLoading(false);
@@ -161,17 +230,11 @@ const BoatDetail = () => {
           {/* Image Section */}
           <div className="space-y-4">
             <div className="relative h-96 rounded-lg overflow-hidden bg-muted">
-              {boat.image_url ? (
-                <img
-                  src={imageMap[boat.image_url] || boat.image_url}
-                  alt={boat.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <MapPin className="h-24 w-24 text-muted-foreground" />
-                </div>
-              )}
+              <img
+                src={getBoatDetailImage(boat)}
+                alt={boat.name}
+                className="w-full h-full object-cover"
+              />
               <Badge className="absolute top-4 right-4 bg-accent text-white border-0">
                 <Shield className="h-3 w-3 mr-1" />
                 Terverifikasi KSOP
