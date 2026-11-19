@@ -8,10 +8,18 @@ import { DEMO_BOATS } from "@/lib/demoFallback";
 interface BoatSearchModalProps {
   open: boolean;
   onClose: () => void;
+  departure: string; // "Teluk Penyu" | "Tanjung Intan"
   destination: string;
   date: string; // "YYYY-MM-DD" atau ""
   passengers: number;
 }
+
+// Nama lengkap dermaga untuk ditampilkan di ringkasan (di form hero
+// cukup nama pendek supaya tidak terpotong di kolom select).
+const DEPARTURE_LABELS: Record<string, string> = {
+  "Teluk Penyu": "Teluk Penyu · Dermaga Pandanarang",
+  "Tanjung Intan": "Tanjung Intan · Pelabuhan Tanjung Intan",
+};
 
 function formatDateId(iso: string): string {
   if (!iso) return "Belum dipilih";
@@ -40,6 +48,7 @@ function formatDateId(iso: string): string {
 export const BoatSearchModal: React.FC<BoatSearchModalProps> = ({
   open,
   onClose,
+  departure,
   destination,
   date,
   passengers,
@@ -115,6 +124,10 @@ export const BoatSearchModal: React.FC<BoatSearchModalProps> = ({
           </div>
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-100 rounded-full px-2.5 py-1">
+              <Ship className="h-3.5 w-3.5" />
+              Berangkat: {DEPARTURE_LABELS[departure] ?? departure}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-100 rounded-full px-2.5 py-1">
               <MapPin className="h-3.5 w-3.5" />
               {destination}
             </span>
@@ -128,7 +141,7 @@ export const BoatSearchModal: React.FC<BoatSearchModalProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            Semua kapal berangkat dari Teluk Penyu. Daftar di bawah sudah
+            Semua kapal berangkat dari {departure}. Daftar di bawah sudah
             disaring berdasarkan jumlah penumpang.
           </p>
         </div>

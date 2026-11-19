@@ -9,7 +9,6 @@ import ReadyFleetSection from "@/components/ReadyFleetSection";
 import AskBeforeSailingSection from "@/components/AskBeforeSailingSection";
 import Footer from "@/components/Footer";
 import { WeatherMapPanel } from "@/components/weather/WeatherMapPanel";
-import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { DebugOverlay } from "@/components/landing/DebugOverlay";
 
 // Lazy-load panggung 3D agar Three.js bundle tidak membebani First Contentful Paint (FCP)
@@ -51,7 +50,6 @@ const Index: React.FC = () => {
       <Footer />
 
       {/* 11. Asisten Pintar Juru Mudi & Telemetry Dev Overlay */}
-      <AssistantWidget />
       <DebugOverlay />
     </div>
   );

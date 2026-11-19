@@ -6,8 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import Navbar from "@/components/Navbar";
-import { Calendar as CalendarIcon, Users, Clock, DollarSign } from "lucide-react";
+import { Calendar as CalendarIcon, Users, Clock, DollarSign, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapBookingError } from "@/lib/bookingErrors";
@@ -35,6 +34,20 @@ interface PackageDetail {
   isDemo?: boolean;
 }
 
+// Prefill tanggal dari ?date=YYYY-MM-DD (dari popup Cari Kapal).
+// Dibangun sebagai tanggal lokal (bukan UTC) supaya tidak mundur sehari.
+// Mengembalikan undefined bila kosong / tidak valid / sudah lewat.
+const parseDateParam = (value: string | null): Date | undefined => {
+  if (!value) return undefined;
+  const parts = value.split("-").map((v) => parseInt(v, 10));
+  if (parts.length !== 3 || parts.some((v) => !Number.isFinite(v))) {
+    return undefined;
+  }
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (Number.isNaN(d.getTime()) || isDateInPastWib(d)) return undefined;
+  return d;
+};
+
 const Booking = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -44,12 +57,20 @@ const Booking = () => {
   // Armada selalu membuka halaman dengan ringkasan pesanan kosong.
   const boatParam = searchParams.get("boatId") ?? searchParams.get("boat");
   const packageParam = searchParams.get("packageId");
+  // Prefill dari popup Cari Kapal: ?date=YYYY-MM-DD&passengers=N.
+  const dateParam = searchParams.get("date");
+  const paxParam = searchParams.get("passengers");
 
-  const [date, setDate] = useState<Date>();
+  const [date, setDate] = useState<Date | undefined>(() =>
+    parseDateParam(dateParam)
+  );
   const [boat, setBoat] = useState<BoatDetail | null>(null);
   const [pkg, setPkg] = useState<PackageDetail | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [passengers, setPassengers] = useState(1);
+  const [passengers, setPassengers] = useState(() => {
+    const n = parseInt(paxParam ?? "", 10);
+    return Number.isFinite(n) ? Math.min(100, Math.max(1, n)) : 1;
+  });
   const [departureTime, setDepartureTime] = useState("09:00");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -153,19 +174,26 @@ const Booking = () => {
   useEffect(() => {
     if (!packageParam) return;
     let cancelled = false;
-    supabase
-      .from("boats")
-      .select("id, name, base_price, capacity")
-      .eq("available", true)
-      .then(({ data }) => {
+    // PERBAIKAN 2026-11-19: pakai async/await + try/catch, bukan rantai
+    // then/catch. Query Supabase mengembalikan PromiseLike (bukan Promise
+    // asli), jadi then di sana tidak punya catch — VS Code menandai error
+    // "Property 'catch' does not exist on type 'PromiseLike<void>'".
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("boats")
+          .select("id, name, base_price, capacity")
+          .eq("available", true);
         if (!cancelled && data && data.length > 0) {
           setRealBoats(data as BoatDetail[]);
           setSelectedBoatId((cur) =>
             DEMO_BOATS.some((d) => d.id === cur) ? (data[0] as BoatDetail).id : cur
           );
         }
-      })
-      .catch(() => {});
+      } catch {
+        // Abaikan: daftar kapal demo tetap tampil.
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -241,8 +269,20 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
+        {/* PERBAIKAN 2026-11-18: tombol kembali ke armada. Sebelumnya halaman
+            Booking tidak punya jalan kembali ke daftar kapal / beranda selain
+            lewat navbar. */}
+        <Button
+          variant="ghost"
+          className="mb-4 -ml-2 text-slate-600 hover:text-slate-900"
+          onClick={() => {
+            window.location.href = "/#armada-siap-berlayar";
+          }}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1.5" />
+          Kembali ke Armada Kapal
+        </Button>
         <div className="grid md:grid-cols-2 gap-8">
           <div>
             <h1 className="text-3xl font-bold mb-6">

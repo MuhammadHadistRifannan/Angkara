@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,7 +73,6 @@ const TourPackages = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
