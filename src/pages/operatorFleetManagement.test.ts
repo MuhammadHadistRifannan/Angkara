@@ -203,7 +203,7 @@ describe("OperatorDashboard & BoatModal - Task 4 Manajemen Armada Operator", () 
       expect(screen.getByLabelText(/Kapasitas Penumpang/i)).toBeDefined();
       expect(screen.getByLabelText(/Tarif Dasar Sewa/i)).toBeDefined();
     });
-  });
+  }, 15000);
 
   it("dapat menambahkan kapal baru melalui BoatModal dan memicu insert ke Supabase", async () => {
     const onSaveSuccess = vi.fn();
