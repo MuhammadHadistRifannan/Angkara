@@ -107,14 +107,10 @@ const OperatorDashboard = () => {
   const [, setSafetyVerdict] = useState<SailingSafetyVerdict | null>(null);
 
   useEffect(() => {
-    const checkOperator = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
+    let isMounted = true;
+
+    const handleOperatorUser = async (user: User) => {
+      if (!isMounted) return;
 
       // 1. Cari berdasarkan user_id
       let { data: operatorData } = await supabase
@@ -164,6 +160,8 @@ const OperatorDashboard = () => {
         }
       }
 
+      if (!isMounted) return;
+
       if (!operatorData) {
         toast.error("Anda belum terdaftar sebagai operator kapal");
         navigate("/dashboard");
@@ -175,7 +173,52 @@ const OperatorDashboard = () => {
       fetchBookings(operatorData.id);
       fetchPackages(operatorData.id);
     };
+
+    const checkOperator = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        await handleOperatorUser(user);
+        return;
+      }
+
+      const hasAuthParams =
+        typeof window !== "undefined" &&
+        (window.location.hash.includes("access_token") ||
+          window.location.search.includes("code"));
+
+      if (!hasAuthParams && isMounted) {
+        navigate("/auth");
+      }
+    };
+
     checkOperator();
+
+    const subscription =
+      typeof supabase.auth?.onAuthStateChange === "function"
+        ? supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session?.user && isMounted) {
+              await handleOperatorUser(session.user);
+            } else if (!session && isMounted) {
+              const hasAuthParams =
+                typeof window !== "undefined" &&
+                (window.location.hash.includes("access_token") ||
+                  window.location.search.includes("code"));
+              if (!hasAuthParams) {
+                navigate("/auth");
+              }
+            }
+          })
+        : null;
+
+    return () => {
+      isMounted = false;
+      if (subscription?.data?.subscription) {
+        subscription.data.subscription.unsubscribe();
+      }
+    };
   }, [navigate]);
 
   // Langganan sinkronisasi realtime Supabase untuk booking, armada, dan paket wisata

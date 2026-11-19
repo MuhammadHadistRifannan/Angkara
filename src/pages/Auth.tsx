@@ -20,7 +20,7 @@ const Auth = () => {
   const [showSigninPassword, setShowSigninPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
-  // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard sesuai perannya
+  // Jika pengguna sudah memiliki sesi login aktif atau baru menyelesaikan redirect Google OAuth, arahkan langsung ke dashboard sesuai perannya
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
@@ -28,6 +28,22 @@ const Auth = () => {
         navigate(targetPath, { replace: true });
       }
     });
+
+    const subscription =
+      typeof supabase.auth?.onAuthStateChange === "function"
+        ? supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session?.user) {
+              const targetPath = await getDashboardRedirectPath(session.user);
+              navigate(targetPath, { replace: true });
+            }
+          })
+        : null;
+
+    return () => {
+      if (subscription?.data?.subscription) {
+        subscription.data.subscription.unsubscribe();
+      }
+    };
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {

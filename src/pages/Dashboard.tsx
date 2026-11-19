@@ -40,17 +40,12 @@ const Dashboard = () => {
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
+    let isMounted = true;
 
-      // Bila terdeteksi sebagai operator kapal, otomatis arahkan ke dashboard operator
+    const handleUser = async (user: User) => {
+      if (!isMounted) return;
       const isOp = await checkIsOperator(user.id, user.email, user.user_metadata);
+      if (!isMounted) return;
       if (isOp) {
         navigate("/operator-dashboard", { replace: true });
         return;
@@ -59,7 +54,6 @@ const Dashboard = () => {
       setCurrentUser(user);
       fetchBookings(user.id);
 
-      // Cek apakah ada prompt tertunda yang memicu pembukaan tab AI chat secara otomatis
       try {
         const pendingPrompt = sessionStorage.getItem("pending_assistant_prompt");
         if (pendingPrompt) {
@@ -69,7 +63,55 @@ const Dashboard = () => {
         console.warn("Gagal mengecek pending prompt:", err);
       }
     };
+
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        await handleUser(user);
+        return;
+      }
+
+      // Periksa apakah URL saat ini membawa token atau kode OAuth
+      const hasAuthParams =
+        typeof window !== "undefined" &&
+        (window.location.hash.includes("access_token") ||
+          window.location.search.includes("code"));
+
+      // Jika ada token OAuth di URL, jangan langsung redirect ke /auth;
+      // biarkan onAuthStateChange memproses pertukaran sesi.
+      if (!hasAuthParams && isMounted) {
+        navigate("/auth");
+      }
+    };
+
     checkAuth();
+
+    const subscription =
+      typeof supabase.auth?.onAuthStateChange === "function"
+        ? supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (session?.user && isMounted) {
+              await handleUser(session.user);
+            } else if (!session && isMounted) {
+              const hasAuthParams =
+                typeof window !== "undefined" &&
+                (window.location.hash.includes("access_token") ||
+                  window.location.search.includes("code"));
+              if (!hasAuthParams) {
+                navigate("/auth");
+              }
+            }
+          })
+        : null;
+
+    return () => {
+      isMounted = false;
+      if (subscription?.data?.subscription) {
+        subscription.data.subscription.unsubscribe();
+      }
+    };
   }, [navigate]);
 
   const fetchBookings = async (userId: string) => {

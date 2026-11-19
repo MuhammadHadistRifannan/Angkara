@@ -1,4 +1,7 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { checkIsOperator } from "@/lib/authRoles";
 import Hero from "@/components/Hero";
 import { Features2DFallback } from "@/components/features3d/Features2DFallback";
 import WhyChooseSuar from "@/components/WhyChooseSuar";
@@ -16,6 +19,35 @@ import { DebugOverlay } from "@/components/landing/DebugOverlay";
 const FeaturesStage = lazy(() => import("@/components/features3d/FeaturesStage"));
 
 const Index: React.FC = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Tangani kemungkinan redirect OAuth yang mendarat di root path / (Site URL fallback Supabase)
+    const hasAuthParams =
+      typeof window !== "undefined" &&
+      (window.location.hash.includes("access_token") ||
+        window.location.search.includes("code"));
+
+    if (hasAuthParams && typeof supabase.auth?.onAuthStateChange === "function") {
+      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          const isOp = await checkIsOperator(
+            session.user.id,
+            session.user.email,
+            session.user.user_metadata
+          );
+          navigate(isOp ? "/operator-dashboard" : "/dashboard", { replace: true });
+        }
+      });
+
+      return () => {
+        if (data?.subscription) {
+          data.subscription.unsubscribe();
+        }
+      };
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-cyan-500 selection:text-white">
       {/* 1. Cinematic Scrollcraft Hero Section */}
