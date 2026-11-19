@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AuthModal } from "@/components/AuthModal";
@@ -21,6 +21,8 @@ import {
   LifeBuoy,
   Anchor,
   Sparkles,
+  Package as PackageIcon,
+  AlertTriangle,
 } from "lucide-react";
 
 import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
@@ -211,11 +213,11 @@ export const RouteDetail: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-slate-400 text-sm">Memuat detail rute pelayaran...</p>
+        <div className="container mx-auto px-4 pt-24 pb-12 text-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground text-sm">Memuat detail rute pelayaran...</p>
         </div>
       </div>
     );
@@ -223,12 +225,12 @@ export const RouteDetail: React.FC = () => {
 
   if (!pkg) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="container mx-auto px-4 pt-32 pb-20 text-center max-w-lg">
-          <Compass className="w-16 h-16 text-cyan-400 mx-auto mb-4 opacity-80" />
+        <div className="container mx-auto px-4 pt-24 pb-12 text-center max-w-lg">
+          <Compass className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-60" />
           <h1 className="text-2xl font-bold mb-2">Rute Wisata Tidak Ditemukan</h1>
-          <p className="text-slate-400 text-sm mb-6">
+          <p className="text-muted-foreground text-sm mb-6">
             Rute pelayaran yang Anda cari mungkin telah diperbarui atau belum tersedia di sistem.
           </p>
           <Button variant="default" onClick={() => navigate("/tour-packages")}>
@@ -240,180 +242,205 @@ export const RouteDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#070D18] text-slate-100">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <main className="container mx-auto px-4 sm:px-6 pt-28 pb-20">
+      <main className="container mx-auto px-4 sm:px-6 pt-24 pb-16">
         {/* Tombol Navigasi Kembali */}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-400 hover:text-cyan-300 transition-colors mb-6 group cursor-pointer"
+          className="mb-6 -ml-2 text-slate-600 hover:text-slate-900 group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>Kembali ke Jelajah Rute Wisata</span>
-        </button>
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          <span>Kembali ke Jelajah Rute</span>
+        </Button>
 
         <div className="grid lg:grid-cols-3 gap-8 items-start">
           {/* Kolom Kiri: Detail Rute Utama (Span 2) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Banner Gambar Rute */}
-            <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900 group">
-              <img
-                src={pkg.imageUrl}
-                alt={pkg.name}
-                className="w-full h-72 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#070D18] via-[#070D18]/40 to-transparent" />
-
-              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                <Badge className="bg-cyan-500/90 hover:bg-cyan-500 text-slate-950 font-bold border-0 text-xs px-3 py-1">
-                  <Sparkles className="w-3.5 h-3.5 mr-1" />
-                  {pkg.category}
-                </Badge>
-                <Badge className="bg-emerald-500/90 text-white font-semibold border-0 text-xs px-3 py-1 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Terverifikasi KSOP
-                </Badge>
+            {/* Card Banner Gambar & Judul */}
+            <Card className="overflow-hidden border border-slate-200 shadow-sm">
+              <div className="relative h-72 sm:h-96 w-full overflow-hidden bg-muted">
+                <img
+                  src={pkg.imageUrl}
+                  alt={pkg.name}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                  <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 shadow-sm font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 mr-1" />
+                    {pkg.category}
+                  </Badge>
+                  <Badge className="bg-emerald-600 text-white font-semibold border-0 shadow-sm flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Terverifikasi KSOP
+                  </Badge>
+                </div>
               </div>
 
-              <div className="absolute bottom-6 left-6 right-6">
-                <p className="text-cyan-300 text-xs sm:text-sm font-semibold flex items-center gap-1.5 mb-1.5">
-                  <MapPin className="w-4 h-4" /> Tujuan: {pkg.destination}
-                </p>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
+              <CardContent className="p-6 sm:p-8">
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary mb-2">
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  <span>Tujuan: {pkg.destination}</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 leading-tight mb-4">
                   {pkg.name}
                 </h1>
-              </div>
-            </div>
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+                  {pkg.description}
+                </p>
+              </CardContent>
+            </Card>
 
             {/* 4 Kartu Metrik Ringkasan Rute */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-between">
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-cyan-400" /> Durasi Trip
-                </span>
-                <span className="text-lg font-bold text-white mt-1">{pkg.durationLabel}</span>
-              </div>
+              <Card className="border border-slate-200 shadow-xs">
+                <CardContent className="p-4 flex flex-col justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <Clock className="w-4 h-4 text-primary" /> Durasi Trip
+                  </span>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900 mt-2">{pkg.durationLabel}</p>
+                </CardContent>
+              </Card>
 
-              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-between">
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                  <Compass className="w-3.5 h-3.5 text-cyan-400" /> Jarak Tempuh
-                </span>
-                <span className="text-lg font-bold text-white mt-1">{pkg.distance}</span>
-              </div>
+              <Card className="border border-slate-200 shadow-xs">
+                <CardContent className="p-4 flex flex-col justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <Compass className="w-4 h-4 text-primary" /> Jarak Tempuh
+                  </span>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900 mt-2">{pkg.distance}</p>
+                </CardContent>
+              </Card>
 
-              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-between">
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-cyan-400" /> Kapasitas Kapal
-                </span>
-                <span className="text-lg font-bold text-white mt-1">Maks. {pkg.maxParticipants} Org</span>
-              </div>
+              <Card className="border border-slate-200 shadow-xs">
+                <CardContent className="p-4 flex flex-col justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <Users className="w-4 h-4 text-primary" /> Kapasitas Kapal
+                  </span>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900 mt-2">Maks. {pkg.maxParticipants} Org</p>
+                </CardContent>
+              </Card>
 
-              <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col justify-between">
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                  <CalendarCheck className="w-3.5 h-3.5 text-cyan-400" /> Jendela Aman
-                </span>
-                <span className="text-sm font-bold text-emerald-300 mt-1">07.00 - 15.00 WIB</span>
-              </div>
+              <Card className="border border-slate-200 shadow-xs">
+                <CardContent className="p-4 flex flex-col justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                    <CalendarCheck className="w-4 h-4 text-emerald-600" /> Jendela Aman
+                  </span>
+                  <p className="text-sm font-bold text-emerald-700 mt-2">07.00 - 15.00 WIB</p>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Deskripsi & Ringkasan Perjalanan */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/10 space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Compass className="w-5 h-5 text-cyan-400" />
-                <span>Gambaran & Daya Tarik Rute</span>
-              </h2>
-              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                {pkg.description}
-              </p>
-              <div className="p-4 rounded-2xl bg-cyan-950/30 border border-cyan-500/20 flex items-start gap-3">
-                <LifeBuoy className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-                <div className="text-xs text-slate-300 leading-relaxed">
-                  <span className="font-bold text-cyan-300">Standar Keselamatan Terintegrasi:</span> Seluruh
-                  rute ini dipandu nakhoda berpengalaman, wajib menggunakan rompi pelampung SOLAS berstandar
-                  internasional, dan diawasi telemetri cuaca maritim live BMKG Cilacap.
+            {/* Jaminan Keselamatan Pelayaran */}
+            <Card className="border border-cyan-100 bg-cyan-50/50 shadow-xs">
+              <CardContent className="p-5 flex items-start gap-3.5">
+                <LifeBuoy className="w-5 h-5 text-cyan-600 shrink-0 mt-0.5" />
+                <div className="text-xs text-slate-700 leading-relaxed">
+                  <span className="font-bold text-slate-900">Standar Keselamatan Terintegrasi Syahbandar:</span> Seluruh
+                  rute ini dipandu nakhoda lokal terverifikasi, wajib menggunakan rompi pelampung SOLAS berstandar
+                  internasional, dan dimonitor melalui telemetri peringatan dini BMKG & KSOP Kelas II Cilacap.
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Itinerary Rute Step-by-Step */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/10 space-y-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Anchor className="w-5 h-5 text-cyan-400" />
-                <span>Rencana Perjalanan (Itinerary Rute)</span>
-              </h2>
-
-              <div className="space-y-4 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-white/10">
-                {pkg.itinerary.map((item, idx) => (
-                  <div key={idx} className="relative pl-10">
-                    <span className="absolute left-0 top-0.5 w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold text-xs flex items-center justify-center">
-                      {item.step}
-                    </span>
-                    <h3 className="text-base font-bold text-white">{item.title}</h3>
-                    <p className="text-xs sm:text-sm text-slate-400 mt-1 leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Card className="border border-slate-200 shadow-sm">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Anchor className="w-5 h-5 text-primary" />
+                  <span>Rencana Perjalanan (Itinerary Rute)</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8 space-y-6">
+                <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                  {pkg.itinerary.map((item, idx) => (
+                    <div key={idx} className="relative pl-10">
+                      <span className="absolute left-0 top-0 w-8 h-8 rounded-full bg-primary/10 border-2 border-primary text-primary font-bold text-xs flex items-center justify-center">
+                        {item.step}
+                      </span>
+                      <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                      <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Fasilitas Termasuk */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/10 space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span>Fasilitas Termasuk dalam Paket</span>
-              </h2>
-              <div className="grid sm:grid-cols-2 gap-3 pt-2">
-                {pkg.includes.map((fac, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 text-sm text-slate-200"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>{fac}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Card className="border border-slate-200 shadow-sm">
+              <CardHeader className="pb-3 border-b border-slate-100">
+                <CardTitle className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <span>Fasilitas Termasuk dalam Paket</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {pkg.includes.map((fac, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium text-slate-800"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{fac}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Kolom Kanan: Sticky Booking Card (Span 1) */}
-          <div className="lg:sticky lg:top-28 space-y-4">
-            <Card className="rounded-3xl border-white/15 bg-slate-900/90 backdrop-blur-xl shadow-2xl overflow-hidden text-slate-100">
-              <div className="p-6 sm:p-7 border-b border-white/10">
-                <span className="text-xs text-slate-400 font-medium block mb-1">
+          <div className="lg:sticky lg:top-24 space-y-4">
+            <Card className="border-2 border-primary/20 shadow-xl overflow-hidden">
+              <CardHeader className="bg-slate-50/80 p-6 border-b border-slate-100">
+                <span className="text-xs text-muted-foreground font-medium block mb-1">
                   Tarif Resmi Terdaftar
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-cyan-400">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-primary">
                     Rp {pkg.price.toLocaleString("id-ID")}
                   </span>
-                  <span className="text-sm text-slate-400">{pkg.unit}</span>
+                  <span className="text-sm font-semibold text-muted-foreground">{pkg.unit}</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">
-                  *Termasuk armada kapal operator yang telah dipaketkan dan terverifikasi kelaikan.
+                <p className="text-xs text-slate-500 mt-1.5">
+                  Termasuk armada kapal operator yang telah dipaketkan.
                 </p>
-              </div>
+              </CardHeader>
 
-              <CardContent className="p-6 sm:p-7 space-y-5">
-                <div className="space-y-3 text-xs text-slate-300">
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400">Tujuan Rute</span>
-                    <span className="font-semibold text-white">{pkg.destination}</span>
+              <CardContent className="p-6 space-y-5">
+                <div className="space-y-3 text-xs sm:text-sm">
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-muted-foreground">Tujuan Rute</span>
+                    <span className="font-semibold text-slate-900">{pkg.destination}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400">Estimasi Durasi</span>
-                    <span className="font-semibold text-white">{pkg.durationLabel}</span>
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-muted-foreground">Estimasi Durasi</span>
+                    <span className="font-semibold text-slate-900">{pkg.durationLabel}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400">Kapasitas Maksimal</span>
-                    <span className="font-semibold text-white">{pkg.maxParticipants} Penumpang</span>
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-muted-foreground">Kapasitas Maksimal</span>
+                    <span className="font-semibold text-slate-900">{pkg.maxParticipants} Penumpang</span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-white/5">
-                    <span className="text-slate-400">Ketentuan Pembayaran</span>
-                    <span className="font-semibold text-cyan-300">DP 30%, Pelunasan di Lokasi</span>
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-muted-foreground">Pembayaran</span>
+                    <span className="font-semibold text-primary">DP 30%, Pelunasan di Lokasi</span>
+                  </div>
+                </div>
+
+                {/* Rincian DP */}
+                <div className="bg-muted/50 p-4 rounded-xl text-xs space-y-1.5 text-slate-600">
+                  <p className="font-semibold text-slate-900">Skema Pembayaran Transparan:</p>
+                  <div className="flex justify-between">
+                    <span>Uang Muka (DP 30%):</span>
+                    <span className="font-bold text-slate-900">Rp {(pkg.price * 0.3).toLocaleString("id-ID")}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Pelunasan di dermaga (70%):</span>
+                    <span className="font-bold text-slate-900">Rp {(pkg.price * 0.7).toLocaleString("id-ID")}</span>
                   </div>
                 </div>
 
@@ -423,28 +450,30 @@ export const RouteDetail: React.FC = () => {
                     variant="hero"
                     size="lg"
                     onClick={handleBookingClick}
-                    className="w-full text-base font-bold py-6 rounded-2xl shadow-lg shadow-cyan-500/20 cursor-pointer"
+                    className="w-full text-base font-bold py-6 shadow-md cursor-pointer"
                   >
                     Booking Sekarang
                   </Button>
-                  <p className="text-[11px] text-center text-slate-400">
+                  <p className="text-[11px] text-center text-muted-foreground">
                     Semua aktivitas booking wajib masuk / login akun terlebih dahulu.
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Kartu Bantuan / Syahbandar Notice */}
-            <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 text-xs text-slate-400 space-y-2">
-              <div className="flex items-center gap-2 text-cyan-300 font-bold">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Jaminan Kelaikan Berlayar</span>
-              </div>
-              <p className="leading-relaxed">
-                Setiap keberangkatan kapal disinkronkan dengan peringatan dini BMKG dan regulasi keselamatan
-                pelayaran KSOP Kelas II Cilacap.
-              </p>
-            </div>
+            {/* Kartu Syahbandar Notice */}
+            <Card className="border border-slate-200 bg-slate-50/50 shadow-xs">
+              <CardContent className="p-4 space-y-2 text-xs text-slate-600">
+                <div className="flex items-center gap-1.5 text-primary font-bold">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Kepatuhan Regulasi KSOP</span>
+                </div>
+                <p className="leading-relaxed">
+                  Jadwal pelayaran disesuaikan secara dinamis dengan indeks keselamatan maritim BMKG. Bila terjadi
+                  cuaca buruk, keberangkatan dapat dijadwalkan ulang demi keselamatan.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
