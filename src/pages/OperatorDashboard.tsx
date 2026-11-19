@@ -176,12 +176,23 @@ const OperatorDashboard = () => {
     };
 
     const checkOperator = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // 1. Cek apakah ada parameter galat dari callback OAuth
+      const hashStr = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+      const hashParams = new URLSearchParams(hashStr);
+      const searchParams = new URLSearchParams(window.location.search);
+      const oauthError = hashParams.get("error_description") || searchParams.get("error_description") || hashParams.get("error") || searchParams.get("error");
+      if (oauthError && isMounted) {
+        navigate(`/auth#${hashStr}`, { replace: true });
+        return;
+      }
 
-      if (user) {
-        await handleOperatorUser(user);
+      // 2. Cek sesi aktif
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        await handleOperatorUser(session.user);
         return;
       }
 

@@ -23,13 +23,24 @@ const Index: React.FC = () => {
 
   useEffect(() => {
     // Tangani kemungkinan redirect OAuth yang mendarat di root path / (Site URL fallback Supabase)
+    const hashStr = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+    const hashParams = new URLSearchParams(hashStr);
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthError = hashParams.get("error_description") || searchParams.get("error_description") || hashParams.get("error") || searchParams.get("error");
+
+    if (oauthError) {
+      navigate(`/auth#${hashStr}`, { replace: true });
+      return;
+    }
+
     const hasAuthParams =
       typeof window !== "undefined" &&
       (window.location.hash.includes("access_token") ||
         window.location.search.includes("code"));
 
-    if (hasAuthParams && typeof supabase.auth?.onAuthStateChange === "function") {
-      const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    if (hasAuthParams) {
+      // 1. Cek sesi yang mungkin sudah selesai dipertukarkan
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
         if (session?.user) {
           const isOp = await checkIsOperator(
             session.user.id,
@@ -40,11 +51,25 @@ const Index: React.FC = () => {
         }
       });
 
-      return () => {
-        if (data?.subscription) {
-          data.subscription.unsubscribe();
-        }
-      };
+      // 2. Berlangganan event jika pertukaran kode sedang berjalan
+      if (typeof supabase.auth?.onAuthStateChange === "function") {
+        const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          if (session?.user) {
+            const isOp = await checkIsOperator(
+              session.user.id,
+              session.user.email,
+              session.user.user_metadata
+            );
+            navigate(isOp ? "/operator-dashboard" : "/dashboard", { replace: true });
+          }
+        });
+
+        return () => {
+          if (data?.subscription) {
+            data.subscription.unsubscribe();
+          }
+        };
+      }
     }
   }, [navigate]);
 

@@ -94,10 +94,27 @@ export const Auth: React.FC = () => {
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Sinkronisasi dengan URL Query (?mode=login | ?mode=register)
+  // 1. Sinkronisasi dengan URL Query (?mode=login | ?mode=register) & Tangani Galat OAuth
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const mode = params.get("mode");
+    // Tangani kemungkinan galat OAuth dari callback Google/Supabase
+    const hashStr = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+    const hashParams = new URLSearchParams(hashStr);
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthErrorDesc = hashParams.get("error_description") || searchParams.get("error_description");
+    const oauthError = hashParams.get("error") || searchParams.get("error");
+
+    if (oauthErrorDesc || oauthError) {
+      const rawMsg = oauthErrorDesc || oauthError || "Autentikasi OAuth gagal";
+      const cleanMsg = decodeURIComponent(rawMsg.replace(/\+/g, " "));
+      toast.error(`Gagal masuk dengan Google: ${cleanMsg}`);
+      setMascotMood("worried");
+      // Bersihkan hash error dari URL agar tidak berulang
+      if (window.location.hash) {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    }
+
+    const mode = searchParams.get("mode");
     if (mode === "register" || mode === "signup") {
       setActiveTab("signup");
     } else {

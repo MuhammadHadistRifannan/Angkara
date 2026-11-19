@@ -12,6 +12,10 @@ export async function signInWithGoogle(): Promise<{ error: Error | null }> {
       provider: "google",
       options: {
         redirectTo: `${origin}/dashboard`,
+        queryParams: {
+          prompt: "select_account",
+          access_type: "offline",
+        },
       },
     });
 
