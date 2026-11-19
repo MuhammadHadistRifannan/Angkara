@@ -1,29 +1,29 @@
 import React from "react";
 import { motion } from "framer-motion";
 import {
-  Shield,
-  Calendar,
+  ShieldCheck,
+  CalendarCheck2,
   Anchor,
   FileText,
-  Cloud,
-  CreditCard,
-  Star,
-  MessageCircle,
-  Package,
+  CloudSun,
+  Wallet,
+  StarHalf,
+  BotMessageSquare,
+  Sailboat,
   BarChart3,
   Sparkles,
 } from "lucide-react";
 
 const features = [
   {
-    icon: Shield,
+    icon: ShieldCheck,
     tag: "KSOP Resmi",
     title: "Listing Terverifikasi",
     description:
       "Semua operator kapal terverifikasi KSOP dengan dokumen legalitas lengkap, uji kelaikan berkala, dan badge resmi.",
   },
   {
-    icon: Calendar,
+    icon: CalendarCheck2,
     tag: "Anti-Overbooking",
     title: "Kalender Booking",
     description:
@@ -44,35 +44,35 @@ const features = [
       "Panduan lengkap kepatuhan undang-undang pelayaran, sertifikasi nakhoda, dan checklist keselamatan untuk setiap rute perjalanan.",
   },
   {
-    icon: Cloud,
+    icon: CloudSun,
     tag: "BMKG & Open-Meteo",
     title: "Peringatan Cuaca",
     description:
       "Pemantauan parameter tinggi gelombang, kecepatan angin, dan petir dengan kalkulasi keselamatan deterministik aman/waspada/tunda.",
   },
   {
-    icon: CreditCard,
+    icon: Wallet,
     tag: "Escrow Aman",
     title: "Pembayaran Online",
     description:
       "Opsi pembayaran DP 30% via e-wallet dan transfer bank terlindungi sistem escrow untuk jaminan kepastian berangkat.",
   },
   {
-    icon: Star,
+    icon: StarHalf,
     tag: "GPS Verified",
     title: "Rating Terverifikasi",
     description:
       "Ulasan otentik pasca-perjalanan dari wisatawan asli dengan verifikasi GPS untuk transparansi reputasi operator perahu.",
   },
   {
-    icon: MessageCircle,
+    icon: BotMessageSquare,
     tag: "Asisten Cerdas",
     title: "Chat Real-time",
     description:
       "Komunikasi langsung dengan nahkoda kapal serta konsultasi instan bersama AI Juru Mudi untuk rekomendasi trip.",
   },
   {
-    icon: Package,
+    icon: Sailboat,
     tag: "Rute Populer",
     title: "Paket Wisata",
     description:

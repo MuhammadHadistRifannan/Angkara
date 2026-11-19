@@ -7,6 +7,7 @@ import { sendMessage, AssistantError } from "@/lib/assistantClient";
 import { loadDraft } from "@/lib/bookingDraft";
 import type { ChatMessage } from "../../../supabase/functions/_shared/contracts";
 import { Bot, Send, X, RefreshCw, AlertCircle, Compass, Zap } from "lucide-react";
+import { Mascot } from "@/components/illustrations/Mascot";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthModal } from "@/components/AuthModal";
 
@@ -227,7 +228,7 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
           onClick={handleOpenClick}
           aria-label="Buka Chat Juru Mudi AI"
         >
-          <Bot className="h-7 w-7 text-white" aria-hidden="true" />
+          <Mascot mood="wave" size={42} />
         </Button>
         <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
       </>
@@ -241,8 +242,8 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
       <CardHeader className="bg-[#0B1528] text-white px-5 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-            <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-              <Zap className="h-4 w-4 text-cyan-400" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-cyan-950/70 border border-cyan-400/30">
+              <Mascot mood="happy" size={28} />
             </span>
             <span>Juru Mudi AI</span>
           </CardTitle>
@@ -267,13 +268,13 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
       {/* Konten Pesan */}
       {messages.length === 0 ? (
         <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center text-center space-y-4">
-          <div className="h-12 w-12 rounded-full bg-[#0B1528]/10 flex items-center justify-center text-[#0B1528]">
-            <Compass className="h-6 w-6 animate-pulse" aria-hidden="true" />
+          <div className="flex items-center justify-center -mb-1" aria-hidden="true">
+            <Mascot mood="happy" size={72} />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">Halo! Saya Juru Mudi AI</h3>
+            <h3 className="font-bold text-sm text-slate-900">Halo! Saya Si Suar (Juru Mudi AI)</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-[260px] leading-relaxed">
-              Asisten pintar pelayaran dan wisata bahari SUAR di perairan Cilacap & Nusakambangan.
+              Asisten pintar pelayaran dan wisata bahari SUAR di perairan Cilacap &amp; Nusakambangan.
             </p>
           </div>
 
@@ -306,7 +307,7 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
       {errorMessage && (
         <div className="p-3 bg-destructive/10 border-t border-destructive/20 text-destructive text-xs flex items-center justify-between gap-2 shrink-0">
           <div className="flex items-center gap-1.5 overflow-hidden">
-            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <Mascot mood="worried" size={24} className="shrink-0" />
             <span className="truncate">{errorMessage}</span>
           </div>
           <Button

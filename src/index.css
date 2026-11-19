@@ -102,23 +102,85 @@ All colors MUST be HSL.
   }
 }
 
-/* Ilustrasi garis panggung fitur: efek gambar-garis singkat (FeatureIllustration) */
-@keyframes suar-draw {
-  to {
-    stroke-dashoffset: 0;
+/* Animasi dinamis & hidup Ilustrasi & Maskot Fitur SUAR */
+@keyframes suar-mascot-bob {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
   }
 }
 
-.suar-draw .d {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: suar-draw 0.7s ease-out forwards;
+@keyframes suar-boat-rock {
+  0%, 100% {
+    transform: rotate(-3deg) translateY(0px);
+  }
+  50% {
+    transform: rotate(3deg) translateY(-4px);
+  }
+}
+
+@keyframes suar-cloud-drift {
+  0%, 100% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes suar-glow-pulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes suar-coin-bob {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(4deg);
+  }
+}
+
+.suar-anim-bob {
+  animation: suar-mascot-bob 3.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.suar-anim-rock {
+  animation: suar-boat-rock 4s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.suar-anim-drift {
+  animation: suar-cloud-drift 5s ease-in-out infinite;
+}
+
+.suar-anim-pulse {
+  animation: suar-glow-pulse 2.8s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.suar-anim-coin {
+  animation: suar-coin-bob 2.6s ease-in-out infinite;
+  transform-origin: center center;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .suar-draw .d {
-    animation: none;
-    stroke-dashoffset: 0;
+  .suar-anim-bob,
+  .suar-anim-rock,
+  .suar-anim-drift,
+  .suar-anim-pulse,
+  .suar-anim-coin {
+    animation: none !important;
   }
 }
 

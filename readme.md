@@ -310,10 +310,14 @@ EVAL_URL=https://<project-ref>.supabase.co/functions/v1/juru-mudi EVAL_ANON_KEY=
 
 ## 🎨 Daftar Aset & Lisensi
 
-Seluruh aset eksternal yang digunakan dalam proyek SUAR dipilih dengan cermat demi kepatuhan hak cipta dan lisensi terbuka:
+Seluruh aset eksternal yang digunakan dalam proyek SUAR dipilih dengan cermat demi kepatuhan hak cipta dan lisensi terbuka (detail lengkap tersedia di [docs/CREDITS.md](docs/CREDITS.md)):
 
 | Aset | Tipe / Format | Sumber / Penggunaan | Lisensi |
 | :--- | :--- | :--- | :--- |
+| **Maskot "Si Suar"** | Komponen SVG Murni (`Mascot.tsx`) | Karakter orisinal pelampung suar navigasi ramah (karya orisinal tim dengan asistensi AI) | Proprietary (Hak Cipta Tim SUAR) |
+| **Ilustrasi Cara Kerja** | Komponen SVG Murni (`scenes/*.tsx`) | 4 adegan ilustratif alur pemesanan SUAR | Proprietary (Hak Cipta Tim SUAR) |
+| **Ilustrasi Fitur Sekunder & Cuaca** | Komponen SVG Murni (`FeatureScenes.tsx`, `WeatherMapPanel.tsx`) | Ilustrasi ramah perahu speedboat, jukung nelayan, pin tujuan, dan pengukur ombak | Proprietary (Hak Cipta Tim SUAR) |
+| **Pembatas Gelombang (WaveDivider)** | Komponen SVG + CSS Murni (`WaveDivider.tsx`, `waveMath.ts`) | Transisi gelombang dinamis multi-lapis tanpa celah berbasis GPU | Proprietary (Hak Cipta Tim SUAR) |
 | **Logo SUAR** | PNG / Vektor | Identitas resmi platform SUAR (desain orisinal tim) | Proprietary (Hak Cipta Tim SUAR) |
 | **Video Hero Latar** | MP4 Video | Footage kapal wisata pesisir Cilacap & laut lepas | Dokumentasi Tim / Bebas Lisensi Komersial |
 | **Model 3D Shield** | GLTF/GLB (`shield_protection_icon.glb`) | Model tameng verifikasi KSOP pada panggung 3D | CC Attribution / CC0 |

@@ -9,7 +9,10 @@ import logoSuar from "@/assets/LOGO SUAR WHITE-01.png";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-[#090D16] text-white">
+    <footer
+      className="bg-[#090D16] text-white"
+      style={{ "--section-footer-bg": "#090D16" } as React.CSSProperties}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Brand */}

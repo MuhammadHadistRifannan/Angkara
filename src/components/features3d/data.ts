@@ -1,13 +1,13 @@
 import {
-  Shield,
-  Calendar,
-  CreditCard,
+  ShieldCheck,
+  CalendarCheck2,
+  Wallet,
   BarChart3,
-  Anchor,
-  Ticket,
-  Cloud,
-  Star,
-  MessageCircle,
+  Sailboat,
+  TicketCheck,
+  CloudSun,
+  StarHalf,
+  BotMessageSquare,
 } from "lucide-react";
 import type { Feature3DItem, SecondaryFeatureItem } from "./types";
 import { MODEL_CONFIG } from "./modelConfig";
@@ -21,7 +21,7 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
     description:
       "Kapal dan nakhoda baru tampil di daftar setelah dokumen, kelaikan armada, dan sertifikasinya diperiksa.",
     modelUrl: MODEL_CONFIG["listing-terverifikasi"].url,
-    icon: Shield,
+    icon: ShieldCheck,
     targetHeight: MODEL_CONFIG["listing-terverifikasi"].targetHeight,
     initialRotation: [0, 0, 0],
   },
@@ -32,7 +32,7 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
     description:
       "Pilih tanggal dan lihat sisa kursi. Bila kuota minimal belum terpenuhi, trip bisa digabung agar biaya terbagi.",
     modelUrl: MODEL_CONFIG["kalender-booking"].url,
-    icon: Calendar,
+    icon: CalendarCheck2,
     targetHeight: MODEL_CONFIG["kalender-booking"].targetHeight,
     initialRotation: [0, 0, 0],
   },
@@ -43,7 +43,7 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
     description:
       "Bayar uang muka lewat QRIS atau e-wallet. Dana ditampung dengan sistem escrow.",
     modelUrl: MODEL_CONFIG["pembayaran-online"].url,
-    icon: CreditCard,
+    icon: Wallet,
     targetHeight: MODEL_CONFIG["pembayaran-online"].targetHeight,
     initialRotation: [0, 0, 0],
   },
@@ -65,7 +65,7 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
     description:
       "Paket kurasi lokal yang siap dipesan, misalnya sunset Teluk Penyu dan susur mangrove.",
     modelUrl: MODEL_CONFIG["paket-wisata"].url,
-    icon: Anchor,
+    icon: Sailboat,
     targetHeight: MODEL_CONFIG["paket-wisata"].targetHeight,
     initialRotation: MODEL_CONFIG["paket-wisata"].rotation,
   },
@@ -75,46 +75,42 @@ export const MAIN_FEATURES_3D: Feature3DItem[] = [
 export const SECONDARY_FEATURES: SecondaryFeatureItem[] = [
   {
     id: "etiket-asuransi",
-    title: "E-Tiket & Asuransi Resmi",
-    description:
-      "Tiket digital QR tervalidasi dermaga terpadu dengan premi asuransi resmi kecelakaan laut PT Jasa Raharja Putra.",
-    icon: Ticket,
+    title: "E-Tiket & Asuransi",
+    description: "Tiket QR digital, sudah termasuk asuransi kecelakaan laut.",
+    icon: TicketCheck,
     href: "#",
-    tag: "Perlindungan Penumpang",
-    badge: "Asuransi Resmi KSOP",
+    tag: "Asuransi",
+    badge: "Asuransi",
     actionText: "Cek Ketentuan Asuransi",
   },
   {
     id: "peringatan-cuaca",
     title: "Peringatan Cuaca BMKG",
-    description:
-      "Integrasi data BMKG real-time dengan status keselamatan deterministik: tinggi gelombang, angin, dan rekomendasi aman berlayar.",
-    icon: Cloud,
+    description: "Cuaca laut real-time, dijelaskan sederhana: aman, waspada, atau tunda.",
+    icon: CloudSun,
     href: "/cuaca",
-    tag: "Sensor & Radar Maritim",
-    badge: "Live Telemetri WIB",
+    tag: "Cuaca",
+    badge: "Cuaca",
     actionText: "Pantau Cuaca Real-Time",
   },
   {
     id: "rating-terverifikasi",
-    title: "Rating Terverifikasi",
-    description:
-      "Ulasan otentik pasca-trip hanya dari penumpang yang telah menyelesaikan pelayaran dengan verifikasi GPS & foto trip.",
-    icon: Star,
+    title: "Ulasan Terverifikasi",
+    description: "Hanya dari penumpang yang benar-benar sudah berlayar.",
+    icon: StarHalf,
     href: "#armada",
-    tag: "Validasi Penumpang",
-    badge: "100% Penumpang Sah",
+    tag: "Ulasan",
+    badge: "Ulasan",
     actionText: "Lihat Ulasan Armada",
   },
   {
     id: "asisten-juru-mudi",
-    title: "Asisten AI Juru Mudi",
-    description:
-      "Konsultasi cerdas rekomendasi waktu berlayar, pencarian kapal terbaik, dan panduan keselamatan maritim 24/7.",
-    icon: MessageCircle,
+    title: "Juru Mudi, Asisten AI",
+    description: "Tanya waktu berlayar terbaik dan kapal yang cocok, kapan saja.",
+    icon: BotMessageSquare,
     href: "#",
-    tag: "Kecerdasan Buatan Bahari",
-    badge: "Gemini 2.5 Safe Window",
+    tag: "Asisten AI",
+    badge: "Asisten AI",
     actionText: "Konsultasi Juru Mudi",
   },
 ];

@@ -8,9 +8,11 @@ import {
   Suspense,
   type ReactNode,
 } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { MAIN_FEATURES_3D, SECONDARY_FEATURES } from "./data";
 import { FeatureIllustration } from "./FeatureIllustration";
 import { SecondaryFeatures } from "./SecondaryFeatures";
+import { WaveDivider } from "@/components/landing/WaveDivider";
 import { Features2DFallback } from "./Features2DFallback";
 import { FeatureDescriptionPanel } from "./FeatureDescriptionPanel";
 import {
@@ -224,6 +226,17 @@ export const FeaturesStage = () => {
     window.scrollTo({ top: targetScrollY, behavior: "smooth" });
   }, []);
 
+  // Pelacakan arah scroll horizontal untuk animasi geser + spring bounce
+  const prevStepRef = useRef(currentStep);
+  const [slideDirection, setSlideDirection] = useState(1);
+
+  useEffect(() => {
+    if (currentStep !== prevStepRef.current) {
+      setSlideDirection(currentStep > prevStepRef.current ? 1 : -1);
+      prevStepRef.current = currentStep;
+    }
+  }, [currentStep]);
+
   if (USE_3D_MODELS && !hasWebGL) {
     return <Features2DFallback />;
   }
@@ -422,9 +435,22 @@ export const FeaturesStage = () => {
             */}
             <div
               ref={slotIntroRef}
-              className="w-full max-w-sm sm:max-w-md mx-auto h-[38svh] max-h-[340px] pointer-events-none"
+              className="w-full max-w-sm sm:max-w-md mx-auto h-[38svh] max-h-[340px] pointer-events-none flex items-center justify-center overflow-visible"
             >
-              {!USE_3D_MODELS && <FeatureIllustration id="intro" />}
+              {!USE_3D_MODELS && (
+                <motion.div
+                  initial={prefersReducedMotion ? {} : { scale: 0.7, opacity: 0, y: 35 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 260, damping: 16, delay: 0.15 }
+                  }
+                  className="w-full h-full flex items-center justify-center"
+                >
+                  <FeatureIllustration id="intro" />
+                </motion.div>
+              )}
             </div>
           </div>
 
@@ -441,17 +467,59 @@ export const FeaturesStage = () => {
             }`}
           >
             <div className="w-full max-w-5xl lg:max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-6 sm:gap-10 lg:gap-14">
-              {/* Kolom Kiri: DOM Slot Model Fitur (Lebih ke tengah) */}
+              {/* Kolom Kiri: DOM Slot Model Fitur (Lebih ke tengah) dengan Transisi Geser & Spring Bounce */}
               <div className="flex items-center justify-center md:justify-end">
                 <div
                   ref={slotFeatureRef}
-                  className="w-full max-w-xs sm:max-w-sm md:max-w-[380px] h-[45svh] max-h-[400px] pointer-events-none"
+                  className="relative w-full max-w-xs sm:max-w-sm md:max-w-[380px] h-[45svh] max-h-[400px] pointer-events-none flex items-center justify-center overflow-visible"
                 >
                   {!USE_3D_MODELS && (
-                    <FeatureIllustration
-                      key={isIntro ? "idle" : activeFeature.id}
-                      id={activeFeature.id}
-                    />
+                    <AnimatePresence mode="popLayout" custom={slideDirection}>
+                      <motion.div
+                        key={isIntro ? "idle" : activeFeature.id}
+                        custom={slideDirection}
+                        variants={{
+                          enter: (dir: number) => ({
+                            x: prefersReducedMotion ? 0 : dir > 0 ? 160 : -160,
+                            opacity: 0,
+                            scale: prefersReducedMotion ? 1 : 0.82,
+                            rotate: prefersReducedMotion ? 0 : dir > 0 ? 7 : -7,
+                          }),
+                          center: {
+                            x: 0,
+                            opacity: 1,
+                            scale: 1,
+                            rotate: 0,
+                            transition: prefersReducedMotion
+                              ? { duration: 0 }
+                              : {
+                                  x: { type: "spring", stiffness: 300, damping: 20, mass: 0.8 },
+                                  scale: { type: "spring", stiffness: 320, damping: 17, mass: 0.7 },
+                                  rotate: { type: "spring", stiffness: 280, damping: 18 },
+                                  opacity: { duration: 0.22 },
+                                },
+                          },
+                          exit: (dir: number) => ({
+                            x: prefersReducedMotion ? 0 : dir > 0 ? -140 : 140,
+                            opacity: 0,
+                            scale: prefersReducedMotion ? 1 : 0.85,
+                            rotate: prefersReducedMotion ? 0 : dir > 0 ? -7 : 7,
+                            transition: prefersReducedMotion
+                              ? { duration: 0 }
+                              : {
+                                  duration: 0.22,
+                                  ease: "easeInOut",
+                                },
+                          }),
+                        }}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        className="w-full h-full flex items-center justify-center"
+                      >
+                        <FeatureIllustration id={activeFeature.id} />
+                      </motion.div>
+                    </AnimatePresence>
                   )}
                 </div>
               </div>
@@ -512,26 +580,17 @@ export const FeaturesStage = () => {
       <section
         id="secondary-features"
         className="relative z-20 bg-[#020b17] text-white pt-16 pb-0 mt-0 overflow-hidden"
+        style={{
+          "--section-features-bg": "#020b17",
+          "--section-why-bg": "#F8FAFC",
+        } as React.CSSProperties}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <SecondaryFeatures features={SECONDARY_FEATURES} />
         </div>
 
         {/* Transisi Ombak Halus Menuju Pesisir Cilacap & Mengapa Wisatawan Memilih Platform SUAR */}
-        <div className="relative w-full overflow-hidden leading-none -mb-px mt-16" aria-hidden="true">
-          <svg
-            viewBox="0 0 1440 96"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-14 sm:h-20 block"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0,42 C320,85 640,15 960,58 C1200,88 1360,35 1440,42 L1440,96 L0,96 Z"
-              fill="#F8FAFC"
-            />
-          </svg>
-        </div>
+        <WaveDivider from="--section-features-bg" to="--section-why-bg" className="mt-16" />
       </section>
     </WebGLErrorBoundary>
   );

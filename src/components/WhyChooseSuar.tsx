@@ -2,6 +2,7 @@ import React from "react";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Mascot } from "@/components/illustrations/Mascot";
 
 const reasons = [
   {
@@ -69,7 +70,10 @@ export const WhyChooseSuar: React.FC = () => {
   };
 
   return (
-    <section className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
+    <section
+      className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden"
+      style={{ "--section-why-bg": "#F8FAFC" } as React.CSSProperties}
+    >
       {/* Subtle Ambient Lighting */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 -right-20 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl pointer-events-none" />
@@ -120,14 +124,22 @@ export const WhyChooseSuar: React.FC = () => {
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <div>
-                  {/* Top Bar: Nomor Besar & Tag Maritim (Tanpa Icon & Tanpa Background Icon) */}
+                  {/* Top Bar: Nomor Besar & Tag Maritim + Maskot Si Suar */}
                   <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-slate-100">
-                    <span className="font-mono text-3xl sm:text-4xl font-black text-sky-700 tracking-tight group-hover:text-sky-600 transition-colors">
-                      {item.number}
-                    </span>
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold tracking-wide uppercase bg-sky-50 border border-sky-200/60 text-sky-800">
-                      {item.tag}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-3xl sm:text-4xl font-black text-sky-700 tracking-tight group-hover:text-sky-600 transition-colors">
+                        {item.number}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold tracking-wide uppercase bg-sky-50 border border-sky-200/60 text-sky-800">
+                        {item.tag}
+                      </span>
+                    </div>
+                    <div className="shrink-0 -my-2" aria-hidden="true">
+                      <Mascot
+                        mood={index === 0 ? "thinking" : index === 1 ? "happy" : "celebrate"}
+                        size={52}
+                      />
+                    </div>
                   </div>
 
                   {/* Title */}

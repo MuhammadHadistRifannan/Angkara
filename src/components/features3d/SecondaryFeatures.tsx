@@ -1,130 +1,179 @@
-import { useState, useCallback } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Anchor,
-} from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { TicketCheck, CloudSun, StarHalf, BotMessageSquare } from "lucide-react";
 import type { SecondaryFeatureItem } from "./types";
+import {
+  FeatureInsuranceScene,
+  FeatureWeatherScene,
+  FeatureReviewScene,
+  FeatureAssistantScene,
+} from "@/components/illustrations";
 
 interface SecondaryFeaturesProps {
-  features: SecondaryFeatureItem[];
+  features?: SecondaryFeatureItem[];
 }
 
-export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
-  const [activeIdx, setActiveIdx] = useState(0);
+interface FeatureCardConfig {
+  id: string;
+  label: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  Illustration: React.FC<{ className?: string }>;
+}
 
-  const handlePrev = useCallback(() => {
-    setActiveIdx((prev) => Math.max(0, prev - 1));
+const FEATURE_CARDS: FeatureCardConfig[] = [
+  {
+    id: "etiket-asuransi",
+    label: "Asuransi",
+    title: "E-Tiket & Asuransi",
+    description: "Tiket QR digital, sudah termasuk asuransi kecelakaan laut.",
+    icon: TicketCheck,
+    Illustration: FeatureInsuranceScene,
+  },
+  {
+    id: "peringatan-cuaca",
+    label: "Cuaca",
+    title: "Peringatan Cuaca BMKG",
+    description: "Cuaca laut real-time, dijelaskan sederhana: aman, waspada, atau tunda.",
+    icon: CloudSun,
+    Illustration: FeatureWeatherScene,
+  },
+  {
+    id: "rating-terverifikasi",
+    label: "Ulasan",
+    title: "Ulasan Terverifikasi",
+    description: "Hanya dari penumpang yang benar-benar sudah berlayar.",
+    icon: StarHalf,
+    Illustration: FeatureReviewScene,
+  },
+  {
+    id: "asisten-juru-mudi",
+    label: "Asisten AI",
+    title: "Juru Mudi, Asisten AI",
+    description: "Tanya waktu berlayar terbaik dan kapal yang cocok, kapan saja.",
+    icon: BotMessageSquare,
+    Illustration: FeatureAssistantScene,
+  },
+];
+
+export const SecondaryFeatures: React.FC<SecondaryFeaturesProps> = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setIsReducedMotion(mq.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
-  const handleNext = useCallback(() => {
-    setActiveIdx((prev) => Math.min(features.length - 1, prev + 1));
-  }, [features.length]);
+  useEffect(() => {
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      setIsInView(true);
+      return;
+    }
 
-  const handleSelect = useCallback((idx: number) => {
-    setActiveIdx(idx);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   return (
     <div
-      className="pt-6 pb-10 focus:outline-none"
-      tabIndex={0}
+      ref={containerRef}
+      className="pt-4 pb-8 focus:outline-none"
       role="region"
-      aria-label="Karusel Fitur Ekosistem Maritim"
+      aria-label="Fitur Tambahan SUAR"
     >
       {/* 
         1. HEADER SECTION
-        Sederhana dan langsung ke poin.
+        Ringkas, ramah, dan selaras:
+        - Tanpa pil koordinat
+        - Judul tetap "Dan Masih Banyak Lagi"
+        - Subteks 1 baris pendek
       */}
-      <div className="max-w-3xl mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 shadow-sm backdrop-blur-md mb-3">
-          <Anchor className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Ekosistem Maritim Lengkap</span>
-          <span className="text-cyan-500/60 font-mono text-[10px] hidden sm:inline">• 7°44&apos;S 109°00&apos;E</span>
-        </div>
-        <h4 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white tracking-tight mt-1">
+      <div className="max-w-2xl mb-8 sm:mb-10 text-left">
+        <h4 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white tracking-tight leading-tight">
           Dan Masih Banyak Lagi
         </h4>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-2xl mt-2 leading-relaxed">
-          Infrastruktur pelayaran terpadu: e-tiket dan asuransi resmi, telemetri cuaca BMKG, ulasan tervalidasi GPS, dan asisten navigasi AI.
+        <p className="text-base sm:text-lg text-slate-300 mt-2.5 font-normal leading-relaxed">
+          Semua yang dibutuhkan sebelum dan sesudah berlayar.
         </p>
-
-        {/* Kontrol aksesibilitas (disembunyikan dari visual sesuai permintaan) */}
-        <div className="sr-only">
-          <div data-testid="active-step-counter">
-            <span>{String(activeIdx + 1).padStart(2, "0")}</span>
-            <span>/ {String(features.length).padStart(2, "0")}</span>
-          </div>
-          <button
-            type="button"
-            aria-label="Kartu sebelumnya"
-            disabled={activeIdx === 0}
-            onClick={handlePrev}
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Kartu berikutnya"
-            disabled={activeIdx === features.length - 1}
-            onClick={handleNext}
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
       </div>
 
       {/* 
-        2. GRID 4 KARTU EKOSISTEM (Sederhana, Bersih, Hover-Highlighted)
-        Format simpel tanpa visual berlebih: badge ringkas, judul, deskripsi jelas, dan tag status.
+        2. GRID 4 KARTU FITUR
+        Layout: 4 kolom (>=1280px), 2 kolom (>=768px), 1 kolom mobile.
+        Struktur seragam per kartu:
+        - Area Ilustrasi (~110-130px dengan blob seafoam/teal lembut & maskot Si Suar)
+        - Label Kapsul Pendek
+        - Judul (22-24px, weight 600)
+        - Deskripsi 1 kalimat (max 80 karakter, putih opacity 0.8, 16px)
       */}
-      <div
-        role="tablist"
-        aria-label="Pilihan Kartu Fitur"
-        className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5"
-      >
-        {features.map((item, idx) => {
-          const numStr = String(idx + 1).padStart(2, "0");
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
+        {FEATURE_CARDS.map((card, idx) => {
+          const { Illustration } = card;
+          const staggerDelay = idx * 80;
 
           return (
             <div
-              key={item.id}
-              role="tab"
-              aria-selected={idx === activeIdx}
-              aria-label={`Pilih kartu ${numStr} - ${item.title}`}
-              onClick={() => handleSelect(idx)}
-              className="group rounded-2xl p-6 bg-[#091322] border border-slate-800/80 hover:bg-[#0c192d] hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-950/30 transition-all duration-200 flex flex-col justify-between cursor-pointer relative overflow-hidden"
+              key={card.id}
+              style={{
+                transitionDelay: !isReducedMotion && isInView ? `${staggerDelay}ms` : "0ms",
+              }}
+              className={`group relative rounded-2xl p-5 sm:p-6 bg-[#091322] border border-slate-800/80 flex flex-col justify-between h-full transition-all duration-300 ease-out cursor-default overflow-hidden ${
+                isReducedMotion
+                  ? "opacity-100 translate-y-0"
+                  : isInView
+                  ? "opacity-100 translate-y-0 hover:-translate-y-1 hover:border-teal-400/50 hover:bg-[#0c192d] hover:shadow-xl hover:shadow-teal-950/40"
+                  : "opacity-0 translate-y-4"
+              }`}
             >
-              {/* Subtle Top Accent Line on Hover */}
-              <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              {/* Garis Aksen Halus di Bagian Atas saat Hover */}
+              <div
+                className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-teal-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                aria-hidden="true"
+              />
 
               <div>
-                {/* Tag Kategori Kecil */}
+                {/* 1. Area Ilustrasi (Tinggi ~120px dengan blob lembut & maskot Si Suar) */}
+                <div className="mb-4">
+                  <Illustration className="transition-transform duration-300 group-hover:scale-[1.02]" />
+                </div>
+
+                {/* 2. Label Kapsul Pendek dengan Icon & Bounce */}
                 <div className="mb-2.5">
-                  <span className="text-[11px] font-semibold tracking-wider text-cyan-400 uppercase">
-                    {item.badge || item.tag}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-500/15 text-teal-300 border border-teal-500/30 tracking-wide transition-all duration-300 group-hover:scale-105 group-hover:bg-teal-500/25">
+                    <card.icon className="w-3.5 h-3.5 text-teal-300 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6" />
+                    <span>{card.label}</span>
                   </span>
                 </div>
 
-                {/* Judul Kartu */}
-                <h5 className="font-bold text-lg text-white mb-2 tracking-tight group-hover:text-cyan-200 transition-colors">
-                  {item.title}
+                {/* 3. Judul Kartu (22-24px, font-semibold) */}
+                <h5 className="text-[22px] sm:text-[24px] font-semibold text-white tracking-tight mb-2 leading-snug group-hover:text-teal-200 transition-colors">
+                  {card.title}
                 </h5>
 
-                {/* Deskripsi Bersih */}
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-                  {item.description}
+                {/* 4. Deskripsi Singkat & Ramah (Maksimal 80 karakter, putih opacity 0.8 / kontras AA, 16px) */}
+                <p className="text-[16px] text-white/80 leading-relaxed font-normal">
+                  {card.description}
                 </p>
-              </div>
-
-              {/* Tag / Status Ringkas di Bagian Bawah */}
-              <div className="pt-4 mt-5 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-                <span className="font-medium text-slate-400 group-hover:text-cyan-300/80 transition-colors">
-                  {item.tag}
-                </span>
-                <span className="text-slate-600 font-mono text-[10px]">
-                  0{idx + 1}
-                </span>
               </div>
             </div>
           );
