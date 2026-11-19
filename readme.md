@@ -315,6 +315,10 @@ Seluruh aset eksternal yang digunakan dalam proyek SUAR dipilih dengan cermat de
 | Aset | Tipe / Format | Sumber / Penggunaan | Lisensi |
 | :--- | :--- | :--- | :--- |
 | **Maskot "Si Suar"** | Komponen SVG Murni (`Mascot.tsx`) | Karakter orisinal pelampung suar navigasi ramah (karya orisinal tim dengan asistensi AI) | Proprietary (Hak Cipta Tim SUAR) |
+| **Ilustrasi Kapal Armada Suar** | Komponen SVG Murni (`BoatCardIllustration.tsx`) | Ilustrasi perahu jukung tradisional, speedboat fiber, dan kapal ekowisata mangrove dengan Si Suar | Proprietary (Hak Cipta Tim SUAR) |
+| **Stiker Maskot Tematik** | Komponen SVG Murni (`MascotSticker.tsx`) | Lencana stiker Si Suar beraksesori payung pantai, masker snorkel, dan joran pancing | Proprietary (Hak Cipta Tim SUAR) |
+| **Font Judul Membulat (Fredoka)** | WOFF2 / WebFont (`@fontsource/fredoka`) | Tipografi judul kartu & section ramah membulat (subset latin 600/700, mandiri ~32 KB) | Open Font License (OFL) |
+| **Font Judul Playful (Bagel Fat One)** | WOFF2 / WebFont (`@fontsource/bagel-fat-one`) | Tipografi judul tebal membulat halaman autentikasi (subset latin 400, mandiri ~24 KB) | Open Font License (OFL) |
 | **Ilustrasi Cara Kerja** | Komponen SVG Murni (`scenes/*.tsx`) | 4 adegan ilustratif alur pemesanan SUAR | Proprietary (Hak Cipta Tim SUAR) |
 | **Ilustrasi Fitur Sekunder & Cuaca** | Komponen SVG Murni (`FeatureScenes.tsx`, `WeatherMapPanel.tsx`) | Ilustrasi ramah perahu speedboat, jukung nelayan, pin tujuan, dan pengukur ombak | Proprietary (Hak Cipta Tim SUAR) |
 | **Pembatas Gelombang (WaveDivider)** | Komponen SVG + CSS Murni (`WaveDivider.tsx`, `waveMath.ts`) | Transisi gelombang dinamis multi-lapis tanpa celah berbasis GPU | Proprietary (Hak Cipta Tim SUAR) |

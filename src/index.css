@@ -1,3 +1,7 @@
+@import "@fontsource/bagel-fat-one/latin-400.css";
+@import "@fontsource/fredoka/latin-600.css";
+@import "@fontsource/fredoka/latin-700.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,6 +12,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    --font-playful: "Bagel Fat One", "Fredoka", system-ui, sans-serif;
     /* Ocean-inspired maritime color palette */
     --background: 0 0% 100%;
     --foreground: 215 25% 27%;
@@ -179,8 +184,45 @@ All colors MUST be HSL.
   .suar-anim-rock,
   .suar-anim-drift,
   .suar-anim-pulse,
-  .suar-anim-coin {
+  .suar-anim-coin,
+  .suar-bg-drift,
+  .suar-bubble {
     animation: none !important;
   }
 }
+
+@keyframes suar-bg-drift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(10px, -10px) scale(1.02);
+  }
+}
+
+@keyframes suar-bubble-rise {
+  0% {
+    transform: translateY(80px) scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.45;
+  }
+  80% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(-60px) scale(1.05);
+    opacity: 0;
+  }
+}
+
+.suar-bg-drift {
+  animation: suar-bg-drift 20s ease-in-out infinite alternate;
+}
+
+.suar-bubble {
+  animation: suar-bubble-rise 8s ease-in-out infinite;
+}
+
 

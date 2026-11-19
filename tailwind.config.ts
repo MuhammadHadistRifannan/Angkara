@@ -60,6 +60,8 @@ export default {
         },
       },
       fontFamily: {
+        playful: ['"Bagel Fat One"', '"Fredoka"', "system-ui", "sans-serif"],
+        fredoka: ['"Fredoka"', "system-ui", "sans-serif"],
         display: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
         sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
       },
