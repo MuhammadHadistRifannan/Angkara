@@ -40,8 +40,8 @@ jobs:
 
       - name: Build production bundle
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - name: Deploy to Netlify (Production)
@@ -49,12 +49,29 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
-          npx --yes netlify-cli@27.16.3 deploy \
-            --dir=dist \
-            --prod \
-            --no-build \
-            --message "$GITHUB_SHA" \
-            --json > deploy-output.json
+          deploy_success=false
+          for i in 1 2 3; do
+            echo "Percobaan deploy ke Netlify ke-$i..."
+            if npx --yes netlify-cli@27.16.3 deploy \
+              --dir=dist \
+              --prod \
+              --no-build \
+              --message "$GITHUB_SHA" \
+              --json > deploy-output.json; then
+              deploy_success=true
+              echo "Deploy ke Netlify berhasil pada percobaan ke-$i."
+              break
+            else
+              echo "Percobaan deploy ke-$i gagal. Output log:"
+              cat deploy-output.json || true
+              sleep 10
+            fi
+          done
+
+          if [ "$deploy_success" = false ]; then
+            echo "Deploy ke Netlify gagal setelah 3 percobaan."
+            exit 1
+          fi
 
       - name: Smoke test deployed site
         run: |
