@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { HeroVideo } from "./landing/HeroVideo";
-import { HeroSearchBar } from "./landing/HeroSearchBar";
 import { HeroWeatherChip } from "./landing/HeroWeatherChip";
 import { HeroTitle } from "./landing/HeroTitle";
 import { LiquidNav } from "./landing/LiquidNav";
@@ -179,20 +178,17 @@ const Hero: React.FC = () => {
         />
 
         {/*
-          OPSI A (2026-11-19): chip cuaca live + form Cari Kapal langsung
-          terlihat di step 0, di bawah judul. Tampil di step 0–2, lalu
-          memudar saat judul ke-3 / exit (step 3–4) supaya tidak menumpuk
-          transisi keluar hero. Scrollcraft-nya tetap jalan seperti biasa.
+          Chip cuaca live maritim (kecepatan angin, tinggi gelombang, kelaikan pelayaran)
+          tampil di bawah judul pada step 0–2, memudar saat keluar hero (step 3–4).
         */}
         <div
-          className={`absolute left-0 right-0 top-[54%] z-20 flex flex-col items-center gap-3 px-4 transition-all duration-500 ${
+          className={`absolute left-0 right-0 top-[47%] sm:top-[45%] z-20 flex flex-col items-center px-4 transition-all duration-500 ${
             activeStep <= 2
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-4 pointer-events-none"
           }`}
         >
           <HeroWeatherChip />
-          <HeroSearchBar />
         </div>
 
         {/* Unified Liquid Glass Navbar dipancarkan ke body agar fixed stabil melintasi seluruh halaman */}
