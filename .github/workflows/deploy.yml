@@ -40,21 +40,44 @@ jobs:
 
       - name: Build production bundle
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - name: Deploy to Netlify (Production)
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID || vars.NETLIFY_SITE_ID }}
         run: |
-          npx --yes netlify-cli@27.16.3 deploy \
-            --dir=dist \
-            --prod \
-            --no-build \
-            --message "$GITHUB_SHA" \
-            --json > deploy-output.json
+          deploy_success=false
+          last_err=""
+          for i in 1 2 3; do
+            echo "Percobaan deploy ke Netlify ke-$i..."
+            # Jalankan deploy dan tangkap stdout serta stderr
+            if npx --yes netlify-cli@27.16.3 deploy \
+              --dir=dist \
+              --prod \
+              --no-build \
+              --message "$GITHUB_SHA" \
+              ${NETLIFY_SITE_ID:+--site="$NETLIFY_SITE_ID"} \
+              ${NETLIFY_AUTH_TOKEN:+--auth="$NETLIFY_AUTH_TOKEN"} \
+              --json > deploy-output.json 2> deploy-error.log; then
+              deploy_success=true
+              echo "Deploy ke Netlify berhasil pada percobaan ke-$i."
+              break
+            else
+              echo "Percobaan deploy ke-$i gagal."
+              cat deploy-output.json || true
+              cat deploy-error.log || true
+              last_err=$(cat deploy-error.log deploy-output.json 2>/dev/null | tr '\n' ' ' | head -c 400)
+              sleep 5
+            fi
+          done
+
+          if [ "$deploy_success" = false ]; then
+            echo "::error::Netlify Deploy Gagal: $last_err"
+            exit 1
+          fi
 
       - name: Smoke test deployed site
         run: |

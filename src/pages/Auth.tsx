@@ -22,6 +22,18 @@ const Auth = () => {
 
   // Jika pengguna sudah memiliki sesi login aktif, arahkan langsung ke dashboard sesuai perannya
   useEffect(() => {
+    // Tangkap pesan error dari redirect OAuth (misal error di hash / query param)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const searchParams = new URLSearchParams(window.location.search);
+    const oauthError =
+      hashParams.get("error_description") ||
+      hashParams.get("error") ||
+      searchParams.get("error_description") ||
+      searchParams.get("error");
+    if (oauthError) {
+      toast.error(`Login Google gagal: ${decodeURIComponent(oauthError.replace(/\+/g, " "))}`);
+    }
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const targetPath = await getDashboardRedirectPath(session.user);

@@ -29,6 +29,10 @@ describe("signInWithGoogle", () => {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: {
+          prompt: "select_account",
+          access_type: "offline",
+        },
       },
     });
     expect(result).toEqual({ error: null });
