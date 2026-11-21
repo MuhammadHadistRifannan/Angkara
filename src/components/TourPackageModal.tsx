@@ -75,7 +75,9 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
   useEffect(() => {
     if (!open) return;
     if (boats && boats.length > 0) {
-      setAvailableBoats(boats.filter((b) => b.available ?? true));
+      setAvailableBoats(
+        boats.filter((b) => (b.available ?? true) || b.id === packageToEdit?.boat_id)
+      );
       return;
     }
     if (operatorId) {
@@ -84,17 +86,18 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
           const { data } = await supabase
             .from("boats")
             .select("id, name, capacity, base_price, available")
-            .eq("operator_id", operatorId)
-            .eq("available", true);
+            .eq("operator_id", operatorId);
           if (data) {
-            setAvailableBoats(data);
+            setAvailableBoats(
+              data.filter((b) => (b.available ?? true) || b.id === packageToEdit?.boat_id)
+            );
           }
         } catch {
           // Abaikan bila gagal
         }
       })();
     }
-  }, [open, boats, operatorId]);
+  }, [open, boats, operatorId, packageToEdit?.boat_id]);
 
   useEffect(() => {
     if (packageToEdit) {
@@ -158,13 +161,20 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
 
     const numParticipants = Number(maxParticipants) || 10;
 
+    if (!isEdit && !operatorId) {
+      toast.error("Profil operator Anda belum termuat. Silakan muat ulang halaman.");
+      return;
+    }
+
+    const sanitizedBoatId = boatId && boatId.trim() !== "" ? boatId.trim() : null;
+
     setIsSubmitting(true);
     try {
       if (isEdit && packageToEdit?.id) {
         const updatePayload = {
           name: name.trim(),
           description: description.trim() || null,
-          boat_id: boatId || null,
+          boat_id: sanitizedBoatId,
           duration_hours: numDuration,
           price: numPrice,
           max_participants: numParticipants,
@@ -189,7 +199,7 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
           operator_id: operatorId,
           name: name.trim(),
           description: description.trim() || null,
-          boat_id: boatId || null,
+          boat_id: sanitizedBoatId,
           duration_hours: numDuration,
           price: numPrice,
           max_participants: numParticipants,
@@ -211,7 +221,9 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
 
       onOpenChange(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal menyimpan paket wisata";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Gagal menyimpan paket wisata");
       toast.error(msg);
     } finally {
       setIsSubmitting(false);

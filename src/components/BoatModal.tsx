@@ -113,6 +113,11 @@ export const BoatModal: React.FC<BoatModalProps> = ({
       return;
     }
 
+    if (!isEdit && !operatorId) {
+      toast.error("Profil operator Anda belum termuat. Silakan muat ulang halaman.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -171,7 +176,9 @@ export const BoatModal: React.FC<BoatModalProps> = ({
 
       onOpenChange(false);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan kapal";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan kapal");
       toast.error(msg);
     } finally {
       setIsSubmitting(false);

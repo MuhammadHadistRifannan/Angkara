@@ -341,7 +341,9 @@ const OperatorDashboard = () => {
         }`
       );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal mengubah status kelaikan kapal";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Gagal mengubah status kelaikan kapal");
       toast.error(msg);
     } finally {
       setIsTogglingBoat(null);
@@ -392,7 +394,9 @@ const OperatorDashboard = () => {
         }`
       );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal mengubah status paket wisata";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Gagal mengubah status paket wisata");
       toast.error(msg);
     } finally {
       setIsTogglingPackage(null);
@@ -415,7 +419,9 @@ const OperatorDashboard = () => {
       setPackages((prev) => prev.filter((p) => p.id !== pkg.id));
       toast.success(`Paket wisata "${pkg.name}" berhasil dihapus`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal menghapus paket wisata";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Gagal menghapus paket wisata");
       toast.error(msg);
     }
   };
@@ -456,7 +462,9 @@ const OperatorDashboard = () => {
         toast.success("Booking telah dibatalkan / ditolak");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal memperbarui status booking";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Gagal memperbarui status booking");
       toast.error(msg);
     } finally {
       setIsUpdating(null);
@@ -554,7 +562,9 @@ const OperatorDashboard = () => {
       );
       toast.success("Profil dan legalitas operator berhasil diperbarui");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal menyimpan profil operator";
+      const msg =
+        (err as { message?: string })?.message ||
+        (err instanceof Error ? err.message : "Gagal menyimpan profil operator");
       toast.error(msg);
     } finally {
       setIsSavingProfile(false);
