@@ -42,8 +42,20 @@ export async function sendMessage(
     });
 
     if (error) {
-      const errorMsg = error.message || "";
+      let errorMsg = error.message || "";
       const status = error.context?.status || error.status;
+
+      // Ekstrak pesan kesalahan spesifik dari body Response JSON jika tersedia
+      if (error.context && typeof (error.context as { json?: () => Promise<unknown> }).json === "function") {
+        try {
+          const bodyJson = await (error.context as { json: () => Promise<Record<string, unknown>> }).json();
+          if (bodyJson && typeof bodyJson.error === "string") {
+            errorMsg = bodyJson.error;
+          }
+        } catch {
+          // Abaikan jika bukan JSON
+        }
+      }
 
       if (
         status === 429 ||
@@ -64,6 +76,13 @@ export async function sendMessage(
         throw new AssistantError(
           "Asisten sedang tidak tersedia. Silakan coba beberapa saat lagi.",
           502
+        );
+      }
+
+      if (errorMsg.includes("GEMINI_API_KEY")) {
+        throw new AssistantError(
+          "Konfigurasi server belum lengkap: GEMINI_API_KEY belum disetel pada Supabase secrets atau berkas supabase/functions/.env",
+          500
         );
       }
 
