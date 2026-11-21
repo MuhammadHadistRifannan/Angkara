@@ -35,6 +35,7 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
     includes: ["Pelampung SOLAS", "Pemandu Lokal"],
     max_participants: 8,
     operator_id: "op-1",
+    boat_id: "boat-op-1",
   };
 
   const sampleOperatorBoat = {
@@ -45,6 +46,18 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
     base_price: 300000,
     capacity: 8,
     available: true,
+  };
+
+  const createBoatsMockChain = () => {
+    const chain: Record<string, unknown> = {
+      single: vi.fn().mockResolvedValue({ data: sampleOperatorBoat }),
+      then: (resolve: (val: unknown) => unknown) =>
+        Promise.resolve({ data: [sampleOperatorBoat] }).then(resolve),
+    };
+    chain.eq = vi.fn().mockReturnValue(chain);
+    return {
+      select: vi.fn().mockReturnValue(chain),
+    };
   };
 
   beforeEach(() => {
@@ -71,13 +84,7 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
         } as unknown as ReturnType<typeof supabase.from>;
       }
       if (table === "boats") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ data: [sampleOperatorBoat] }),
-            }),
-          }),
-        } as unknown as ReturnType<typeof supabase.from>;
+        return createBoatsMockChain() as unknown as ReturnType<typeof supabase.from>;
       }
       return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [] }) }) } as unknown as ReturnType<typeof supabase.from>;
     });
@@ -124,13 +131,7 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
         } as unknown as ReturnType<typeof supabase.from>;
       }
       if (table === "boats") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ data: [sampleOperatorBoat] }),
-            }),
-          }),
-        } as unknown as ReturnType<typeof supabase.from>;
+        return createBoatsMockChain() as unknown as ReturnType<typeof supabase.from>;
       }
       return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [] }) }) } as unknown as ReturnType<typeof supabase.from>;
     });
@@ -178,13 +179,7 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
         } as unknown as ReturnType<typeof supabase.from>;
       }
       if (table === "boats") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ data: [sampleOperatorBoat] }),
-            }),
-          }),
-        } as unknown as ReturnType<typeof supabase.from>;
+        return createBoatsMockChain() as unknown as ReturnType<typeof supabase.from>;
       }
       return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [] }) }) } as unknown as ReturnType<typeof supabase.from>;
     });

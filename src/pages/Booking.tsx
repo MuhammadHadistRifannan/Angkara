@@ -35,6 +35,7 @@ interface PackageDetail {
   isDemo?: boolean;
   max_participants?: number | null;
   operator_id?: string | null;
+  boat_id?: string | null;
 }
 
 // Prefill tanggal dari ?date=YYYY-MM-DD (dari popup Cari Kapal).
@@ -90,7 +91,7 @@ const Booking = () => {
         try {
           const { data } = await supabase
             .from("tour_packages")
-            .select("id, name, description, duration_hours, price, includes, max_participants, operator_id")
+            .select("id, name, description, duration_hours, price, includes, max_participants, operator_id, boat_id")
             .eq("id", packageParam)
             .single();
           if (data) {
@@ -107,6 +108,7 @@ const Booking = () => {
               isDemo: false,
               max_participants: data.max_participants ?? null,
               operator_id: data.operator_id ?? null,
+              boat_id: (data as { boat_id?: string | null }).boat_id ?? null,
             };
           }
         } catch {
@@ -177,19 +179,44 @@ const Booking = () => {
 
   // Mode paket: otomatis pasangkan armada kapal milik operator paket ini.
   // Wisatawan tidak perlu/tidak bisa memilih kapal sendiri karena paket
-  // sudah dibundel oleh operator.
+  // dan kapalnya sudah ditentukan/disetting oleh operator.
   useEffect(() => {
     if (!packageParam) return;
     let cancelled = false;
-    // PERBAIKAN 2026-11-19: pakai async/await + try/catch, bukan rantai
-    // then/catch. Query Supabase mengembalikan PromiseLike (bukan Promise
-    // asli), jadi then di sana tidak punya catch — VS Code menandai error
-    // "Property 'catch' does not exist on type 'PromiseLike<void>'".
     (async () => {
       try {
+        // 1. Jika paket memiliki boat_id yang telah ditentukan operator
+        if (pkg?.boat_id) {
+          const { data: bData } = await supabase
+            .from("boats")
+            .select("id, name, description, base_price, capacity")
+            .eq("id", pkg.boat_id)
+            .single();
+          if (!cancelled && bData) {
+            setRealBoats([bData as BoatDetail]);
+            setSelectedBoatId(bData.id);
+            return;
+          }
+        }
+
+        // 2. Jika belum ada boat_id eksplisit, cari armada milik operator bersangkutan
+        if (pkg?.operator_id) {
+          const { data: opBoats } = await supabase
+            .from("boats")
+            .select("id, name, description, base_price, capacity")
+            .eq("operator_id", pkg.operator_id)
+            .eq("available", true);
+          if (!cancelled && opBoats && opBoats.length > 0) {
+            setRealBoats(opBoats as BoatDetail[]);
+            setSelectedBoatId(opBoats[0].id);
+            return;
+          }
+        }
+
+        // 3. Fallback kapal tersedia umum jika tidak ada kecocokan
         const { data } = await supabase
           .from("boats")
-          .select("id, name, base_price, capacity")
+          .select("id, name, description, base_price, capacity")
           .eq("available", true);
         if (!cancelled && data && data.length > 0) {
           setRealBoats(data as BoatDetail[]);
@@ -202,7 +229,7 @@ const Booking = () => {
     return () => {
       cancelled = true;
     };
-  }, [packageParam, pkg?.operator_id]);
+  }, [packageParam, pkg?.boat_id, pkg?.operator_id]);
 
   const selectedBoat =
     realBoats.find((b) => b.id === selectedBoatId) ||
@@ -344,41 +371,6 @@ const Booking = () => {
                 <CardTitle>Detail Booking</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {pkg && (
-                  <div>
-                    <Label htmlFor="boat-select">Pilih Kapal untuk Paket Ini</Label>
-                    <select
-                      id="boat-select"
-                      value={selectedBoatId}
-                      onChange={(e) => setSelectedBoatId(e.target.value)}
-                      className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {realBoats.length > 0 && (
-                        <optgroup label="Kapal terdaftar — bisa dipesan online">
-                          {realBoats.map((b) => (
-                            <option key={b.id} value={b.id}>
-                              {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
-                              {b.capacity} penumpang
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                      <optgroup label="Kapal lain — belum terdaftar">
-                        {DEMO_BOATS.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.name} — Rp {b.base_price.toLocaleString("id-ID")} / maks.{" "}
-                            {b.capacity} penumpang
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                    <p className="text-xs text-muted-foreground mt-1.5">
-                      Paket berlayar dengan kapal yang dipilih. Pilih kapal
-                      terdaftar agar pemesanan bisa diproses secara online.
-                    </p>
-                  </div>
-                )}
-
                 <div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="passengers">Jumlah Penumpang</Label>
@@ -576,7 +568,7 @@ const Booking = () => {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Armada Kapal</span>
                         <span className="font-medium text-slate-800">
-                          {selectedBoat ? `${selectedBoat.name} (Paket Operator)` : "Disediakan oleh Operator"}
+                          {selectedBoat ? `${selectedBoat.name} (Disiapkan Operator)` : "Disiapkan oleh Operator"}
                         </span>
                       </div>
                       {date && (

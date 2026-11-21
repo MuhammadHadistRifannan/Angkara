@@ -1089,6 +1089,12 @@ const OperatorDashboard = () => {
                             <span className="font-bold text-slate-800">{pkg.duration_hours} Jam</span>
                           </div>
                           <div className="flex justify-between py-1 border-b border-slate-50">
+                            <span className="text-slate-500">Armada Kapal:</span>
+                            <span className="font-bold text-slate-800">
+                              {boats.find((b) => b.id === pkg.boat_id)?.name || "Disediakan Operator"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-slate-50">
                             <span className="text-slate-500">Kapasitas Maksimal:</span>
                             <span className="font-bold text-slate-800">
                               {pkg.max_participants ? `${pkg.max_participants} Orang` : "-"}
@@ -1536,6 +1542,7 @@ const OperatorDashboard = () => {
         open={isPackageModalOpen}
         onOpenChange={setIsPackageModalOpen}
         operatorId={operator?.id || ""}
+        boats={boats}
         packageToEdit={selectedPackageToEdit}
         onSaveSuccess={handlePackageSaved}
       />

@@ -240,6 +240,7 @@ export type Database = {
       tour_packages: {
         Row: {
           available: boolean | null
+          boat_id: string | null
           created_at: string | null
           description: string | null
           duration_hours: number
@@ -252,6 +253,7 @@ export type Database = {
         }
         Insert: {
           available?: boolean | null
+          boat_id?: string | null
           created_at?: string | null
           description?: string | null
           duration_hours: number
@@ -264,6 +266,7 @@ export type Database = {
         }
         Update: {
           available?: boolean | null
+          boat_id?: string | null
           created_at?: string | null
           description?: string | null
           duration_hours?: number

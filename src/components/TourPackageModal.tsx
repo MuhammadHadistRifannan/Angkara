@@ -12,11 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Compass, Check, Sparkles } from "lucide-react";
+import { Compass, Check, Sparkles, Ship } from "lucide-react";
 
 export interface OperatorTourPackageData {
   id?: string;
   operator_id?: string;
+  boat_id?: string | null;
   name: string;
   description?: string | null;
   duration_hours: number;
@@ -31,6 +32,7 @@ export interface TourPackageModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   operatorId: string;
+  boats?: { id: string; name: string; capacity?: number; base_price?: number; available?: boolean }[];
   packageToEdit?: OperatorTourPackageData | null;
   onSaveSuccess: (savedPackage: OperatorTourPackageData) => void;
 }
@@ -50,6 +52,7 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
   open,
   onOpenChange,
   operatorId,
+  boats,
   packageToEdit,
   onSaveSuccess,
 }) => {
@@ -57,6 +60,10 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [boatId, setBoatId] = useState("");
+  const [availableBoats, setAvailableBoats] = useState<
+    { id: string; name: string; capacity?: number; base_price?: number; available?: boolean }[]
+  >([]);
   const [durationHours, setDurationHours] = useState<number | string>(2);
   const [price, setPrice] = useState<number | string>(350000);
   const [maxParticipants, setMaxParticipants] = useState<number | string>(10);
@@ -64,10 +71,36 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
   const [available, setAvailable] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ambil daftar kapal milik operator
+  useEffect(() => {
+    if (!open) return;
+    if (boats && boats.length > 0) {
+      setAvailableBoats(boats.filter((b) => b.available ?? true));
+      return;
+    }
+    if (operatorId) {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("boats")
+            .select("id, name, capacity, base_price, available")
+            .eq("operator_id", operatorId)
+            .eq("available", true);
+          if (data) {
+            setAvailableBoats(data);
+          }
+        } catch {
+          // Abaikan bila gagal
+        }
+      })();
+    }
+  }, [open, boats, operatorId]);
+
   useEffect(() => {
     if (packageToEdit) {
       setName(packageToEdit.name || "");
       setDescription(packageToEdit.description || "");
+      setBoatId(packageToEdit.boat_id || "");
       setDurationHours(packageToEdit.duration_hours || 2);
       setPrice(packageToEdit.price || 350000);
       setMaxParticipants(packageToEdit.max_participants || 10);
@@ -80,6 +113,7 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
     } else {
       setName("");
       setDescription("");
+      setBoatId("");
       setDurationHours(2);
       setPrice(350000);
       setMaxParticipants(10);
@@ -87,6 +121,14 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
       setAvailable(true);
     }
   }, [packageToEdit, open]);
+
+  const handleBoatChange = (selectedId: string) => {
+    setBoatId(selectedId);
+    const found = availableBoats.find((b) => b.id === selectedId);
+    if (found && found.capacity) {
+      setMaxParticipants(found.capacity);
+    }
+  };
 
   const toggleInclude = (item: string) => {
     setIncludes((prev) =>
@@ -122,6 +164,7 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
         const updatePayload = {
           name: name.trim(),
           description: description.trim() || null,
+          boat_id: boatId || null,
           duration_hours: numDuration,
           price: numPrice,
           max_participants: numParticipants,
@@ -146,6 +189,7 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
           operator_id: operatorId,
           name: name.trim(),
           description: description.trim() || null,
+          boat_id: boatId || null,
           duration_hours: numDuration,
           price: numPrice,
           max_participants: numParticipants,
@@ -244,6 +288,30 @@ export const TourPackageModal: React.FC<TourPackageModalProps> = ({
               />
               <p className="text-[11px] text-slate-500">Estimasi waktu trip di laut</p>
             </div>
+          </div>
+
+          {/* Pilih Armada Kapal untuk Paket Ini */}
+          <div className="space-y-1.5">
+            <Label htmlFor="pkg-boat" className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Ship className="h-3.5 w-3.5 text-cyan-600" />
+              <span>Armada Kapal untuk Paket Ini</span>
+            </Label>
+            <select
+              id="pkg-boat"
+              value={boatId}
+              onChange={(e) => handleBoatChange(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-slate-800"
+            >
+              <option value="">Pilih Kapal Armada (Opsional)</option>
+              {availableBoats.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} (Kapasitas: {b.capacity} orang)
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-500">
+              Kapal yang dipilih akan otomatis disiapkan untuk wisatawan. Wisatawan tidak perlu dan tidak bisa memilih kapal saat booking.
+            </p>
           </div>
 
           {/* Kapasitas Maksimal */}

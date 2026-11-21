@@ -135,7 +135,7 @@ describe("Halaman Detail Rute & Auth Gate Booking - Task TDD", () => {
       data: {
         session: {
           user: { id: "user-123", email: "wisatawan@angkara.id" },
-        } as any,
+        } as unknown as import("@supabase/supabase-js").Session,
       },
       error: null,
     });

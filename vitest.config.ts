@@ -5,7 +5,6 @@ export default defineConfig({
   test: {
     testTimeout: 15000,
     environment: "node",
-    testTimeout: 15000,
     include: ["src/**/*.test.{ts,tsx}", "supabase/functions/**/*.test.{ts,tsx}", "scripts/**/*.test.{ts,tsx}"],
     setupFiles: ["./src/test/setup.ts"],
     poolOptions: {
