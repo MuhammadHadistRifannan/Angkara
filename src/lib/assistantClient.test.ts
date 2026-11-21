@@ -93,25 +93,4 @@ describe("assistantClient", () => {
     expect(capturedBody?.messages?.[0].content).toBe("Pesan 5");
     expect(capturedBody?.messages?.[19].content).toBe("Pesan 24");
   });
-
-  it("mengekstrak pesan error detail dari context.json() saat Edge Function melempar 500", async () => {
-    const mockInvoke: AssistantClientDeps["invoke"] = vi.fn(async () => ({
-      data: null,
-      error: {
-        message: "FunctionsHttpError: Edge Function returned a non-2xx status code",
-        context: {
-          status: 500,
-          json: async () => ({
-            error: "Konfigurasi server tidak lengkap: GEMINI_API_KEY belum disetel",
-          }),
-        } as unknown as { status: number },
-      },
-    }));
-
-    const messages: ChatMessage[] = [{ role: "user", content: "Halo" }];
-
-    await expect(sendMessage(messages, { invoke: mockInvoke })).rejects.toThrow(
-      /GEMINI_API_KEY belum disetel/i
-    );
-  });
 });

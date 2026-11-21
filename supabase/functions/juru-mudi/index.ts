@@ -23,25 +23,10 @@ if (typeof Deno !== "undefined" && Deno.serve) {
     }
 
     try {
-      let apiKey = Deno.env.get("GEMINI_API_KEY");
-      if (!apiKey) {
-        try {
-          const envUrl = new URL("../.env", import.meta.url);
-          const envContent = await Deno.readTextFile(envUrl);
-          const match = envContent.match(/^GEMINI_API_KEY=(.+)$/m);
-          if (match) {
-            apiKey = match[1].trim().replace(/^["']|["']$/g, "");
-          }
-        } catch {
-          // File .env tidak ada di folder functions, lanjut ke pemeriksaan berikutnya
-        }
-      }
-
+      const apiKey = Deno.env.get("GEMINI_API_KEY");
       if (!apiKey) {
         return new Response(
-          JSON.stringify({
-            error: "Konfigurasi server tidak lengkap: GEMINI_API_KEY belum disetel. Harap tambahkan GEMINI_API_KEY pada secrets Supabase atau berkas supabase/functions/.env",
-          }),
+          JSON.stringify({ error: "Konfigurasi server tidak lengkap: GEMINI_API_KEY belum disetel" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
