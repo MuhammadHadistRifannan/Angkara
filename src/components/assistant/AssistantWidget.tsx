@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,11 +31,14 @@ const SUGGESTIONS = [
 
 interface AssistantWidgetProps {
   hideFloatingTrigger?: boolean;
+  redirectToDashboard?: boolean;
 }
 
 export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
   hideFloatingTrigger = false,
+  redirectToDashboard = false,
 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -92,18 +96,22 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
   useEffect(() => {
     const onOpenEvent = (e: Event) => {
       const customEvent = e as CustomEvent<{ prompt?: string }>;
+      if (customEvent.detail?.prompt) {
+        try {
+          sessionStorage.setItem("pending_assistant_prompt", customEvent.detail.prompt);
+        } catch (err) {
+          console.warn("Gagal menyimpan pending prompt:", err);
+        }
+      }
       // Prompt disimpan pemanggil di sessionStorage; kalau belum login,
       // buka popup login (AuthModal) dulu, chat dibuka setelah login berhasil.
       supabase.auth.getUser().then(({ data }) => {
         if (!data?.user) {
-          if (customEvent.detail?.prompt) {
-            try {
-              sessionStorage.setItem("pending_assistant_prompt", customEvent.detail.prompt);
-            } catch (err) {
-              console.warn("Gagal menyimpan pending prompt:", err);
-            }
-          }
           setAuthOpen(true);
+          return;
+        }
+        if (redirectToDashboard) {
+          navigate("/dashboard?tab=ai-chat");
           return;
         }
         setIsOpen(true);
@@ -117,7 +125,7 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
     return () => {
       window.removeEventListener("open-assistant", onOpenEvent);
     };
-  }, []);
+  }, [navigate, redirectToDashboard]);
 
   // Auto-scroll ke bawah saat ada pesan baru
   useEffect(() => {
@@ -194,6 +202,10 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
   const handleAuthSuccess = () => {
     setAuthOpen(false);
     setAuthed(true);
+    if (redirectToDashboard) {
+      navigate("/dashboard?tab=ai-chat");
+      return;
+    }
     try {
       const prompt = sessionStorage.getItem("pending_assistant_prompt");
       if (prompt) {
@@ -210,6 +222,10 @@ export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user) {
       setAuthOpen(true);
+      return;
+    }
+    if (redirectToDashboard) {
+      navigate("/dashboard?tab=ai-chat");
       return;
     }
     setIsOpen(true);

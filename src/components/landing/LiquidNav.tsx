@@ -195,16 +195,26 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
         selectAndLock("juru-mudi");
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (!currentUser) {
+          try {
+            sessionStorage.setItem(
+              "pending_assistant_prompt",
+              "Halo Juru Mudi, bantu saya cek rekomendasi pelayaran ke Nusakambangan"
+            );
+          } catch (e) {
+            console.warn("Gagal menyimpan prompt:", e);
+          }
           setAuthOpen(true);
           return;
         }
-        window.dispatchEvent(
-          new CustomEvent("open-assistant", {
-            detail: {
-              prompt: "Halo Juru Mudi, bantu saya cek rekomendasi pelayaran ke Nusakambangan",
-            },
-          })
-        );
+        try {
+          sessionStorage.setItem(
+            "pending_assistant_prompt",
+            "Halo Juru Mudi, bantu saya cek rekomendasi pelayaran ke Nusakambangan"
+          );
+        } catch (e) {
+          console.warn("Gagal menyimpan prompt:", e);
+        }
+        navigate("/dashboard?tab=ai-chat");
       },
       isActive: selectedId === "juru-mudi",
     },
@@ -494,7 +504,10 @@ export const LiquidNav: React.FC<LiquidNavProps> = ({
           <AuthModal
             open={authOpen}
             onClose={() => setAuthOpen(false)}
-            onSuccess={() => setAuthOpen(false)}
+            onSuccess={() => {
+              setAuthOpen(false);
+              navigate("/dashboard?tab=ai-chat");
+            }}
           />
         </motion.nav>
       )}

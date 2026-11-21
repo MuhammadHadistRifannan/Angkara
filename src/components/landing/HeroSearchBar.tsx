@@ -17,7 +17,7 @@ export const HeroSearchBar: React.FC = () => {
   const [departure, setDeparture] = useState("Teluk Penyu");
   const [destination, setDestination] = useState("Pantai Karang Bolong");
   const [date, setDate] = useState("");
-  const [passengers, setPassengers] = useState(2);
+  const [passengers, setPassengers] = useState<number | "">(2);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Tanggal hari ini (WIB, lokal — bukan UTC) sebagai batas minimal.
@@ -109,9 +109,21 @@ export const HeroSearchBar: React.FC = () => {
               min={1}
               max={50}
               value={passengers}
-              onChange={(e) =>
-                setPassengers(Math.max(1, parseInt(e.target.value) || 1))
-              }
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === "") {
+                  setPassengers("");
+                  return;
+                }
+                const val = parseInt(raw, 10);
+                if (isNaN(val)) setPassengers("");
+                else setPassengers(Math.min(50, Math.max(1, val)));
+              }}
+              onBlur={() => {
+                if (passengers === "" || passengers < 1) {
+                  setPassengers(1);
+                }
+              }}
               className="h-11 text-sm bg-white/10 border-white/20 rounded-xl text-white font-medium focus-visible:ring-cyan-400/50 [color-scheme:dark]"
             />
           </div>
@@ -135,7 +147,7 @@ export const HeroSearchBar: React.FC = () => {
         departure={departure}
         destination={destination}
         date={date}
-        passengers={passengers}
+        passengers={typeof passengers === "number" ? passengers : 1}
       />
     </>
   );

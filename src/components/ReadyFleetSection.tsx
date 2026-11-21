@@ -226,31 +226,11 @@ export const ReadyFleetSection: React.FC = () => {
   // lagi, dan pemesanan online (RPC create_booking) bisa jalan.
 
 
-  const openAssistantWith = (prompt: string) => {
-    window.dispatchEvent(
-      new CustomEvent("open-assistant", {
-        detail: {
-          prompt,
-        },
-      })
-    );
-  };
-
   const handleAuthSuccess = () => {
     setAuthOpen(false);
-    try {
-      const prompt = sessionStorage.getItem("pending_assistant_prompt");
-      if (prompt) openAssistantWith(prompt);
-    } catch (err) {
-      console.warn("Gagal membaca prompt tersimpan:", err);
-    }
+    navigate("/dashboard?tab=ai-chat");
   };
 
-  // PERBAIKAN 2026-11-18: "Chat Nelayan" di-gate login lewat popup
-  // AuthModal di landing (sama seperti section Tanya Juru Mudi).
-  // Sebelumnya: langsung navigate("/dashboard") yang melempar user belum
-  // login ke halaman /auth. Sekarang chat terbuka di landing, tanpa pindah
-  // halaman — baik untuk user login maupun yang baru saja login.
   const handleChatCaptain = async (boat: FleetBoat) => {
     const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
     try {
@@ -265,7 +245,7 @@ export const ReadyFleetSection: React.FC = () => {
       setAuthOpen(true);
       return;
     }
-    openAssistantWith(prompt);
+    navigate("/dashboard?tab=ai-chat");
   };
 
   const handleBookNow = (boatId: string) => {

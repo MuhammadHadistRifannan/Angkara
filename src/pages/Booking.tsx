@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, Users, Clock, DollarSign, ArrowLeft } from "lucide-react";
+import { Calendar as CalendarIcon, Users, Clock, DollarSign, ArrowLeft, Compass } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
@@ -37,6 +37,14 @@ interface PackageDetail {
   operator_id?: string | null;
   boat_id?: string | null;
 }
+
+export const BOAT_DESTINATIONS = [
+  "Pantai Karang Bolong (Pulau Nusakambangan)",
+  "Pantai Permisan (Pasir Putih Nusakambangan)",
+  "Mercusuar Cimiring (Cagar Budaya Maritim 1870)",
+  "Laguna Segara Anakan (Susur Mangrove)",
+  "Kustom / Carter Bebas (Sesuai Kesepakatan)",
+];
 
 // Prefill tanggal dari ?date=YYYY-MM-DD (dari popup Cari Kapal).
 // Dibangun sebagai tanggal lokal (bukan UTC) supaya tidak mundur sehari.
@@ -71,12 +79,13 @@ const Booking = () => {
   const [boat, setBoat] = useState<BoatDetail | null>(null);
   const [pkg, setPkg] = useState<PackageDetail | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [passengers, setPassengers] = useState(() => {
+  const [passengers, setPassengers] = useState<number | "">(() => {
     const n = parseInt(paxParam ?? "", 10);
     return Number.isFinite(n) ? Math.min(100, Math.max(1, n)) : 1;
   });
   const [departureTime, setDepartureTime] = useState("09:00");
   const [notes, setNotes] = useState("");
+  const [destination, setDestination] = useState(BOAT_DESTINATIONS[0]);
   const [loading, setLoading] = useState(false);
   // Mode paket: kapal yang dipilih untuk paket ini. Daftar kapal asli dari
   // Supabase (bisa dipesan online) + 12 kapal demo sebagai pilihan.
@@ -249,16 +258,18 @@ const Booking = () => {
 
   // Pastikan jumlah penumpang tidak melebihi kapasitas kemampuan kapal yang diset operator
   useEffect(() => {
-    if (effectiveCapacity > 0 && passengers > effectiveCapacity) {
+    const numPassengers = typeof passengers === "number" ? passengers : 1;
+    if (effectiveCapacity > 0 && numPassengers > effectiveCapacity) {
       setPassengers(effectiveCapacity);
     }
   }, [effectiveCapacity, passengers]);
+  const numPassengers = typeof passengers === "number" ? passengers : 1;
   const totalPrice = pkg
     ? pkg.unit === "/ orang"
-      ? pkg.price * passengers
+      ? pkg.price * numPassengers
       : pkg.price
     : boat
-      ? boat.base_price * passengers
+      ? boat.base_price * numPassengers
       : 0;
 
   // Kembali ke Armada: ke halaman daftar kapal (/boats).
@@ -281,9 +292,15 @@ const Booking = () => {
       return;
     }
 
-    if (passengers > effectiveCapacity) {
+    const finalPassengers = typeof passengers === "number" ? passengers : (parseInt(String(passengers), 10) || 1);
+    if (finalPassengers < 1) {
+      toast.error("Jumlah penumpang minimal 1 pax.");
+      return;
+    }
+
+    if (finalPassengers > effectiveCapacity) {
       toast.error(
-        `Jumlah penumpang melebihi kapasitas maksimal (${effectiveCapacity} orang) yang ditentukan operator.`
+        `Jumlah penumpang melebihi kapasitas maksimal (${effectiveCapacity} pax) yang ditentukan.`
       );
       return;
     }
@@ -301,12 +318,16 @@ const Booking = () => {
     setLoading(true);
     try {
       const formattedDate = formatDateWib(date);
+      const finalNotes = !pkg
+        ? `Tujuan: ${destination}${notes.trim() ? ` · Catatan: ${notes.trim()}` : ""}`
+        : (notes.trim() || null);
+
       const { error } = await supabase.rpc("create_booking", {
         p_boat_id: bookingBoatId,
         p_date: formattedDate,
         p_time: departureTime,
-        p_passengers: passengers,
-        p_notes: notes || null,
+        p_passengers: finalPassengers,
+        p_notes: finalNotes,
       });
 
       if (error) {
@@ -371,11 +392,35 @@ const Booking = () => {
                 <CardTitle>Detail Booking</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {!pkg && (
+                  <div>
+                    <Label htmlFor="destination">Tujuan Penyeberangan</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Compass className="h-4 w-4 text-muted-foreground" />
+                      <select
+                        id="destination"
+                        value={destination}
+                        onChange={(e) => setDestination(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        {BOAT_DESTINATIONS.map((dest) => (
+                          <option key={dest} value={dest}>
+                            {dest}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Pilih tujuan pelayaran atau penyeberangan Anda di perairan pesisir Cilacap.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="passengers">Jumlah Penumpang</Label>
                     <span className="text-xs text-muted-foreground">
-                      Maks. {effectiveCapacity} orang
+                      Maks. {effectiveCapacity} pax
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
@@ -389,25 +434,30 @@ const Booking = () => {
                       onChange={(e) => {
                         const raw = e.target.value;
                         if (raw === "") {
-                          setPassengers(1);
+                          setPassengers("");
                           return;
                         }
                         const val = parseInt(raw, 10);
-                        if (isNaN(val) || val < 1) {
-                          setPassengers(1);
+                        if (isNaN(val)) {
+                          setPassengers("");
                         } else if (val > effectiveCapacity) {
                           setPassengers(effectiveCapacity);
                           toast.error(
-                            `Kapasitas maksimal yang ditentukan operator adalah ${effectiveCapacity} penumpang`
+                            `Kapasitas maksimal yang ditentukan adalah ${effectiveCapacity} pax`
                           );
                         } else {
                           setPassengers(val);
                         }
                       }}
+                      onBlur={() => {
+                        if (passengers === "" || passengers < 1) {
+                          setPassengers(1);
+                        }
+                      }}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5">
-                    Maksimal {effectiveCapacity} penumpang sesuai kapasitas {pkg ? "paket wisata yang disiapkan operator" : "kapal"}.
+                    Maksimal {effectiveCapacity} pax sesuai kapasitas {pkg ? "paket wisata yang disiapkan operator" : "kapal"}.
                   </p>
                 </div>
 
@@ -475,12 +525,18 @@ const Booking = () => {
 
                     <div className="space-y-2 py-4 border-y">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Harga per orang</span>
+                        <span className="text-muted-foreground">Harga per pax</span>
                         <span>Rp {boat.base_price.toLocaleString('id-ID')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Jumlah penumpang</span>
-                        <span>{passengers} orang</span>
+                        <span>{passengers || 1} pax</span>
+                      </div>
+                      <div className="flex justify-between items-start gap-4">
+                        <span className="text-muted-foreground shrink-0">Tujuan</span>
+                        <span className="font-medium text-slate-800 text-right leading-snug break-words">
+                          {destination}
+                        </span>
                       </div>
                       {date && (
                         <div className="flex justify-between">
@@ -559,10 +615,18 @@ const Booking = () => {
                           Rp {pkg.price.toLocaleString('id-ID')} {pkg.unit}
                         </span>
                       </div>
-                      {pkg.unit === "/ orang" && (
+                      {(pkg.unit === "/ orang" || pkg.unit === "/ pax") && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Jumlah penumpang</span>
-                          <span>{passengers} orang (maks. {effectiveCapacity})</span>
+                          <span>{passengers || 1} pax (maks. {effectiveCapacity})</span>
+                        </div>
+                      )}
+                      {pkg.destination && (
+                        <div className="flex justify-between items-start gap-4">
+                          <span className="text-muted-foreground shrink-0">Tujuan</span>
+                          <span className="font-medium text-slate-800 text-right leading-snug break-words">
+                            {pkg.destination}
+                          </span>
                         </div>
                       )}
                       <div className="flex justify-between">

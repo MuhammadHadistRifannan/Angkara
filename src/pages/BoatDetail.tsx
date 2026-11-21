@@ -323,7 +323,7 @@ const BoatDetail = () => {
             <Card className="border-2 border-primary/20">
               <CardContent className="p-6">
                 <div className="mb-4">
-                  <p className="text-sm text-muted-foreground mb-1">Harga per orang</p>
+                  <p className="text-sm text-muted-foreground mb-1">Harga per pax</p>
                   <p className="text-4xl font-bold text-primary">
                     Rp {boat.base_price.toLocaleString("id-ID")}
                   </p>

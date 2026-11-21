@@ -22,6 +22,7 @@ const Navbar = () => {
   const [activeId, setActiveId] = useState<string>("beranda");
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
+  const [authRedirectToChat, setAuthRedirectToChat] = useState(false);
   const guideRef = useRef<HTMLDivElement>(null);
   const isNavigatingRef = useRef(false);
   const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,18 +154,21 @@ const Navbar = () => {
     e.preventDefault();
     setIsMenuOpen(false);
     setGuideOpen(false);
+    try {
+      sessionStorage.setItem(
+        "pending_assistant_prompt",
+        "Halo Juru Mudi, bantu saya cek rekomendasi pelayaran ke Nusakambangan"
+      );
+    } catch (err) {
+      console.warn("Gagal menyimpan prompt:", err);
+    }
     if (!user) {
+      setAuthRedirectToChat(true);
       setAuthTab("signin");
       setAuthOpen(true);
       return;
     }
-    window.dispatchEvent(
-      new CustomEvent("open-assistant", {
-        detail: {
-          prompt: "Halo Juru Mudi, bantu saya cek rekomendasi pelayaran ke Nusakambangan",
-        },
-      })
-    );
+    navigate("/dashboard?tab=ai-chat");
   };
 
   // Gaya link: aktif = teks cyan + garis bawah; biasa = abu-abu, hover cyan.
@@ -494,7 +498,13 @@ const Navbar = () => {
         open={authOpen}
         initialTab={authTab}
         onClose={() => setAuthOpen(false)}
-        onSuccess={() => setAuthOpen(false)}
+        onSuccess={() => {
+          setAuthOpen(false);
+          if (authRedirectToChat) {
+            setAuthRedirectToChat(false);
+            navigate("/dashboard?tab=ai-chat");
+          }
+        }}
       />
     </nav>
   );

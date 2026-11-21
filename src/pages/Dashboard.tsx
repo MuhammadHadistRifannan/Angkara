@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,9 +43,16 @@ interface UserBooking extends ETicketData {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [bookings, setBookings] = useState<UserBooking[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("tickets");
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "ai-chat" || tabParam === "tickets" || tabParam === "profile") {
+      return tabParam;
+    }
+    return "tickets";
+  });
   const [selectedBooking, setSelectedBooking] = useState<UserBooking | null>(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -75,10 +82,11 @@ const Dashboard = () => {
       setProfilePhone(user.user_metadata?.phone || "");
       fetchBookings(user.id);
 
-      // Cek apakah ada prompt tertunda yang memicu pembukaan tab AI chat secara otomatis
+      // Cek apakah ada tab ai-chat atau prompt tertunda yang memicu pembukaan tab AI chat secara otomatis
       try {
+        const tabParam = searchParams.get("tab");
         const pendingPrompt = sessionStorage.getItem("pending_assistant_prompt");
-        if (pendingPrompt) {
+        if (tabParam === "ai-chat" || pendingPrompt) {
           setActiveTab("ai-chat");
         }
       } catch (err) {
@@ -86,7 +94,7 @@ const Dashboard = () => {
       }
     };
     checkAuth();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const fetchBookings = async (userId: string) => {
     const { data, error } = await supabase

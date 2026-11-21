@@ -21,8 +21,8 @@ interface BoatOption {
 const FareCalculator = () => {
   const [boats, setBoats] = useState<BoatOption[]>([]);
   const [selectedBoatId, setSelectedBoatId] = useState<string>("");
-  const [passengers, setPassengers] = useState<number>(1);
-  const [duration, setDuration] = useState<number>(2);
+  const [passengers, setPassengers] = useState<number | "">(1);
+  const [duration, setDuration] = useState<number | "">(2);
   const [total, setTotal] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -147,9 +147,19 @@ const FareCalculator = () => {
                   max="100"
                   value={passengers}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (Number.isNaN(val)) setPassengers(1);
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      setPassengers("");
+                      return;
+                    }
+                    const val = parseInt(raw, 10);
+                    if (Number.isNaN(val)) setPassengers("");
                     else setPassengers(Math.min(100, Math.max(1, val)));
+                  }}
+                  onBlur={() => {
+                    if (passengers === "" || passengers < 1) {
+                      setPassengers(1);
+                    }
                   }}
                 />
                 <span className="text-[11px] text-muted-foreground block">
@@ -170,9 +180,19 @@ const FareCalculator = () => {
                   step="0.5"
                   value={duration}
                   onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (Number.isNaN(val)) setDuration(2);
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      setDuration("");
+                      return;
+                    }
+                    const val = parseFloat(raw);
+                    if (Number.isNaN(val)) setDuration("");
                     else setDuration(Math.min(12, Math.max(0.5, val)));
+                  }}
+                  onBlur={() => {
+                    if (duration === "" || duration < 0.5) {
+                      setDuration(2);
+                    }
                   }}
                 />
                 <span className="text-[11px] text-muted-foreground block">
@@ -212,11 +232,11 @@ const FareCalculator = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Jumlah penumpang</span>
-                    <span className="font-medium text-foreground">{passengers} orang</span>
+                    <span className="font-medium text-foreground">{passengers || 1} orang</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Durasi sewa</span>
-                    <span className="font-medium text-foreground">{duration} jam</span>
+                    <span className="font-medium text-foreground">{duration || 2} jam</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Diskon grup</span>

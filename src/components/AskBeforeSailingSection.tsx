@@ -1,25 +1,14 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Check, Zap, Send, Ship } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthModal } from "@/components/AuthModal";
 
 export const AskBeforeSailingSection: React.FC = () => {
+  const navigate = useNavigate();
   const [questionInput, setQuestionInput] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
-
-  // Chat butuh login. Kalau belum login, simpan pertanyaan lalu buka popup
-  // login (AuthModal) — pengguna tetap di landing. Kalau sudah login, buka
-  // popup chat Juru Mudi AI (AssistantWidget, sudah terpasang di Index) di sini.
-  const openAssistantWith = (prompt: string) => {
-    window.dispatchEvent(
-      new CustomEvent("open-assistant", {
-        detail: {
-          prompt,
-        },
-      })
-    );
-  };
 
   const handleSendQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,21 +27,15 @@ export const AskBeforeSailingSection: React.FC = () => {
       setAuthOpen(true);
       return;
     }
-    openAssistantWith(promptToSend);
     setQuestionInput("");
+    navigate("/dashboard?tab=ai-chat");
   };
 
-  // Setelah login berhasil dari popup: tutup popup, buka chat dengan
-  // pertanyaan yang tadi disimpan.
+  // Setelah login berhasil dari popup: tutup popup, langsung arahkan ke chatbot di dashboard
   const handleAuthSuccess = () => {
     setAuthOpen(false);
-    try {
-      const prompt = sessionStorage.getItem("pending_assistant_prompt");
-      if (prompt) openAssistantWith(prompt);
-    } catch (err) {
-      console.warn("Gagal membaca prompt tersimpan:", err);
-    }
     setQuestionInput("");
+    navigate("/dashboard?tab=ai-chat");
   };
 
   const handleSelectBoat = () => {
@@ -231,7 +214,7 @@ export const AskBeforeSailingSection: React.FC = () => {
               {/* Penjelasan contoh — supaya pengunjung tidak mengira ini jawaban live */}
               <p className="px-5 sm:px-6 pt-3 pb-1 text-[11px] leading-relaxed text-slate-400 bg-slate-50/50">
                 Percakapan di atas hanya contoh — angka gelombang dan statusnya ilustrasi, bukan data live.
-                Untuk jawaban sungguhan, ketik pertanyaanmu di kolom bawah. Kamu akan diminta masuk dulu (popup di halaman ini), lalu chat Juru Mudi AI terbuka.
+                Untuk jawaban sungguhan, ketik pertanyaanmu di kolom bawah. Kamu akan diarahkan ke asisten pintar Juru Mudi AI di Dashboard (memerlukan akun/masuk).
               </p>
 
               {/* Chat Input Bar */}

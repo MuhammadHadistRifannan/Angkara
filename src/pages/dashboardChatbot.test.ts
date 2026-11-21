@@ -141,4 +141,65 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
       "Apakah kapal kayu aman ke Mercusuar Cimiring besok?"
     );
   });
+
+  it("tombol floating Juru Mudi di Landing Page bernavigasi ke /dashboard?tab=ai-chat ketika diklik user yang sudah login", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "user-123",
+          email: "user@example.com",
+        },
+      },
+    } as unknown as { data: { user: unknown }; error: null });
+
+    const { container } = render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Index)
+      )
+    );
+
+    const assistantBtn = container.querySelector("button[aria-label*='Buka Chat Juru Mudi']");
+    expect(assistantBtn).not.toBeNull();
+    fireEvent.click(assistantBtn!);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard?tab=ai-chat");
+    });
+  });
+
+  it("AskBeforeSailingSection bernavigasi langsung ke /dashboard?tab=ai-chat jika sudah login", async () => {
+    sessionStorage.clear();
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
+      data: {
+        session: {
+          user: { id: "user-123" },
+        },
+      },
+    } as unknown as { data: { session: unknown }; error: null });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(AskBeforeSailingSection)
+      )
+    );
+
+    const input = screen.getByPlaceholderText(/Tanya kondisi ombak/i);
+    fireEvent.change(input, {
+      target: { value: "Kapan gelombang rendah di Teluk Penyu?" },
+    });
+
+    const submitBtn = screen.getByRole("button", { name: /Kirim Pertanyaan/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem("pending_assistant_prompt")).toBe(
+        "Kapan gelombang rendah di Teluk Penyu?"
+      );
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard?tab=ai-chat");
+    });
+  });
 });

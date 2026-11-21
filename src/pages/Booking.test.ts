@@ -88,6 +88,8 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Baruna Express")).toBeDefined();
+      expect(screen.getByText("Harga per pax")).toBeDefined();
+      expect(screen.getByLabelText(/Tujuan Penyeberangan/i)).toBeDefined();
     });
 
     const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
@@ -113,7 +115,7 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
         p_boat_id: "boat-123",
         p_passengers: 1,
         p_time: "09:00",
-        p_notes: "Bawa rombongan keluarga",
+        p_notes: expect.stringContaining("Bawa rombongan keluarga"),
       }));
       expect(toast.success).toHaveBeenCalledWith("Booking berhasil dibuat!");
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
@@ -198,5 +200,41 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
       expect(toast.error).toHaveBeenCalledWith("Silakan login terlebih dahulu.");
       expect(mockNavigate).toHaveBeenCalledWith("/auth");
     });
+  });
+
+  it("mengizinkan penghapusan angka penumpang menjadi kosong lalu mengganti ke angka 2 tanpa bug 12, dan tujuan tidak terpotong", async () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Booking)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Baruna Express")).toBeDefined();
+    });
+
+    const paxInput = screen.getByLabelText(/Jumlah Penumpang/i) as HTMLInputElement;
+    expect(paxInput.value).toBe("1");
+
+    // Simulasi user menghapus angka 1 (menjadi kosong)
+    fireEvent.change(paxInput, { target: { value: "" } });
+    expect(paxInput.value).toBe("");
+
+    // Simulasi user mengetik angka 2
+    fireEvent.change(paxInput, { target: { value: "2" } });
+    expect(paxInput.value).toBe("2");
+
+    // Simulasi blur saat kosong kembali ke 1
+    fireEvent.change(paxInput, { target: { value: "" } });
+    fireEvent.blur(paxInput);
+    expect(paxInput.value).toBe("1");
+
+    // Verifikasi elemen tujuan di ringkasan pesanan tidak memiliki kelas truncate
+    const destElements = screen.getAllByText(/Pantai Karang Bolong/i);
+    const destSummary = destElements.find((el) => el.tagName.toLowerCase() === "span" && !el.closest("select"));
+    expect(destSummary).toBeDefined();
+    expect(destSummary?.className).not.toContain("truncate");
   });
 });
