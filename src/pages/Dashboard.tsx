@@ -29,7 +29,7 @@ import {
   Compass,
 } from "lucide-react";
 import { toast } from "sonner";
-import { checkIsOperator } from "@/lib/authRoles";
+import { checkIsOperator, checkIsAdmin } from "@/lib/authRoles";
 import { FullPageAssistant } from "@/components/assistant/FullPageAssistant";
 import { ETicketModal, type ETicketData } from "@/components/ETicketModal";
 import type { User } from "@supabase/supabase-js";
@@ -66,6 +66,12 @@ const Dashboard = () => {
       } = await supabase.auth.getUser();
       if (!user) {
         navigate("/auth");
+        return;
+      }
+
+      // Bila terdeteksi sebagai admin platform SUAR, otomatis arahkan ke dashboard admin
+      if (checkIsAdmin(user.user_metadata)) {
+        navigate("/admin", { replace: true });
         return;
       }
 

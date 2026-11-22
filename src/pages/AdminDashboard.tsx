@@ -22,7 +22,13 @@ import {
   Menu,
   X,
   Waves,
+  Key,
+  Plus,
+  Edit,
+  Wifi,
+  Sparkles,
 } from "lucide-react";
+import { AiApiKeyDialog, type AiApiKeyFormData } from "@/components/admin/AiApiKeyDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -83,6 +89,20 @@ interface BookingItem {
   boats?: { name: string } | null;
 }
 
+export interface AiApiKeyItem {
+  id: string;
+  name: string;
+  provider: string;
+  api_key: string;
+  priority: number;
+  status: "ACTIVE" | "INACTIVE" | "DEPLETED" | "ERROR";
+  tokens_used: number;
+  tokens_limit: number | null;
+  error_msg?: string | null;
+  last_used_at?: string | null;
+  created_at: string;
+}
+
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -98,6 +118,12 @@ const AdminDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // AI API Keys State (Multi-Key Pool & Failover)
+  const [aiKeys, setAiKeys] = useState<AiApiKeyItem[]>([]);
+  const [selectedKey, setSelectedKey] = useState<AiApiKeyFormData | null>(null);
+  const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
+  const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
 
   // Status Override Berlayar Otoritas
   const [sailingOverride, setSailingOverride] = useState<"auto" | "waspada" | "tunda">("auto");
@@ -143,12 +169,14 @@ const AdminDashboard: React.FC = () => {
         { data: toursData, error: toursError },
         { data: reviewsData, error: reviewsError },
         { data: bookingsData, error: bookingsError },
+        { data: keysData, error: keysError },
       ] = await Promise.all([
         supabase.from("operators").select("*").order("created_at", { ascending: false }),
         supabase.from("boats").select("*, operators(*)").order("name", { ascending: true }),
         supabase.from("tour_packages").select("*, operators(*)").order("created_at", { ascending: false }),
         supabase.from("reviews").select("*, boats(name)").order("created_at", { ascending: false }),
         supabase.from("bookings").select("*, boats(name)").order("booking_date", { ascending: false }),
+        supabase.from("ai_api_keys").select("*").order("priority", { ascending: true }),
       ]);
 
       if (opsError) console.warn("Notice loading operators:", opsError);
@@ -156,6 +184,11 @@ const AdminDashboard: React.FC = () => {
       if (toursError) console.warn("Notice loading tours:", toursError);
       if (reviewsError) console.warn("Notice loading reviews:", reviewsError);
       if (bookingsError) console.warn("Notice loading bookings:", bookingsError);
+      if (keysError) console.warn("Notice loading ai_api_keys:", keysError);
+
+      if (keysData) {
+        setAiKeys(keysData as unknown as AiApiKeyItem[]);
+      }
 
       if (opsData) {
         const mappedOps: OperatorItem[] = (opsData as Record<string, unknown>[]).map((op) => ({
@@ -362,6 +395,123 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // AKSI 6: Pengelolaan Pool AI API Key (Tradiora-Style Failover & Rotation)
+  const handleSaveKey = async (formData: AiApiKeyFormData) => {
+    if (formData.id) {
+      const { error } = await supabase
+        .from("ai_api_keys")
+        .update({
+          name: formData.name,
+          provider: formData.provider,
+          api_key: formData.api_key,
+          priority: formData.priority,
+          tokens_limit: formData.tokens_limit,
+          status: formData.status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", formData.id);
+
+      if (error) throw error;
+      toast.success("Kunci API berhasil diperbarui!");
+    } else {
+      const { error } = await supabase.from("ai_api_keys").insert({
+        name: formData.name,
+        provider: formData.provider,
+        api_key: formData.api_key,
+        priority: formData.priority,
+        tokens_limit: formData.tokens_limit,
+        status: formData.status,
+      });
+
+      if (error) throw error;
+      toast.success("Kunci API baru berhasil ditambahkan ke pool!");
+    }
+    fetchData();
+  };
+
+  const handleDeleteKey = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus kunci API ini dari pool?")) return;
+    try {
+      const { error } = await supabase.from("ai_api_keys").delete().eq("id", id);
+      if (error) throw error;
+      setAiKeys((prev) => prev.filter((k) => k.id !== id));
+      toast.success("Kunci API berhasil dihapus.");
+    } catch {
+      toast.error("Gagal menghapus kunci API.");
+    }
+  };
+
+  const handleToggleKeyStatus = async (key: AiApiKeyItem) => {
+    const nextStatus = key.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    try {
+      const { error } = await supabase
+        .from("ai_api_keys")
+        .update({
+          status: nextStatus,
+          error_msg: nextStatus === "ACTIVE" ? null : key.error_msg,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", key.id);
+
+      if (error) throw error;
+      setAiKeys((prev) =>
+        prev.map((k) =>
+          k.id === key.id
+            ? { ...k, status: nextStatus, error_msg: nextStatus === "ACTIVE" ? null : k.error_msg }
+            : k
+        )
+      );
+      toast.success(`Status kunci diubah menjadi ${nextStatus}.`);
+    } catch {
+      toast.error("Gagal mengubah status kunci.");
+    }
+  };
+
+  const handleTestConnection = async (key: AiApiKeyItem) => {
+    setTestingKeyId(key.id);
+    try {
+      const res = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key.api_key,
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "ping" }] }],
+          }),
+        }
+      );
+
+      if (res.ok) {
+        toast.success(`Koneksi sukses! Kunci "${key.name}" aktif dan valid.`);
+        if (key.status === "DEPLETED" || key.status === "ERROR") {
+          await supabase
+            .from("ai_api_keys")
+            .update({ status: "ACTIVE", error_msg: null, updated_at: new Date().toISOString() })
+            .eq("id", key.id);
+          fetchData();
+        }
+      } else if (res.status === 429) {
+        toast.error(`Kunci "${key.name}" terkena batas kuota / rate limit (429).`);
+      } else {
+        const text = await res.text();
+        toast.error(`Kunci "${key.name}" gagal diverifikasi (${res.status}): ${text.substring(0, 100)}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Uji koneksi gagal: ${msg}`);
+    } finally {
+      setTestingKeyId(null);
+    }
+  };
+
+  const maskApiKey = (k: string) => {
+    if (!k || k.length <= 8) return "••••••••";
+    return `${k.substring(0, 6)}••••••••${k.substring(k.length - 4)}`;
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
@@ -535,6 +685,21 @@ const AdminDashboard: React.FC = () => {
                     <SlidersHorizontal className="h-4 w-4 text-cyan-600" />
                     <span>Kontrol Berlayar</span>
                   </div>
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="ai-keys"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Key className="h-4 w-4 text-cyan-600" />
+                    <span>AI API Keys</span>
+                  </div>
+                  {aiKeys.length > 0 && (
+                    <span className="h-5 px-1.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-black flex items-center justify-center">
+                      {aiKeys.filter((k) => k.status === "ACTIVE").length} / {aiKeys.length}
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1130,8 +1295,211 @@ const AdminDashboard: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* TAB 6: AI API Keys Pool Manager (Tradiora-Style Failover & Rotation) */}
+          <TabsContent value="ai-keys" className="space-y-6 mt-0 animate-in fade-in duration-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 flex items-center gap-2.5">
+                  <Key className="h-7 w-7 text-cyan-600" />
+                  <span>Pool AI API Key (Juru Mudi AI)</span>
+                </h1>
+                <p className="text-slate-600 text-xs sm:text-sm mt-0.5">
+                  Kelola cadangan kunci Google Gemini API. Sistem otomatis merotasi kunci (failover) jika terjadi batas kuota (HTTP 429) sehingga chatbot tidak pernah mati.
+                </p>
+              </div>
+
+              <Button
+                variant="hero"
+                onClick={() => {
+                  setSelectedKey(null);
+                  setIsKeyDialogOpen(true);
+                }}
+                className="rounded-xl text-xs font-bold gap-2 self-start sm:self-auto shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Tambah Kunci Baru</span>
+              </Button>
+            </div>
+
+            {aiKeys.length === 0 ? (
+              <Card className="rounded-3xl border-slate-200 bg-white shadow-sm p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center mx-auto mb-4">
+                  <Key className="h-8 w-8" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Belum Ada Kunci di Database Pool</h3>
+                <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto mb-6">
+                  Saat ini Juru Mudi AI menggunakan environment variable fallback (<code>GEMINI_API_KEY</code>). Tambahkan beberapa akun Gemini di sini untuk rotasi otomatis anti-limit!
+                </p>
+                <Button
+                  variant="hero"
+                  onClick={() => {
+                    setSelectedKey(null);
+                    setIsKeyDialogOpen(true);
+                  }}
+                  className="rounded-xl text-xs font-bold gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Tambah Kunci Pertama</span>
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                <div className="overflow-x-auto rounded-3xl border border-slate-200/90 bg-white shadow-sm">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                        <th className="py-3.5 px-4">Nama & Provider</th>
+                        <th className="py-3.5 px-4">Kunci API</th>
+                        <th className="py-3.5 px-4">Prioritas</th>
+                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-4">Pemakaian Token</th>
+                        <th className="py-3.5 px-4 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {aiKeys.map((k) => {
+                        const statusColors: Record<string, string> = {
+                          ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                          INACTIVE: "bg-slate-100 text-slate-600 border-slate-200",
+                          DEPLETED: "bg-amber-50 text-amber-700 border-amber-200",
+                          ERROR: "bg-rose-50 text-rose-700 border-rose-200",
+                        };
+
+                        return (
+                          <tr key={k.id} className="hover:bg-slate-50/60 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="font-bold text-slate-900 text-xs">{k.name}</div>
+                              <div className="text-[11px] text-slate-500 font-mono mt-0.5">{k.provider}</div>
+                            </td>
+                            <td className="py-3.5 px-4 font-mono text-slate-700 text-xs">
+                              {maskApiKey(k.api_key)}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <Badge variant="outline" className="text-[10px] font-bold rounded-lg px-2 py-0.5">
+                                #{k.priority}
+                              </Badge>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                                  statusColors[k.status] || "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                <span
+                                  className={`w-1.5 h-1.5 rounded-full ${
+                                    k.status === "ACTIVE"
+                                      ? "bg-emerald-500 animate-pulse"
+                                      : k.status === "DEPLETED"
+                                      ? "bg-amber-500"
+                                      : k.status === "ERROR"
+                                      ? "bg-rose-500"
+                                      : "bg-slate-400"
+                                  }`}
+                                />
+                                {k.status}
+                              </span>
+                              {k.error_msg && (
+                                <p className="text-[10px] text-rose-600 mt-1 max-w-[200px] truncate" title={k.error_msg}>
+                                  {k.error_msg}
+                                </p>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-600 font-medium">
+                              <div>
+                                {Number(k.tokens_used).toLocaleString("id-ID")} /{" "}
+                                {k.tokens_limit !== null ? Number(k.tokens_limit).toLocaleString("id-ID") : "∞"}
+                              </div>
+                              {k.tokens_limit !== null && (
+                                <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full ${
+                                      (k.tokens_used / k.tokens_limit) > 0.8 ? "bg-rose-500" : "bg-cyan-500"
+                                    }`}
+                                    style={{
+                                      width: `${Math.min(100, Math.round((k.tokens_used / k.tokens_limit) * 100))}%`,
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={testingKeyId === k.id}
+                                  onClick={() => handleTestConnection(k)}
+                                  className="h-8 px-2.5 text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 rounded-xl"
+                                  title="Uji koneksi ping ke server Gemini"
+                                >
+                                  {testingKeyId === k.id ? (
+                                    <RefreshCw className="h-3.5 w-3.5 animate-spin text-cyan-600" />
+                                  ) : (
+                                    <Wifi className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleToggleKeyStatus(k)}
+                                  className={`h-8 px-2.5 text-xs font-bold rounded-xl ${
+                                    k.status === "ACTIVE"
+                                      ? "text-slate-600 hover:bg-slate-100"
+                                      : "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                                  }`}
+                                >
+                                  {k.status === "ACTIVE" ? "Matikan" : "Aktifkan"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedKey({
+                                      id: k.id,
+                                      name: k.name,
+                                      provider: k.provider,
+                                      api_key: k.api_key,
+                                      priority: k.priority,
+                                      tokens_limit: k.tokens_limit,
+                                      status: k.status,
+                                    });
+                                    setIsKeyDialogOpen(true);
+                                  }}
+                                  className="h-8 w-8 p-0 text-slate-500 hover:text-slate-800 rounded-xl"
+                                  title="Edit kunci"
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteKey(k.id)}
+                                  className="h-8 w-8 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl"
+                                  title="Hapus kunci"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </TabsContent>
         </main>
       </Tabs>
+
+      <AiApiKeyDialog
+        open={isKeyDialogOpen}
+        onOpenChange={setIsKeyDialogOpen}
+        initialData={selectedKey}
+        onSave={handleSaveKey}
+      />
     </div>
   );
 };

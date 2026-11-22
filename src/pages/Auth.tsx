@@ -110,8 +110,8 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("signin-email") as string;
-    const password = formData.get("signin-password") as string;
+    const email = ((formData.get("signin-email") as string) || "").trim();
+    const password = (formData.get("signin-password") as string) || "";
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,

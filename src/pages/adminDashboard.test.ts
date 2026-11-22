@@ -95,6 +95,21 @@ const mockBookings = [
   },
 ];
 
+const mockAiApiKeys = [
+  {
+    id: "key-01",
+    name: "Gemini Primary Flash",
+    provider: "GOOGLE",
+    api_key: "AIzaSyTest1234567890",
+    priority: 0,
+    status: "ACTIVE",
+    tokens_used: 1500,
+    tokens_limit: 100000,
+    error_msg: null,
+    created_at: "2026-11-20T00:00:00Z",
+  },
+];
+
 describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -179,6 +194,13 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
         return {
           select: vi.fn().mockReturnValue({
             order: vi.fn().mockResolvedValue({ data: mockBookings, error: null }),
+          }),
+        } as unknown as ReturnType<typeof supabase.from>;
+      }
+      if (table === "ai_api_keys") {
+        return {
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: mockAiApiKeys, error: null }),
           }),
         } as unknown as ReturnType<typeof supabase.from>;
       }
@@ -370,6 +392,57 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Status pelayaran diubah/i));
+    });
+  });
+
+  it("merender tab AI API Keys dan menampilkan daftar kunci dalam pool", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "admin-01",
+          email: "admin@angkara.id",
+          user_metadata: { role: "admin" },
+        },
+      },
+    } as unknown as { data: { user: null }; error: null });
+
+    vi.mocked(supabase.from).mockImplementation((table: string) => {
+      if (table === "ai_api_keys") {
+        return {
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: mockAiApiKeys, error: null }),
+          }),
+        } as unknown as ReturnType<typeof supabase.from>;
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>;
+    });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(AdminDashboard)
+      )
+    );
+
+    // Buka tab AI API Keys dengan mouseDown + click (Radix Tabs trigger)
+    await waitFor(() => {
+      const keysTab = screen.getByRole("tab", { name: /AI API Keys/i });
+      fireEvent.mouseDown(keysTab, { button: 0 });
+      fireEvent.click(keysTab);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pool AI API Key \(Juru Mudi AI\)/i)).toBeDefined();
+      expect(screen.getByText("Gemini Primary Flash")).toBeDefined();
+      expect(screen.getByText("ACTIVE")).toBeDefined();
     });
   });
 });

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { signInWithGoogle } from "@/lib/auth";
-import { getDashboardRedirectPath } from "@/lib/authRoles";
+import { getDashboardRedirectPath, checkIsAdmin } from "@/lib/authRoles";
 import { toast } from "sonner";
 import googleLogo from "@/assets/google.svg";
 import { Ship, User, Eye, EyeOff } from "lucide-react";
@@ -36,6 +37,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess, initialTab = "signin" }) => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"signin" | "signup">(initialTab);
 
   // Ikuti tab yang diminta saat modal dibuka kembali.
@@ -71,8 +73,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess, 
     setLoading(true);
     setError(null);
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("signin-email") as string;
-    const password = formData.get("signin-password") as string;
+    const email = ((formData.get("signin-email") as string) || "").trim();
+    const password = (formData.get("signin-password") as string) || "";
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
@@ -81,7 +83,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, onSuccess, 
     }
     if (data.user) {
       toast.success("Login berhasil!");
-      // Sengaja TIDAK navigate ke dashboard — tetap di landing.
+      if (checkIsAdmin(data.user.user_metadata)) {
+        onClose();
+        navigate("/admin");
+        return;
+      }
       await getDashboardRedirectPath(data.user).catch(() => undefined);
       onSuccess?.();
     }

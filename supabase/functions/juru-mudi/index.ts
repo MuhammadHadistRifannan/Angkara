@@ -7,6 +7,13 @@ import type { MarineResponse, SupabaseLike } from "../_shared/contracts.ts";
 import { TOOLS } from "./tools/index.ts";
 import { createGeminiClient } from "./gemini.ts";
 import { handleChat } from "./handler.ts";
+import {
+  getAvailableAiApiKey,
+  markAiApiKeyDepleted,
+  markAiApiKeyError,
+  recordAiApiKeyUsage,
+} from "./aiApiKeyManager.ts";
+import { UpstreamError } from "../_shared/weather/bmkg.ts";
 
 declare const Deno: {
   serve: (handler: (req: Request) => Promise<Response>) => void;
@@ -23,18 +30,22 @@ if (typeof Deno !== "undefined" && Deno.serve) {
     }
 
     try {
-      const apiKey = Deno.env.get("GEMINI_API_KEY");
-      if (!apiKey) {
-        return new Response(
-          JSON.stringify({ error: "Konfigurasi server tidak lengkap: GEMINI_API_KEY belum disetel" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
       const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
       const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const supabaseLike = supabase as unknown as SupabaseLike;
+
+      let keyInfo = await getAvailableAiApiKey(supabaseLike);
+      if (!keyInfo) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Konfigurasi server tidak lengkap: Kunci API Gemini tidak ditemukan di database maupun environment.",
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       const clientIp =
         req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
@@ -66,29 +77,71 @@ if (typeof Deno !== "undefined" && Deno.serve) {
       };
 
       const ctx = {
-        supabase: supabase as unknown as SupabaseLike,
+        supabase: supabaseLike,
         marine,
         now: () => new Date(),
       };
 
-      const llm = createGeminiClient(apiKey, model, fetch);
+      // Failover Loop: jika key aktif terkena 429 atau 401, rotasi otomatis ke key berikutnya (maksimal 3 percobaan)
+      let lastResult: { body: unknown; status: number } | null = null;
+      let lastError: unknown = null;
 
-      const result = await handleChat(body, {
-        llm,
-        tools: TOOLS,
-        ctx,
-        now: () => new Date(),
-        clientIp,
-        supabase: supabase as unknown as SupabaseLike,
-      });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (!keyInfo) {
+          break;
+        }
 
-      return new Response(JSON.stringify(result.body), {
-        status: result.status,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      });
+        const llm = createGeminiClient(keyInfo.apiKey, model, fetch);
+
+        try {
+          const result = await handleChat(body, {
+            llm,
+            tools: TOOLS,
+            ctx,
+            now: () => new Date(),
+            clientIp,
+            supabase: supabaseLike,
+          });
+
+          lastResult = result;
+
+          // Catat pemakaian token jika sukses dan menggunakan key dari pool database
+          if (keyInfo.id && keyInfo.isPoolKey) {
+            await recordAiApiKeyUsage(supabaseLike, keyInfo.id, 500);
+          }
+          break;
+        } catch (err: unknown) {
+          lastError = err;
+          if (err instanceof UpstreamError && keyInfo.id && keyInfo.isPoolKey) {
+            if (err.status === 429) {
+              await markAiApiKeyDepleted(supabaseLike, keyInfo.id, err.message);
+              // Ambil key cadangan berikutnya
+              keyInfo = await getAvailableAiApiKey(supabaseLike);
+              continue;
+            }
+            if (err.status === 400 || err.status === 401 || err.status === 403) {
+              await markAiApiKeyError(supabaseLike, keyInfo.id, err.message);
+              // Ambil key cadangan berikutnya
+              keyInfo = await getAvailableAiApiKey(supabaseLike);
+              continue;
+            }
+          }
+          // Error selain rate limit/auth dilempar langsung
+          throw err;
+        }
+      }
+
+      if (lastResult) {
+        return new Response(JSON.stringify(lastResult.body), {
+          status: lastResult.status,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      throw lastError || new Error("Gagal memproses pesan dengan semua kunci API yang tersedia.");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return new Response(

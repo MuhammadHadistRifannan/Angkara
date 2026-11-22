@@ -183,4 +183,28 @@ describe("Dashboard Wisatawan (Task 2 - Opsi B Full-Page Assistant)", () => {
       expect(screen.getByPlaceholderText(/Tanyakan rute kapal, perkiraan cuaca/i)).toBeDefined();
     });
   });
+
+  it("otomatis mengarahkan akun admin ke /admin jika membuka /dashboard", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "admin-001",
+          email: "admin@angkara.id",
+          user_metadata: { role: "admin" },
+        },
+      },
+    } as unknown as { data: { user: null }; error: null });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Dashboard)
+      )
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/admin", { replace: true });
+    });
+  });
 });
