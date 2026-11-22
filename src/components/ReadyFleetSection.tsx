@@ -421,49 +421,6 @@ export const ReadyFleetSection: React.FC = () => {
           ))}
         </div>
         </motion.div>
-
-        {/* Emergency SAR Quick-Response Banner matching Image 4 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-[#0B1528] via-[#0f2142] to-[#0B1528] text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xl relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex items-center gap-4 relative z-10">
-            <motion.div
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-              className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/30 text-rose-400 flex-shrink-0 shadow-inner"
-            >
-              <Radio className="h-6 w-6 text-rose-400" />
-            </motion.div>
-            <div>
-              <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                Jalur Cepat Darurat Maritim Terpadu
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-300">
-                Pos Siaga Basarnas SAR Pelabuhan Cilacap & Radio Nelayan
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-end sm:self-auto relative z-10">
-            <span className="px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs font-mono font-bold text-slate-200">
-              VHF Radio: CH 16
-            </span>
-            <motion.a
-              href="tel:115"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-950/40 transition-colors"
-            >
-              <PhoneCall className="h-4 w-4" />
-              <span>Hotline 115</span>
-            </motion.a>
-          </div>
-        </motion.div>
       </div>
 
       <AuthModal
