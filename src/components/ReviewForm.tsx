@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Star } from "lucide-react";
+import { Star, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -29,6 +29,62 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
   const [safetyRating, setSafetyRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [eligibility, setEligibility] = useState<"checking" | "eligible" | "already_reviewed" | "not_completed">("checking");
+  const [completedBookingId, setCompletedBookingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkEligibility = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!isMounted) return;
+        if (!user) {
+          setEligibility("not_completed");
+          return;
+        }
+
+        // 1. Cek apakah user sudah pernah mengulas kapal ini
+        const { data: existingReview } = await supabase
+          .from("reviews")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("boat_id", boatId)
+          .maybeSingle();
+
+        if (!isMounted) return;
+        if (existingReview) {
+          setEligibility("already_reviewed");
+          return;
+        }
+
+        // 2. Cek apakah ada booking completed untuk kapal ini
+        const { data: bookings } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("boat_id", boatId)
+          .eq("booking_status", "completed")
+          .limit(1);
+
+        if (!isMounted) return;
+        if (bookings && bookings.length > 0) {
+          setCompletedBookingId(bookings[0].id);
+          setEligibility("eligible");
+        } else {
+          setEligibility("not_completed");
+        }
+      } catch {
+        if (isMounted) setEligibility("not_completed");
+      }
+    };
+
+    checkEligibility();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [boatId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,33 +107,23 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
         return;
       }
 
-      // Check if user has completed booking for this boat
-      const { data: bookings, error: bookingError } = await supabase
-        .from("bookings")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("boat_id", boatId)
-        .eq("booking_status", "completed")
-        .limit(1);
+      const bookingIdToUse = completedBookingId;
+      if (!bookingIdToUse) {
+        // Fallback cek booking completed
+        const { data: bookings, error: bookingError } = await supabase
+          .from("bookings")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("boat_id", boatId)
+          .eq("booking_status", "completed")
+          .limit(1);
 
-      if (bookingError) throw bookingError;
+        if (bookingError) throw bookingError;
 
-      if (!bookings || bookings.length === 0) {
-        toast.error("Anda harus menyelesaikan booking terlebih dahulu untuk memberikan ulasan");
-        return;
-      }
-
-      // Check if user already reviewed this boat
-      const { data: existingReview } = await supabase
-        .from("reviews")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("boat_id", boatId)
-        .single();
-
-      if (existingReview) {
-        toast.error("Anda sudah memberikan ulasan untuk kapal ini");
-        return;
+        if (!bookings || bookings.length === 0) {
+          toast.error("Anda harus menyelesaikan booking terlebih dahulu untuk memberikan ulasan");
+          return;
+        }
       }
 
       // Insert review
@@ -86,7 +132,7 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
         .insert({
           boat_id: boatId,
           user_id: user.id,
-          booking_id: bookings[0].id,
+          booking_id: bookingIdToUse || undefined,
           rating,
           service_rating: serviceRating,
           safety_rating: safetyRating,
@@ -100,12 +146,14 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
       setServiceRating(0);
       setSafetyRating(0);
       setComment("");
+      setEligibility("already_reviewed");
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error("Gagal menambahkan ulasan: " + error.message);
+        const msg = error instanceof Error ? error.message : String(error);
+        toast.error("Gagal menambahkan ulasan: " + msg);
       }
     } finally {
       setIsSubmitting(false);
@@ -143,6 +191,34 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
       </div>
     </div>
   );
+
+  if (eligibility === "checking") {
+    return <p className="text-xs text-muted-foreground text-center py-4">Memeriksa riwayat pelayaran Anda...</p>;
+  }
+
+  if (eligibility === "already_reviewed") {
+    return (
+      <Card className="rounded-2xl border-emerald-200 bg-emerald-50/70 p-6 text-center">
+        <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+        <h4 className="font-bold text-sm text-emerald-950 mb-1">Ulasan Anda Telah Terdaftar</h4>
+        <p className="text-xs text-emerald-700 max-w-md mx-auto">
+          Terima kasih! Anda telah memberikan ulasan terverifikasi untuk armada kapal ini.
+        </p>
+      </Card>
+    );
+  }
+
+  if (eligibility === "not_completed") {
+    return (
+      <Card className="rounded-2xl border-slate-200 bg-slate-50 p-6 text-center shadow-sm">
+        <ShieldCheck className="h-8 w-8 text-cyan-600 mx-auto mb-2" />
+        <h4 className="font-bold text-sm text-slate-900 mb-1">Ulasan Terverifikasi KSOP</h4>
+        <p className="text-xs text-slate-600 max-w-md mx-auto">
+          Untuk menjaga transparansi dan reputasi nahkoda lokal, hanya wisatawan yang telah menyelesaikan trip/sewa dengan kapal ini yang dapat memberikan ulasan.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -194,10 +270,11 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            * Anda hanya dapat memberikan ulasan jika sudah menyelesaikan booking
+            * Ulasan terverifikasi setelah pelayaran selesai
           </p>
         </form>
       </CardContent>
     </Card>
   );
 };
+

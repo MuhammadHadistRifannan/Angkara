@@ -27,11 +27,13 @@ import {
   Menu,
   X,
   Compass,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { checkIsOperator, checkIsAdmin } from "@/lib/authRoles";
 import { FullPageAssistant } from "@/components/assistant/FullPageAssistant";
 import { ETicketModal, type ETicketData } from "@/components/ETicketModal";
+import { ReviewModal } from "@/components/ReviewModal";
 import type { User } from "@supabase/supabase-js";
 
 interface UserBooking extends ETicketData {
@@ -54,6 +56,9 @@ const Dashboard = () => {
   });
   const [selectedBooking, setSelectedBooking] = useState<UserBooking | null>(null);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [reviewedBookings, setReviewedBookings] = useState<Record<string, { rating: number }>>({});
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedReviewBooking, setSelectedReviewBooking] = useState<UserBooking | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
@@ -102,23 +107,37 @@ const Dashboard = () => {
   }, [navigate, searchParams]);
 
   const fetchBookings = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select(`
-        *,
-        boats (
-          name,
-          type,
-          image_url
-        )
-      `)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+    const [bookingsRes, reviewsRes] = await Promise.all([
+      supabase
+        .from("bookings")
+        .select(`
+          *,
+          boats (
+            name,
+            type,
+            image_url
+          )
+        `)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("reviews")
+        .select("booking_id, rating")
+        .eq("user_id", userId),
+    ]);
 
-    if (error) {
+    if (bookingsRes.error) {
       toast.error("Gagal memuat booking");
     } else {
-      setBookings((data as unknown as UserBooking[]) || []);
+      setBookings((bookingsRes.data as unknown as UserBooking[]) || []);
+    }
+
+    if (reviewsRes.data) {
+      const reviewMap: Record<string, { rating: number }> = {};
+      reviewsRes.data.forEach((r: { booking_id: string; rating: number }) => {
+        if (r.booking_id) reviewMap[r.booking_id] = { rating: r.rating };
+      });
+      setReviewedBookings(reviewMap);
     }
   };
 
@@ -577,6 +596,29 @@ const Dashboard = () => {
                           <span>E-Tiket & Boarding Pass</span>
                         </Button>
 
+                        {/* Aksi Ulasan jika Pelayaran Telah Selesai (completed) */}
+                        {booking.booking_status === "completed" && (
+                          reviewedBookings[booking.id] ? (
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                              <span>Ulasan Terkirim ({reviewedBookings[booking.id].rating}/5)</span>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedReviewBooking(booking);
+                                setIsReviewModalOpen(true);
+                              }}
+                              className="rounded-xl text-xs font-bold gap-1.5 border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100 hover:text-amber-950 shadow-sm"
+                            >
+                              <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
+                              <span>Beri Ulasan Pelayaran</span>
+                            </Button>
+                          )
+                        )}
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -748,6 +790,18 @@ const Dashboard = () => {
         booking={selectedBooking}
         open={isTicketModalOpen}
         onOpenChange={setIsTicketModalOpen}
+      />
+
+      {/* Modal Beri Ulasan Pelayaran */}
+      <ReviewModal
+        booking={selectedReviewBooking}
+        open={isReviewModalOpen}
+        onOpenChange={setIsReviewModalOpen}
+        onSuccess={() => {
+          if (currentUser) {
+            fetchBookings(currentUser.id);
+          }
+        }}
       />
     </div>
   );
