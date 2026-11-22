@@ -205,6 +205,7 @@ export const ReadyFleetSection: React.FC = () => {
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
+  const [pendingBoat, setPendingBoat] = useState<FleetBoat | null>(null);
 
   const updateArrows = () => {
     const el = scrollRef.current;
@@ -225,27 +226,30 @@ export const ReadyFleetSection: React.FC = () => {
   // boats berisi 12 kapal ini (id UUID sama) — fetch boleh dinyalakan
   // lagi, dan pemesanan online (RPC create_booking) bisa jalan.
 
-
-  const handleAuthSuccess = () => {
-    setAuthOpen(false);
-    navigate("/dashboard?tab=ai-chat");
+  const openWhatsApp = (boat: FleetBoat) => {
+    const phone = "6281234567890";
+    const message = encodeURIComponent(
+      `Halo Nakhoda ${boat.captainName}, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} (${boat.boatTypeTag}) untuk penyeberangan wisata Teluk Penyu - Nusakambangan.`
+    );
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };
 
   const handleChatCaptain = async (boat: FleetBoat) => {
-    const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
-    try {
-      sessionStorage.setItem("pending_assistant_prompt", prompt);
-    } catch (e) {
-      console.warn("Gagal menyimpan prompt:", e);
-    }
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+    const authRes = supabase.auth.getSession ? await supabase.auth.getSession() : null;
+    if (!authRes?.data?.session) {
+      setPendingBoat(boat);
       setAuthOpen(true);
       return;
     }
-    navigate("/dashboard?tab=ai-chat");
+    openWhatsApp(boat);
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    if (pendingBoat) {
+      openWhatsApp(pendingBoat);
+      setPendingBoat(null);
+    }
   };
 
   const handleBookNow = (boatId: string) => {
@@ -417,51 +421,16 @@ export const ReadyFleetSection: React.FC = () => {
           ))}
         </div>
         </motion.div>
-
-        {/* Emergency SAR Quick-Response Banner matching Image 4 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-[#0B1528] via-[#0f2142] to-[#0B1528] text-white border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-xl relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex items-center gap-4 relative z-10">
-            <motion.div
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-              className="p-3 rounded-2xl bg-rose-500/20 border border-rose-500/30 text-rose-400 flex-shrink-0 shadow-inner"
-            >
-              <Radio className="h-6 w-6 text-rose-400" />
-            </motion.div>
-            <div>
-              <h4 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                Jalur Cepat Darurat Maritim Terpadu
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-300">
-                Pos Siaga Basarnas SAR Pelabuhan Cilacap & Radio Nelayan
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-end sm:self-auto relative z-10">
-            <span className="px-3.5 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs font-mono font-bold text-slate-200">
-              VHF Radio: CH 16
-            </span>
-            <motion.a
-              href="tel:115"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-rose-950/40 transition-colors"
-            >
-              <PhoneCall className="h-4 w-4" />
-              <span>Hotline 115</span>
-            </motion.a>
-          </div>
-        </motion.div>
       </div>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => {
+          setAuthOpen(false);
+          setPendingBoat(null);
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </section>
   );
 };

@@ -35,7 +35,7 @@ interface AssistantWidgetProps {
 }
 
 export const AssistantWidget: React.FC<AssistantWidgetProps> = ({
-  hideFloatingTrigger = false,
+  hideFloatingTrigger = true,
   redirectToDashboard = false,
 }) => {
   const navigate = useNavigate();

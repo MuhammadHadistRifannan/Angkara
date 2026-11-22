@@ -122,3 +122,105 @@ All colors MUST be HSL.
   }
 }
 
+/* ==========================================================================
+   Aturan Cetak Khusus E-Tiket & Manifes Maritim (Print Media)
+   Memastikan hasil cetak hanya mencakup kartu e-tiket, bersih dalam 1 halaman.
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Sembunyikan elemen utama aplikasi website saat dialog e-tiket sedang dicetak */
+  body.printing-eticket #root,
+  body:has(.printable-eticket-dialog) #root,
+  body.printing-manifest #root,
+  body:has(.printable-manifest-dialog) #root,
+  body:has(.printable-manifest) #root {
+    display: none !important;
+  }
+
+  /* Sembunyikan backdrop/overlay dialog */
+  [data-radix-dialog-overlay],
+  .fixed.inset-0.bg-black\/80,
+  div[data-state="open"].fixed.inset-0,
+  div[class*="bg-black/80"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Reset posisi dialog Radix agar pas pada layout halaman kertas A4 */
+  .printable-eticket-dialog,
+  .printable-manifest-dialog {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 1.5rem !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Pastikan header tiket tidak tercetak hitam pekat: ubah ke latar putih dengan garis pembatas hitam */
+  .printable-eticket-dialog .eticket-header,
+  .eticket-header,
+  div.eticket-header {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-bottom: 2px solid #0f172a !important;
+  }
+
+  .printable-eticket-dialog .eticket-header *,
+  .eticket-header * {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  .printable-eticket-dialog .eticket-header .badge-ksop {
+    background-color: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #86efac !important;
+  }
+
+  /* Pastikan seluruh elemen anak dan badge mencetak warna akurat */
+  .printable-eticket-dialog *,
+  .printable-manifest-dialog * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Sembunyikan tombol close dan elemen non-cetak */
+  .printable-eticket-dialog button[data-state],
+  .printable-eticket-dialog button > .sr-only,
+  .printable-manifest-dialog button[data-state],
+  .printable-manifest-dialog button > .sr-only,
+  button.print\:hidden,
+  .print\:hidden,
+  .no-print {
+    display: none !important;
+  }
+}
+
+

@@ -51,7 +51,7 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     cleanup();
   });
 
-  it("Landing Page (Index) merender AssistantWidget (tombol floating Juru Mudi)", () => {
+  it("Landing Page (Index) tidak lagi merender tombol floating Juru Mudi di pojok kanan bawah", () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
     } as unknown as { data: { user: null }; error: null });
@@ -64,21 +64,22 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
       )
     );
 
-    // Tombol chat floating memiliki aria-label yang memuat 'Buka Chat Juru Mudi'
+    // Tombol chat floating di pojok kanan bawah sudah dihilangkan
     const assistantBtn = container.querySelector("button[aria-label*='Buka Chat Juru Mudi']");
-    expect(assistantBtn).not.toBeNull();
+    expect(assistantBtn).toBeNull();
   });
 
-  it("tombol floating Juru Mudi di Landing Page memicu AuthModal ketika diklik oleh pengunjung yang belum login", async () => {
+  it("tombol floating Juru Mudi bila diaktifkan (hideFloatingTrigger=false) memicu AuthModal ketika diklik pengunjung belum login", async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
     } as unknown as { data: { user: null }; error: null });
 
+    const { AssistantWidget } = await import("@/components/assistant/AssistantWidget");
     const { container } = render(
       React.createElement(
         MemoryRouter,
         null,
-        React.createElement(Index)
+        React.createElement(AssistantWidget, { hideFloatingTrigger: false, redirectToDashboard: true })
       )
     );
 
@@ -92,7 +93,7 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     });
   });
 
-  it("Dashboard User merender AssistantWidget (Juru Mudi AI)", async () => {
+  it("Dashboard User tidak lagi merender tombol floating Juru Mudi di pojok kanan bawah", async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: {
         user: {
@@ -112,15 +113,13 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     );
 
     await waitFor(() => {
-      // Pastikan tombol floating Juru Mudi ada di dalam Dashboard
+      // Pastikan tombol floating Juru Mudi di pojok kanan bawah tidak muncul
       const assistantBtn = container.querySelector("button[aria-label*='Buka Chat Juru Mudi']");
-      expect(assistantBtn).not.toBeNull();
+      expect(assistantBtn).toBeNull();
     });
   });
 
-  it("AskBeforeSailingSection menyimpan prompt ke sessionStorage dan bernavigasi ke /dashboard saat pertanyaan diajukan", () => {
-    sessionStorage.clear();
-
+  it("AskBeforeSailingSection menonaktifkan tombol submit chat asisten di landing page", () => {
     render(
       React.createElement(
         MemoryRouter,
@@ -129,20 +128,11 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
       )
     );
 
-    const input = screen.getByPlaceholderText(/Tanya kondisi ombak/i);
-    fireEvent.change(input, {
-      target: { value: "Apakah kapal kayu aman ke Mercusuar Cimiring besok?" },
-    });
-
     const submitBtn = screen.getByRole("button", { name: /Kirim Pertanyaan/i });
-    fireEvent.click(submitBtn);
-
-    expect(sessionStorage.getItem("pending_assistant_prompt")).toBe(
-      "Apakah kapal kayu aman ke Mercusuar Cimiring besok?"
-    );
+    expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("tombol floating Juru Mudi di Landing Page bernavigasi ke /dashboard?tab=ai-chat ketika diklik user yang sudah login", async () => {
+  it("tombol floating Juru Mudi bila diaktifkan bernavigasi ke /dashboard?tab=ai-chat ketika diklik user yang sudah login", async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: {
         user: {
@@ -152,11 +142,12 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
       },
     } as unknown as { data: { user: unknown }; error: null });
 
+    const { AssistantWidget } = await import("@/components/assistant/AssistantWidget");
     const { container } = render(
       React.createElement(
         MemoryRouter,
         null,
-        React.createElement(Index)
+        React.createElement(AssistantWidget, { hideFloatingTrigger: false, redirectToDashboard: true })
       )
     );
 
@@ -169,15 +160,8 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     });
   });
 
-  it("AskBeforeSailingSection bernavigasi langsung ke /dashboard?tab=ai-chat jika sudah login", async () => {
+  it("AskBeforeSailingSection tidak melakukan submit atau navigasi ketika tombol dinonaktifkan", () => {
     sessionStorage.clear();
-    vi.mocked(supabase.auth.getSession).mockResolvedValue({
-      data: {
-        session: {
-          user: { id: "user-123" },
-        },
-      },
-    } as unknown as { data: { session: unknown }; error: null });
 
     render(
       React.createElement(
@@ -187,19 +171,10 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
       )
     );
 
-    const input = screen.getByPlaceholderText(/Tanya kondisi ombak/i);
-    fireEvent.change(input, {
-      target: { value: "Kapan gelombang rendah di Teluk Penyu?" },
-    });
-
     const submitBtn = screen.getByRole("button", { name: /Kirim Pertanyaan/i });
     fireEvent.click(submitBtn);
 
-    await waitFor(() => {
-      expect(sessionStorage.getItem("pending_assistant_prompt")).toBe(
-        "Kapan gelombang rendah di Teluk Penyu?"
-      );
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard?tab=ai-chat");
-    });
+    expect(sessionStorage.getItem("pending_assistant_prompt")).toBeNull();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

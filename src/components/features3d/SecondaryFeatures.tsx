@@ -37,10 +37,6 @@ export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
         Sederhana dan langsung ke poin.
       */}
       <div className="max-w-3xl mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 text-xs font-semibold mb-3">
-          <Anchor className="w-3.5 h-3.5" />
-          <span>Ekosistem Maritim Lengkap</span>
-        </div>
         <h4 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white tracking-tight mt-1">
           Dan Masih Banyak Lagi
         </h4>

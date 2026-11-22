@@ -120,19 +120,11 @@ export const FullPageAssistant: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-black text-base tracking-tight text-white">Juru Mudi AI</h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
-                Gemini 2.0 Flash
-              </span>
             </div>
             <p className="text-xs text-slate-400">
               Asisten Cerdas Navigasi & Cuaca Maritim Cilacap
             </p>
           </div>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>BMKG Tunggul Wulung Synced</span>
         </div>
       </div>
 

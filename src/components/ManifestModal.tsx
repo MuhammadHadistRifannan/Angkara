@@ -107,14 +107,22 @@ export const ManifestModal: React.FC<ManifestModalProps> = ({
   };
 
   const handlePrint = () => {
+    document.body.classList.add("printing-manifest");
     window.print();
+    window.addEventListener(
+      "afterprint",
+      () => {
+        document.body.classList.remove("printing-manifest");
+      },
+      { once: true }
+    );
   };
 
   const allCompliant = Object.values(checkedItems).every(Boolean);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 text-slate-900 border-slate-200">
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 text-slate-900 border-slate-200 printable-manifest-dialog print:max-h-none print:overflow-visible print:p-0 print:border-none print:shadow-none print:w-full print:max-w-full">
         <DialogHeader className="sr-only">
           <DialogTitle>Lembar Manifes Penumpang & Checklist Kelaikan KSOP</DialogTitle>
           <DialogDescription>
@@ -270,7 +278,7 @@ export const ManifestModal: React.FC<ManifestModalProps> = ({
         </div>
 
         {/* DIALOG ACTIONS */}
-        <DialogFooter className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+        <DialogFooter className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3 print:hidden">
           <Button
             variant="outline"
             size="sm"
