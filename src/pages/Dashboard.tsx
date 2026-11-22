@@ -745,8 +745,8 @@ const Dashboard = () => {
         onOpenChange={setIsTicketModalOpen}
       />
 
-      {/* Floating Assistant Widget */}
-      <AssistantWidget />
+      {/* Floating Assistant Widget (Trigger mengambang kanan bawah disembunyikan) */}
+      <AssistantWidget hideFloatingTrigger={true} />
     </div>
   );
 };

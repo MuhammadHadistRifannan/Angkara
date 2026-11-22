@@ -51,7 +51,7 @@ const Index: React.FC = () => {
       <Footer />
 
       {/* 11. Asisten Pintar Juru Mudi & Telemetry Dev Overlay */}
-      <AssistantWidget redirectToDashboard={true} />
+      <AssistantWidget redirectToDashboard={true} hideFloatingTrigger={true} />
       <DebugOverlay />
     </div>
   );
