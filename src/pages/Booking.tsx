@@ -136,7 +136,7 @@ const Booking = () => {
               unit: demo.unit,
               includes: demo.includes,
               isDemo: true,
-              max_participants: (demo as Record<string, unknown>).max_participants as number ?? 10,
+              max_participants: (demo as unknown as { max_participants?: number }).max_participants ?? 10,
               operator_id: null,
             };
           }
