@@ -157,7 +157,7 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
     // Nilai otomatis di-clamp ke kapasitas maksimal kapal operator (8)
     expect(paxInput.value).toBe("8");
     expect(toast.error).toHaveBeenCalledWith(
-      expect.stringContaining("8 penumpang")
+      expect.stringContaining("8 pax")
     );
   });
 
