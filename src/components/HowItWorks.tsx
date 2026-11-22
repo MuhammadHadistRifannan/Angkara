@@ -63,9 +63,6 @@ const HowItWorks: React.FC = () => {
       id="how-it-works"
       className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden border-t border-slate-200/60"
     >
-      {/* Subtle Ambient Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-sky-100/30 rounded-full blur-3xl pointer-events-none" />
-
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header Section matching SUAR Coastal Theme */}
         <motion.div
@@ -96,7 +93,7 @@ const HowItWorks: React.FC = () => {
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.9, ease: "easeInOut", delay: 0.2 }}
-            className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-[2px] bg-gradient-to-r from-sky-300 via-cyan-400 to-sky-300 -z-0"
+            className="hidden lg:block absolute top-12 left-[12%] right-[12%] h-[2px] bg-sky-700 -z-0"
           />
 
           <motion.div
@@ -115,9 +112,9 @@ const HowItWorks: React.FC = () => {
                   whileHover={{ y: -8, transition: { duration: 0.25 } }}
                   className="relative group flex"
                 >
-                  <div className="relative p-7 pt-8 rounded-3xl bg-[#F8FAFC]/90 border border-slate-200/90 hover:border-sky-300 hover:bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full w-full">
+                  <div className="relative p-7 pt-8 rounded-3xl bg-[#F8FAFC]/90 border border-slate-200/90 hover:border-sky-700 hover:bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full w-full">
                     {/* Floating Number Badge */}
-                    <div className="absolute -top-4 -left-3 bg-[#0B1528] text-white rounded-2xl w-12 h-12 flex items-center justify-center font-black text-lg shadow-md border border-cyan-400/20 group-hover:scale-110 group-hover:bg-sky-800 transition-all duration-300">
+                    <div className="absolute -top-4 -left-3 bg-[#0B1528] text-white rounded-2xl w-12 h-12 flex items-center justify-center font-black text-lg shadow-md border border-sky-700/30 group-hover:scale-110 group-hover:bg-sky-700 transition-all duration-300">
                       {step.number}
                     </div>
 
@@ -128,13 +125,13 @@ const HowItWorks: React.FC = () => {
                           <Icon className="h-6 w-6" />
                         </div>
 
-                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 group-hover:bg-sky-50 group-hover:text-sky-800 transition-colors">
+                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 group-hover:bg-sky-50 group-hover:text-sky-700 transition-colors">
                           {step.tag}
                         </span>
                       </div>
 
                       {/* Step Title & Description */}
-                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-sky-800 transition-colors tracking-tight mb-2">
+                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-sky-700 transition-colors tracking-tight mb-2">
                         {step.title}
                       </h3>
 

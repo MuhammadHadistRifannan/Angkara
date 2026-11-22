@@ -1,7 +1,6 @@
 import React from "react";
 import { motion, type Variants } from "framer-motion";
 import { Compass, Landmark, Trees } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import imgKarangBolong from "@/assets/dest-karang-bolong.jpg";
 import imgMercusuarCimiring from "@/assets/dest-mercusuar-cimiring.png";
 import imgSegaraAnakan from "@/assets/dest-segara-anakan.png";
@@ -67,13 +66,8 @@ const cardVariants: Variants = {
 };
 
 export const IconicDestinations: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     <section id="destinasi-ikonik" className="py-20 sm:py-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden border-t border-slate-200/60">
-      {/* Subtle Coastal Glow */}
-      <div className="absolute top-1/3 -right-24 w-96 h-96 bg-cyan-200/25 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 -left-24 w-96 h-96 bg-sky-200/25 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header */}
@@ -82,12 +76,11 @@ export const IconicDestinations: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center max-w-3xl mx-auto mb-14 sm:mb-16"
+          className="text-center max-w-5xl mx-auto mb-14 sm:mb-16"
         >
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-            Destinasi Ikonik
-            <span className="block mt-1">di Pesisir Cilacap</span>
+          <h2 className="text-[1.6rem] sm:text-[1.75rem] sm:whitespace-nowrap lg:text-4xl xl:text-[2.75rem] font-black text-slate-900 tracking-tight leading-tight">
+            Destinasi Ikonik di Pesisir Cilacap
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
             Empat tujuan wisata bahari dari Teluk Penyu: Pantai Karang Bolong, Pantai
@@ -110,35 +103,33 @@ export const IconicDestinations: React.FC = () => {
               <motion.div
                 key={item.id}
                 variants={cardVariants}
-                whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                onClick={() => navigate("/tour-packages")}
-                className="group relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/70 hover:border-cyan-400/50"
+                className="relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden shadow-lg border border-slate-200/70"
               >
                 {/* Background Image with Zoom */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
 
                 {/* Dark Gradient Overlay for optimal legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/65 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300" />
+                <div  className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/65 to-transparent opacity-90"/>
 
                 {/* Card Content placed at the bottom */}
                 <div className="absolute inset-0 p-6 sm:p-7 flex flex-col justify-end text-white">
                   {/* Badge */}
-                  <div className="flex items-center gap-1.5 text-cyan-300 text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-2.5">
+                  <div className="flex items-center gap-1.5 text-sky-300 text-[11px] sm:text-xs font-bold tracking-wider uppercase mb-2.5">
                     <Icon className="h-3.5 w-3.5 animate-pulse" />
                     <span>{item.tag}</span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight group-hover:text-cyan-300 transition-colors">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
                     {item.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3 group-hover:text-white transition-colors">
+                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3">
                     {item.description}
                   </p>
                 </div>
