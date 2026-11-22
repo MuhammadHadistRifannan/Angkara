@@ -26,9 +26,9 @@ import {
 } from "lucide-react";
 
 import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
-import imgTourMangrove from "@/assets/tour-mangrove-anakan.png";
-import imgTourMancing from "@/assets/tour-mancing-mercusuar.png";
-import destKarangBolong from "@/assets/dest-karang-bolong.jpg";
+import imgTourMangrove from "@/assets/tour-mangrove-boat.jpg";
+import imgTourMancing from "@/assets/tour-fishing-boat.jpg";
+import destKarangBolong from "@/assets/dest-karang-bolong.png";
 import destMercusuarCimiring from "@/assets/dest-mercusuar-cimiring.png";
 import destSegaraAnakan from "@/assets/dest-segara-anakan.png";
 
