@@ -128,7 +128,7 @@ describe("Landing Page Components (SUAR Platform)", () => {
     expect(screen.getByText(/Jelajah Hutan Mangrove/i)).toBeDefined();
   });
 
-    it("ReadyFleetSection merender armada kapal terverifikasi", () => {
+  it("ReadyFleetSection merender armada kapal terverifikasi", () => {
     render(
       React.createElement(
         MemoryRouter,
