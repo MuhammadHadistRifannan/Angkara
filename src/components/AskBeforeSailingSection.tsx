@@ -1,47 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
 import { motion } from "framer-motion";
 import { Check, Zap, Send, Ship } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { AuthModal } from "@/components/AuthModal";
 
 export const AskBeforeSailingSection: React.FC = () => {
-  const navigate = useNavigate();
-  const [questionInput, setQuestionInput] = useState("");
-  const [authOpen, setAuthOpen] = useState(false);
-
-  const handleSendQuestion = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const promptToSend =
-      questionInput.trim() ||
-      "Apakah besok pagi aman menyeberang ke Nusakambangan naik kapal kayu untuk 8 orang?";
-
-    try {
-      sessionStorage.setItem("pending_assistant_prompt", promptToSend);
-    } catch (err) {
-      console.warn("Gagal menyimpan prompt:", err);
-    }
-
-    const authRes = supabase.auth.getSession ? await supabase.auth.getSession() : null;
-    if (!authRes?.data?.session) {
-      setAuthOpen(true);
-      return;
-    }
-    setQuestionInput("");
-    navigate("/dashboard?tab=ai-chat");
-  };
-
-  // Setelah login berhasil dari popup: tutup popup, langsung arahkan ke chatbot di dashboard
-  const handleAuthSuccess = () => {
-    setAuthOpen(false);
-    setQuestionInput("");
-    navigate("/dashboard?tab=ai-chat");
-  };
-
-  const handleSelectBoat = () => {
-    document.getElementById("boats")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <section id="tanya-sebelum-berlayar" className="py-20 sm:py-24 bg-white text-slate-900 relative overflow-hidden border-t border-slate-200/60">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,11 +15,6 @@ export const AskBeforeSailingSection: React.FC = () => {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="lg:col-span-5 space-y-6"
           >
-            {/* Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-900 text-xs font-semibold uppercase tracking-wider shadow-2xs">
-              <span className="h-2 w-2 rounded-full bg-sky-600 animate-pulse" />
-              <span>Asisten Navigasi &amp; Cuaca Maritim</span>
-            </div>
 
             {/* Title */}
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-[1.15]">
@@ -197,51 +153,46 @@ export const AskBeforeSailingSection: React.FC = () => {
                         </div>
                       </div>
 
-                      <motion.button
+                      <button
                         type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleSelectBoat}
-                        className="px-4 py-2 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white text-xs font-bold transition-colors shadow-sm"
+                        disabled
+                        className="px-4 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 text-xs font-bold cursor-not-allowed shadow-none"
+                        title="Simulasi rekomendasi armada kapal"
                       >
                         Pilih
-                      </motion.button>
+                      </button>
                     </div>
                   </div>
                 </motion.div>
               </div>
 
-              {/* Penjelasan contoh — supaya pengunjung tidak mengira ini jawaban live */}
+              {/* Penjelasan contoh — simulasi informatif */}
               <p className="px-5 sm:px-6 pt-3 pb-1 text-[11px] leading-relaxed text-slate-400 bg-slate-50/50">
-                Percakapan di atas hanya contoh — angka gelombang dan statusnya ilustrasi, bukan data live.
-                Untuk jawaban sungguhan, ketik pertanyaanmu di kolom bawah. Kamu akan diarahkan ke asisten pintar Juru Mudi AI di Dashboard (memerlukan akun/masuk).
+                Percakapan di atas merupakan simulasi ilustratif. Fitur interaktif Juru Mudi AI dapat diakses langsung melalui Dashboard Wisatawan.
               </p>
 
-              {/* Chat Input Bar */}
-              <form onSubmit={handleSendQuestion} className="p-4 bg-white border-t border-slate-200/90 flex items-center gap-2.5">
+              {/* Chat Input Bar (Dinonaktifkan di Landing Page) */}
+              <form onSubmit={(e) => e.preventDefault()} className="p-4 bg-white border-t border-slate-200/90 flex items-center gap-2.5">
                 <input
                   type="text"
-                  value={questionInput}
-                  onChange={(e) => setQuestionInput(e.target.value)}
-                  placeholder="Tanya kondisi ombak, rute kapal, atau aturan anak-anak..."
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:bg-white transition-all"
+                  disabled
+                  placeholder="Chat Juru Mudi AI aktif di Dashboard setelah masuk..."
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-slate-100/70 border border-slate-200 text-xs sm:text-sm text-slate-400 placeholder-slate-400 cursor-not-allowed"
                 />
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.92 }}
+                <button
+                  type="button"
+                  disabled
                   aria-label="Kirim Pertanyaan"
-                  className="w-10 h-10 rounded-xl bg-[#0B1528] hover:bg-[#15233e] text-white flex items-center justify-center transition-colors flex-shrink-0 shadow-sm"
+                  className="w-10 h-10 rounded-xl bg-slate-200 text-slate-400 flex items-center justify-center flex-shrink-0 shadow-none cursor-not-allowed transition-colors"
+                  title="Fitur chat interaktif dinonaktifkan di landing page"
                 >
                   <Send className="h-4 w-4" />
-                </motion.button>
+                </button>
               </form>
             </div>
           </motion.div>
         </div>
       </div>
-
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
     </section>
   );
 };

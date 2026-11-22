@@ -126,9 +126,6 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>&copy; 2026 SUAR Cilacap — Berlayar Aman, Berdaya Bersama. Semua hak cipta dilindungi.</p>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-500">Kepatuhan Keselamatan Maritim KSOP & BMKG</span>
-          </div>
         </div>
       </div>
     </footer>

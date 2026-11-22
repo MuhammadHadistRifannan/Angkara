@@ -205,6 +205,7 @@ export const ReadyFleetSection: React.FC = () => {
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
+  const [pendingBoat, setPendingBoat] = useState<FleetBoat | null>(null);
 
   const updateArrows = () => {
     const el = scrollRef.current;
@@ -225,27 +226,30 @@ export const ReadyFleetSection: React.FC = () => {
   // boats berisi 12 kapal ini (id UUID sama) — fetch boleh dinyalakan
   // lagi, dan pemesanan online (RPC create_booking) bisa jalan.
 
-
-  const handleAuthSuccess = () => {
-    setAuthOpen(false);
-    navigate("/dashboard?tab=ai-chat");
+  const openWhatsApp = (boat: FleetBoat) => {
+    const phone = "6281234567890";
+    const message = encodeURIComponent(
+      `Halo Nakhoda ${boat.captainName}, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} (${boat.boatTypeTag}) untuk penyeberangan wisata Teluk Penyu - Nusakambangan.`
+    );
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
   };
 
   const handleChatCaptain = async (boat: FleetBoat) => {
-    const prompt = `Halo, saya ingin menanyakan jadwal ketersediaan kapal ${boat.name} dengan nakhoda ${boat.captainName}.`;
-    try {
-      sessionStorage.setItem("pending_assistant_prompt", prompt);
-    } catch (e) {
-      console.warn("Gagal menyimpan prompt:", e);
-    }
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+    const authRes = supabase.auth.getSession ? await supabase.auth.getSession() : null;
+    if (!authRes?.data?.session) {
+      setPendingBoat(boat);
       setAuthOpen(true);
       return;
     }
-    navigate("/dashboard?tab=ai-chat");
+    openWhatsApp(boat);
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    if (pendingBoat) {
+      openWhatsApp(pendingBoat);
+      setPendingBoat(null);
+    }
   };
 
   const handleBookNow = (boatId: string) => {
@@ -461,7 +465,15 @@ export const ReadyFleetSection: React.FC = () => {
           </div>
         </motion.div>
       </div>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={handleAuthSuccess} />
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => {
+          setAuthOpen(false);
+          setPendingBoat(null);
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </section>
   );
 };

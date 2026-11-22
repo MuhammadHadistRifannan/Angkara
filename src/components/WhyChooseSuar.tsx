@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 const reasons = [
   {
     number: "01",
-    tag: "Telemetri Maritim",
     title: "Analisis AI & BMKG Terpadu",
     description:
       "Sistem kami memadukan data prakiraan gelombang terbaru dengan riwayat arus Teluk Penyu. Status pelayaran Aman, Waspada, atau Tunda mengikuti data terbaru, supaya nahkoda dan wisatawan bisa memutuskan sebelum berangkat.",
@@ -15,7 +14,6 @@ const reasons = [
   },
   {
     number: "02",
-    tag: "Ekonomi Nelayan",
     title: "Ekonomi Nelayan Berkelanjutan",
     description:
       "Tanpa perantara dan tanpa calo di dermaga. Harga tertera di depan, dan biaya sewa dibayar langsung kepada nelayan yang bertugas saat Anda berlayar.",
@@ -24,7 +22,6 @@ const reasons = [
   },
   {
     number: "03",
-    tag: "Lisensi KSOP",
     title: "Standar Keamanan Bahari Ketat",
     description:
       "Setiap armada perahu kayu maupun speedboat melalui verifikasi fisik berkala: kelengkapan rompi pelampung standar ISO, kotak P3K maritim, GPS beacon darurat, serta izin syahbandar.",
@@ -120,9 +117,6 @@ export const WhyChooseSuar: React.FC = () => {
                   <div className="flex items-center justify-between gap-3 mb-5 pb-3 border-b border-slate-100">
                     <span className="font-mono text-3xl sm:text-4xl font-black text-sky-700 tracking-tight group-hover:text-sky-600 transition-colors">
                       {item.number}
-                    </span>
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold tracking-wide uppercase bg-sky-50 border border-sky-200/60 text-sky-800">
-                      {item.tag}
                     </span>
                   </div>
 
