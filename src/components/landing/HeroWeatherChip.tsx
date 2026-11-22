@@ -7,13 +7,15 @@ import { Waves, Wind } from "lucide-react";
  * Plan B: fetch langsung ke Open-Meteo dari browser (bypass Supabase)
  * karena Edge Function marine-conditions masih BOOT_ERROR.
  * Gelombang dari Open-Meteo Marine, angin dari Open-Meteo Forecast
- * (km/h ÷ 1,852 → knot). Status Aman bila gelombang ≤ 1,5 m, Waspada
- * bila di atasnya — ambang yang sama dengan widget hero lama.
+* (km/h ÷ 1,852 → knot). Status Aman bila gelombang ≤ 1,2 m, Waspada
+ * bila di atasnya — ambang 1,2 m ini sama dengan batas zona tenang di
+ * peta (0,5m – 1,2m), supaya status hero tidak pernah bertentangan
+ * dengan kategori gelombang di Peta Kelaikan Pelayaran.
  */
 export const HeroWeatherChip: React.FC = () => {
   const [waveM, setWaveM] = useState<number | null>(null);
   const [windKn, setWindKn] = useState<number | null>(null);
-  const [level, setLevel] = useState<string>("Waspada");
+  const [level, setLevel] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<string>("");
   const [error, setError] = useState(false);
 
@@ -36,10 +38,15 @@ export const HeroWeatherChip: React.FC = () => {
         if (!mounted) return;
         if (wave !== null) setWaveM(wave);
         if (windKmh !== null) setWindKn(windKmh / 1.852);
-        setLevel(wave !== null && wave > 1.5 ? "Waspada" : "Aman");
+        setLevel(wave !== null && wave > 1.2 ? "Waspada" : "Aman");
         setFetchedAt(new Date().toISOString());
       } catch {
-        if (mounted) setError(true);
+        if (mounted) {
+          setError(true);
+          // Data tidak tersedia — tampilkan Waspada (batas aman konservatif),
+          // bukan status loading selamanya.
+          setLevel("Waspada");
+        }
       }
     }
 
@@ -66,7 +73,11 @@ export const HeroWeatherChip: React.FC = () => {
           <span className="relative flex h-2.5 w-2.5">
             <span
               className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                level === "Aman" ? "bg-emerald-400" : "bg-amber-400"
+                level === null
+                  ? "bg-slate-400"
+                  : level === "Aman"
+                  ? "bg-emerald-400"
+                  : "bg-amber-400"
               }`}
             />
             <span
@@ -80,7 +91,11 @@ export const HeroWeatherChip: React.FC = () => {
               level === "Aman" ? "text-emerald-300" : "text-amber-300"
             }`}
           >
-            {level === "Aman" ? "Aman Berlayar" : "Waspada Cuaca"}
+            {level === null
+              ? "Memuat cuaca…"
+              : level === "Aman"
+              ? "Aman Berlayar"
+                : "Waspada Cuaca"}
           </span>
         </div>
 

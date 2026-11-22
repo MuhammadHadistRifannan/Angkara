@@ -37,6 +37,7 @@ const mapRowToPackage = (row: any): PagePackage => ({
 const TourPackages = () => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<PagePackage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingPackageId, setPendingPackageId] = useState<string | null>(null);
 
@@ -71,6 +72,7 @@ const TourPackages = () => {
         .eq("available", true);
       if (!error && data && data.length > 0) {
         setPackages(data.map(mapRowToPackage));
+        setIsLoading(false);
         return;
       }
     } catch {
@@ -93,6 +95,7 @@ const TourPackages = () => {
         maxParticipants: null,
       }))
     );
+    setIsLoading(false);
   };
 
   return (
@@ -193,8 +196,15 @@ const TourPackages = () => {
           ))}
         </div>
 
-        {packages.length === 0 && (
+        {isLoading ? (
           <Card className="mt-8">
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">Memuat paket tour…</p>
+            </CardContent>
+          </Card>
+        ) : (
+          packages.length === 0 && (
+            <Card className="mt-8">
             <CardContent className="py-12 text-center">
               <PackageIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">Belum ada paket tour</h3>
@@ -203,6 +213,7 @@ const TourPackages = () => {
               </p>
             </CardContent>
           </Card>
+          )
         )}
       </div>
 
