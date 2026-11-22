@@ -104,4 +104,22 @@ describe("LiquidNav slot-relative highlight navigation", () => {
     expect(cuacaBtn.className).toContain("text-slate-950");
     expect(berandaBtn.className).not.toContain("text-slate-950");
   });
+
+  it("renders logo Suar with uniform h-7 sm:h-8 styling in both hero and non-hero states", () => {
+    const { rerender } = render(
+      React.createElement(LiquidNav, { show: true, isReducedMotion: true, isInHero: true })
+    );
+
+    const logoHero = screen.getByAltText("Logo Suar") as HTMLImageElement;
+    expect(logoHero.getAttribute("src")).toBe("/logo_suar.png");
+    expect(logoHero.className).toContain("h-7 sm:h-8");
+
+    rerender(
+      React.createElement(LiquidNav, { show: true, isReducedMotion: true, isInHero: false })
+    );
+
+    const logoScrolled = screen.getByAltText("Logo Suar") as HTMLImageElement;
+    expect(logoScrolled.getAttribute("src")).toBe("/LOGO SUAR HORIZONTAL-01.png");
+    expect(logoScrolled.className).toContain("h-7 sm:h-8");
+  });
 });
