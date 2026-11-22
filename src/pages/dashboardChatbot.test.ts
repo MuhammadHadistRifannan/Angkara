@@ -177,4 +177,32 @@ describe("Relokasi Chatbot dari Landing Page ke Dashboard User", () => {
     expect(sessionStorage.getItem("pending_assistant_prompt")).toBeNull();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
+
+  it("tidak pernah merender popup/floating modal Card chatbot di Dashboard atau AssistantWidget", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "tourist-001",
+          email: "tourist@angkara.id",
+          user_metadata: { role: "tourist" },
+        },
+      },
+    } as unknown as { data: { user: null }; error: null });
+
+    const { container } = render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Dashboard)
+      )
+    );
+
+    await waitFor(() => {
+      // Pastikan tidak ada card popup chat mengambang
+      const popupCloseBtn = container.querySelector("button[aria-label*='Tutup Chat Juru Mudi AI']");
+      expect(popupCloseBtn).toBeNull();
+      const popupCard = container.querySelector(".fixed.bottom-4.right-4");
+      expect(popupCard).toBeNull();
+    });
+  });
 });

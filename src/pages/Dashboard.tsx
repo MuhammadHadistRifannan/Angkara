@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { checkIsOperator } from "@/lib/authRoles";
-import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { FullPageAssistant } from "@/components/assistant/FullPageAssistant";
 import { ETicketModal, type ETicketData } from "@/components/ETicketModal";
 import type { User } from "@supabase/supabase-js";
@@ -744,9 +743,6 @@ const Dashboard = () => {
         open={isTicketModalOpen}
         onOpenChange={setIsTicketModalOpen}
       />
-
-      {/* Floating Assistant Widget (Trigger mengambang kanan bawah disembunyikan) */}
-      <AssistantWidget hideFloatingTrigger={true} />
     </div>
   );
 };
