@@ -17,7 +17,7 @@ const reasons = [
     title: "Ekonomi Nelayan Berkelanjutan",
     description:
       "Tanpa perantara dan tanpa calo di dermaga. Harga tertera di depan, dan biaya sewa dibayar langsung kepada nelayan yang bertugas saat Anda berlayar.",
-    linkText: "Transparansi bagi hasil",
+    linkText: "Lihat Armada Kapal",
     action: "scroll-boats",
   },
   {
