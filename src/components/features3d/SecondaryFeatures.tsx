@@ -30,7 +30,7 @@ export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
       className="pt-6 pb-10 focus:outline-none"
       tabIndex={0}
       role="region"
-      aria-label="Karusel Fitur Ekosistem Maritim"
+      aria-label="Karusel Fitur SUAR"
     >
       {/* 
         1. HEADER SECTION
@@ -41,7 +41,7 @@ export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
           Dan Masih Banyak Lagi
         </h4>
         <p className="text-xs sm:text-sm text-slate-400 max-w-2xl mt-2 leading-relaxed">
-          Infrastruktur pelayaran terpadu: e-tiket dan asuransi resmi, telemetri cuaca BMKG, ulasan tervalidasi GPS, dan asisten navigasi AI.
+          Satu tempat untuk pesan tiket, cek cuaca dan gelombang, baca ulasan penumpang, dan tanya Juru Mudi AI sebelum berangkat.        
         </p>
 
         {/* Kontrol aksesibilitas (disembunyikan dari visual sesuai permintaan) */}
@@ -70,7 +70,7 @@ export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
       </div>
 
       {/* 
-        2. GRID 4 KARTU EKOSISTEM (Sederhana, Bersih, Hover-Highlighted)
+        2. GRID 4 KARTU FITUR (Sederhana, Bersih, Hover-Highlighted)
         Format simpel tanpa visual berlebih: badge ringkas, judul, deskripsi jelas, dan tag status.
       */}
       <div

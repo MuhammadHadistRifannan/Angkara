@@ -93,7 +93,7 @@ describe("Landing Page Components (SUAR Platform)", () => {
     expect(
       screen.getByRole("heading", { name: /Mengapa Wisatawan Memilih Platform SUAR\?/i })
     ).toBeDefined();
-    expect(screen.getByText(/Analisis AI & BMKG Terpadu/i)).toBeDefined();
+    expect(screen.getByText(/Cuaca & Analisis AI/i)).toBeDefined();
     expect(screen.getByText(/Ekonomi Nelayan Berkelanjutan/i)).toBeDefined();
     expect(screen.getByText(/Standar Keamanan Bahari Ketat/i)).toBeDefined();
   });

@@ -277,7 +277,7 @@ export const ReadyFleetSection: React.FC = () => {
               Armada Siap Berlayar Hari Ini
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600">
-              Setiap kapal telah lolos inspeksi fisik lambung dan kelengkapan P3K laut.
+              Setiap kapal menampilkan spesifikasi, kapasitas, dan harga sewanya di depan.
             </p>
           </div>
 
@@ -295,7 +295,7 @@ export const ReadyFleetSection: React.FC = () => {
                 12 Kapal
               </span>
               <span className="text-xs font-semibold text-sky-800">
-                Siap Berlayar Hari Ini
+                Terdaftar & Siap Disewa
               </span>
             </div>
           </motion.div>

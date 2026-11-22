@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 const reasons = [
   {
     number: "01",
-    title: "Analisis AI & BMKG Terpadu",
+    title: "Cuaca & Analisis AI",
     description:
       "Sistem kami memadukan data prakiraan gelombang terbaru dengan riwayat arus Teluk Penyu. Status pelayaran Aman, Waspada, atau Tunda mengikuti data terbaru, supaya nahkoda dan wisatawan bisa memutuskan sebelum berangkat.",
     linkText: "Lihat Peta Cuaca Maritim",
@@ -24,10 +24,11 @@ const reasons = [
     number: "03",
     title: "Standar Keamanan Bahari Ketat",
     description:
-      "Setiap armada perahu kayu maupun speedboat melalui verifikasi fisik berkala: kelengkapan rompi pelampung standar ISO, kotak P3K maritim, GPS beacon darurat, serta izin syahbandar.",
+      "Setiap kapal menampilkan spesifikasi dan perlengkapan keselamatannya — rompi pelampung, kotak P3K, dan dokumen izin yang didaftarkan operator.",
     linkText: "Cek lisensi nahkoda",
     action: "permit-info",
   },
+
 ];
 
 const containerVariants: Variants = {
@@ -86,7 +87,7 @@ export const WhyChooseSuar: React.FC = () => {
           </h2>
 
           <p className="mt-3 text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            Standar pelayaran wisata pesisir Cilacap dengan perlindungan keselamatan terpadu dan keadilan tarif bagi nelayan lokal.
+            Pelayaran wisata pesisir Cilacap dengan tarif yang adil bagi nelayan lokal dan info keselamatan yang jelas sebelum berangkat.
           </p>
         </motion.div>
 

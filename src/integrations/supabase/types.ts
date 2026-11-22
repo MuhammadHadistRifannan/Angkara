@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_api_keys: {
+        Row: {
+          api_key: string
+          base_url: string | null
+          created_at: string
+          error_msg: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          priority: number
+          provider: string
+          status: Database["public"]["Enums"]["ai_key_status"]
+          tokens_limit: number | null
+          tokens_used: number
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          base_url?: string | null
+          created_at?: string
+          error_msg?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          priority?: number
+          provider?: string
+          status?: Database["public"]["Enums"]["ai_key_status"]
+          tokens_limit?: number | null
+          tokens_used?: number
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          base_url?: string | null
+          created_at?: string
+          error_msg?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          priority?: number
+          provider?: string
+          status?: Database["public"]["Enums"]["ai_key_status"]
+          tokens_limit?: number | null
+          tokens_used?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+
       boats: {
         Row: {
           available: boolean | null
@@ -295,6 +345,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      ai_key_status: "ACTIVE" | "INACTIVE" | "DEPLETED" | "ERROR"
       boat_type: "speedboat" | "kapal_kayu"
       booking_status: "pending" | "confirmed" | "completed" | "cancelled"
       payment_status: "pending" | "dp_paid" | "fully_paid" | "refunded"

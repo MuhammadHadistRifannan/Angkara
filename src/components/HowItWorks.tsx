@@ -17,15 +17,15 @@ const steps = [
     tag: "AI & BMKG Safety",
     title: "Analisis Cuaca & Review",
     description:
-      "Periksa status keselamatan gelombang maritim dan ulasan asli nakhoda berlisensi KSOP sebelum Anda memesan.",
+      "Periksa status keselamatan gelombang dan ulasan penumpang sebelum Anda memesan.",
   },
   {
     icon: Ship,
     number: "03",
-    tag: "Escrow Terjamin",
+    tag: "DP 30%",
     title: "Booking & Bayar DP",
     description:
-      "Kunci kursi Anda via transaksi database atomik anti-overbooking dan bayar DP 30% terlindungi sistem escrow aman.",
+      "Pilih tanggal dan jumlah penumpang, kunci kursi Anda, lalu bayar DP 30% dan sisanya dibayar saat berangkat.",
   },
   {
     icon: ThumbsUp,
