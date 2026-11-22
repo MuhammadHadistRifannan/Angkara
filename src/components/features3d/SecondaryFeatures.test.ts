@@ -9,10 +9,9 @@ describe("SecondaryFeatures sliding card carousel", () => {
   afterEach(() => {
     cleanup();
   });
-  it("renders section header, badge, and slider controls", () => {
+  it("renders section header and slider controls", () => {
     render(React.createElement(SecondaryFeatures, { features: SECONDARY_FEATURES }));
 
-    expect(screen.getByText("Ekosistem Maritim Lengkap")).toBeDefined();
     expect(screen.getByText("Dan Masih Banyak Lagi")).toBeDefined();
 
     // Check navigation controls

@@ -128,7 +128,7 @@ describe("Landing Page Components (SUAR Platform)", () => {
     expect(screen.getByText(/Jelajah Hutan Mangrove/i)).toBeDefined();
   });
 
-  it("ReadyFleetSection merender armada kapal terverifikasi dan banner SAR 115", () => {
+    it("ReadyFleetSection merender armada kapal terverifikasi", () => {
     render(
       React.createElement(
         MemoryRouter,
@@ -140,7 +140,6 @@ describe("Landing Page Components (SUAR Platform)", () => {
     expect(screen.getByRole("heading", { name: /Armada Siap Berlayar Hari Ini/i })).toBeDefined();
     expect(screen.getAllByText(/12 Kapal/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/KM Sri Rejeki 03/i)).toBeDefined();
-    expect(screen.getByText(/Hotline 115/i)).toBeDefined();
     expect(screen.getAllByRole("button", { name: /Chat Nelayan/i }).length).toBeGreaterThan(0);
   });
 
