@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { MapPin, ChevronDown } from "lucide-react";
-import imgTourTelukPenyu from "@/assets/tour-teluk-penyu.png";
-import imgTourMangrove from "@/assets/tour-mangrove-anakan.png";
-import imgTourMancing from "@/assets/tour-mancing-mercusuar.png";
+import imgTourPesisir from "@/assets/tour-pesisir-nusakambangan.jpg";
+import imgTourMangroveSegara from "@/assets/dest-segara-anakan.png";
+import imgTourFishingBoat from "@/assets/tour-fishing-boat.jpg";
+import imgTourKarangRocks from "@/assets/tour-karang-bolong.png";
+import imgTourKarangBeach from "@/assets/tour-karang-bolong-beach.jpg";
+import imgTourMangroveBoat from "@/assets/tour-mangrove-boat.jpg";
+import imgTourTransport from "@/assets/tour-transport-karang-bolong.jpg";
+import imgTourPath from "@/assets/tour-path-karang-bolong.jpg";
 
 interface TourPackageItem {
   id: string;
@@ -37,7 +42,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Mulai dari",
     price: 35000,
     unit: "/ orang",
-    image_url: imgTourTelukPenyu,
+    image_url: imgTourPesisir,
   },
   {
     id: "pkg-segara-anakan",
@@ -53,7 +58,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Kapal",
     price: 350000,
     unit: "/ group",
-    image_url: imgTourMangrove,
+    image_url: imgTourMangroveSegara,
   },
   {
     id: "pkg-mancing-mercusuar",
@@ -69,7 +74,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Spesial",
     price: 550000,
     unit: "/ paket",
-    image_url: imgTourMancing,
+    image_url: imgTourFishingBoat,
   },
   {
     id: "pkg-sunset-karang-bolong",
@@ -85,7 +90,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Mulai dari",
     price: 75000,
     unit: "/ orang",
-    image_url: imgTourTelukPenyu,
+    image_url: imgTourKarangRocks,
   },
   {
     id: "pkg-snorkeling-karang-bolong",
@@ -101,7 +106,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Mulai dari",
     price: 150000,
     unit: "/ orang",
-    image_url: imgTourTelukPenyu,
+    image_url: imgTourKarangBeach,
   },
   {
     id: "pkg-susur-tambak",
@@ -117,7 +122,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Kapal",
     price: 275000,
     unit: "/ group",
-    image_url: imgTourMangrove,
+    image_url: imgTourMangroveBoat,
   },
   {
     id: "pkg-mancing-malam",
@@ -133,7 +138,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Spesial",
     price: 750000,
     unit: "/ paket",
-    image_url: imgTourMancing,
+    image_url: imgTourTransport,
   },
   {
     id: "pkg-nusakambangan-sehari",
@@ -149,7 +154,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Mulai dari",
     price: 250000,
     unit: "/ orang",
-    image_url: imgTourTelukPenyu,
+    image_url: imgTourPath,
   },
 ];
 

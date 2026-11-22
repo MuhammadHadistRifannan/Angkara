@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, type Variants } from "framer-motion";
 import { Compass, Landmark, Trees } from "lucide-react";
-import imgKarangBolong from "@/assets/dest-karang-bolong.jpg";
+import imgKarangBolong from "@/assets/dest-karang-bolong.png";
 import imgMercusuarCimiring from "@/assets/dest-mercusuar-cimiring.png";
 import imgSegaraAnakan from "@/assets/dest-segara-anakan.png";
 import imgPermisan from "@/assets/tour-teluk-penyu.png";
@@ -103,17 +103,19 @@ export const IconicDestinations: React.FC = () => {
               <motion.div
                 key={item.id}
                 variants={cardVariants}
-                className="relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden shadow-lg border border-slate-200/70"
+                whileHover={{ y: -10, transition: { duration: 0.3 } }}
+                className="group relative h-[380px] sm:h-[420px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-slate-200/70 hover:border-sky-700/50"
               >
                 {/* Background Image with Zoom */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
 
                 {/* Dark Gradient Overlay for optimal legibility */}
-                <div  className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/65 to-transparent opacity-90"/>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-[#090D16]/65 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-300"
+                />
 
                 {/* Card Content placed at the bottom */}
                 <div className="absolute inset-0 p-6 sm:p-7 flex flex-col justify-end text-white">
@@ -124,12 +126,12 @@ export const IconicDestinations: React.FC = () => {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight group-hover:text-sky-300 transition-colors">
                     {item.title}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3">
+                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3 group-hover:text-white transition-colors">
                     {item.description}
                   </p>
                 </div>

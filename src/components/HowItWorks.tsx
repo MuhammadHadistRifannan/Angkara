@@ -73,11 +73,8 @@ const HowItWorks: React.FC = () => {
           className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-3"
         >
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-            Cara Kerja{" "}
-            <span className="text-sky-700">
-              Platform SUAR
-            </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-sky-700 tracking-tight leading-tight">
+            Cara Kerja Platform SUAR
           </h2>
 
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
