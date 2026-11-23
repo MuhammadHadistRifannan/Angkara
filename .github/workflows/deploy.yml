@@ -22,7 +22,6 @@ jobs:
     name: Deploy to Production
     needs: verify
     runs-on: ubuntu-latest
-    environment: production
     timeout-minutes: 15
 
     steps:
@@ -38,59 +37,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build production bundle
+      - name: Deploy to Vercel (Production)
+        id: vercel-deploy
         env:
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-        run: npm run build
-
-      - name: Deploy to Netlify (Production)
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID || vars.NETLIFY_SITE_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'dxXKVkjzTwPTOUzwIkTlHUSl' }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_yWJXOmOqbAr5SsIpk8157ijMD7Mq' }}
         run: |
-          deploy_success=false
-          last_err=""
-          for i in 1 2 3; do
-            echo "Percobaan deploy ke Netlify ke-$i..."
-            # Jalankan deploy dan tangkap stdout serta stderr
-            if npx --yes netlify-cli@27.16.3 deploy \
-              --dir=dist \
-              --prod \
-              --no-build \
-              --message "$GITHUB_SHA" \
-              ${NETLIFY_SITE_ID:+--site="$NETLIFY_SITE_ID"} \
-              ${NETLIFY_AUTH_TOKEN:+--auth="$NETLIFY_AUTH_TOKEN"} \
-              --json > deploy-output.json 2> deploy-error.log; then
-              deploy_success=true
-              echo "Deploy ke Netlify berhasil pada percobaan ke-$i."
-              break
-            else
-              echo "Percobaan deploy ke-$i gagal."
-              cat deploy-output.json || true
-              cat deploy-error.log || true
-              last_err=$(cat deploy-error.log deploy-output.json 2>/dev/null | tr '\n' ' ' | head -c 400)
-              sleep 5
-            fi
-          done
-
-          if [ "$deploy_success" = false ]; then
-            echo "::error::Netlify Deploy Gagal: $last_err"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN tidak ditemukan di GitHub secrets!"
             exit 1
           fi
 
+          echo "Memulai deploy produksi ke Vercel..."
+          deploy_url=$(npx --yes vercel deploy --prod --token="$VERCEL_TOKEN" --yes)
+          echo "Vercel Deploy URL: $deploy_url"
+          echo "deploy_url=$deploy_url" >> $GITHUB_OUTPUT
+
       - name: Smoke test deployed site
         run: |
-          PROD_URL=$(node -e "
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('deploy-output.json', 'utf8'));
-            const targetUrl = data.url || data.deploy_url;
-            if (!targetUrl) {
-              console.error('URL deployment tidak ditemukan pada output deploy Netlify');
-              process.exit(1);
-            }
-            console.log(targetUrl.replace(/\/$/, ''));
-          ")
+          PROD_URL="https://suar-cilacap.vercel.app"
           echo "Target Production URL: $PROD_URL"
 
           success=false
@@ -111,8 +77,8 @@ jobs:
               break
             fi
 
-            echo "Percobaan ke-$i belum berhasil (root id: $has_root_id, dashboard HTTP: $dashboard_code). Menunggu 10 detik..."
-            sleep 10
+            echo "Percobaan ke-$i belum berhasil (root id: $has_root_id, dashboard HTTP: $dashboard_code). Menunggu 5 detik..."
+            sleep 5
           done
 
           if [ "$success" = false ]; then

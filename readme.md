@@ -19,7 +19,7 @@
 **Karya Inovasi Teknologi Maritim untuk Kompetisi IT RUSH 2026**  
 *“Menghubungkan laut, memberdayakan armada rakyat, dan mengawal keselamatan wisatawan dalam satu gerakan digital terintegrasi.”*
 
-[Demo Aplikasi](https://angkara-wia.netlify.app) • [Dokumentasi Deployment](docs/DEPLOYMENT.md) • [Laporan Arsitektur](2026-11-08-juru-mudi-design.md)
+[Demo Aplikasi](https://suar-cilacap.vercel.app) • [Dokumentasi Deployment](docs/DEPLOYMENT.md) • [Laporan Arsitektur](2026-11-08-juru-mudi-design.md)
 
 </div>
 

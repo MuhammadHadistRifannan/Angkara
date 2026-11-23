@@ -46,28 +46,32 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
-      - name: Deploy Preview to Netlify
+      - name: Deploy Preview to Vercel
+        id: vercel-preview
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID || 'dxXKVkjzTwPTOUzwIkTlHUSl' }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID || 'prj_yWJXOmOqbAr5SsIpk8157ijMD7Mq' }}
         run: |
-          npx --yes netlify-cli@27.16.3 deploy \
-            --dir=dist \
-            --no-build \
-            --alias=pr-${{ github.event.number }} \
-            --json > preview-output.json
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN tidak ditemukan di GitHub secrets!"
+            exit 1
+          fi
+
+          echo "Memulai deploy preview ke Vercel..."
+          preview_url=$(npx --yes vercel deploy --token="$VERCEL_TOKEN" --yes)
+          echo "Vercel Preview URL: $preview_url"
+          echo "preview_url=$preview_url" >> $GITHUB_OUTPUT
 
       - name: Post or update PR comment
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const data = JSON.parse(fs.readFileSync('preview-output.json', 'utf8'));
-            const previewUrl = data.deploy_url || data.url;
-            const marker = '<!-- netlify-preview-comment -->';
+            const previewUrl = "${{ steps.vercel-preview.outputs.preview_url }}";
+            const marker = '<!-- vercel-preview-comment -->';
             const commitSha = context.payload.pull_request.head.sha.substring(0, 7);
 
-            const body = `${marker}\n### 🚀 Netlify Deploy Preview\n\n- **Preview URL:** [${previewUrl}](${previewUrl})\n- **Commit:** \`${commitSha}\`\n- **PR:** #${context.issue.number}\n\n*Deploy preview diperbarui secara otomatis setiap ada push baru pada PR ini.*`;
+            const body = `${marker}\n### 🚀 Vercel Deploy Preview\n\n- **Preview URL:** [${previewUrl}](${previewUrl})\n- **Commit:** \`${commitSha}\`\n- **PR:** #${context.issue.number}\n\n*Deploy preview diperbarui secara otomatis setiap ada push baru pada PR ini.*`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
