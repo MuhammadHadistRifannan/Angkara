@@ -33,3 +33,6 @@ supabase/.temp/
 skills-lock.json
 supabase/.branches/
 supabase/snippets/
+
+# Local Netlify folder
+.netlify
