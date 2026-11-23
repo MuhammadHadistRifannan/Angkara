@@ -543,46 +543,16 @@ const AdminDashboard: React.FC = () => {
   const handleTestConnection = async (key: AiApiKeyItem) => {
     setTestingKeyId(key.id);
     try {
-      const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.8-flash"];
-      let lastRes: Response | null = null;
-      let isSuccess = false;
-      let matchedModel = "";
+      // Cek validitas otentikasi kunci secara instan via endpoint metadata model (cepat, <300ms, tanpa antrean inferensi 503)
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
+        method: "GET",
+        headers: {
+          "x-goog-api-key": key.api_key,
+        },
+      });
 
-      for (const m of modelsToTry) {
-        try {
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": key.api_key,
-              },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: "ping" }] }],
-              }),
-            }
-          );
-
-          lastRes = res;
-          if (res.ok) {
-            isSuccess = true;
-            matchedModel = m;
-            break;
-          }
-
-          // Jika kunci memang tidak valid (400, 401, 403), jangan coba model lain
-          if (res.status === 400 || res.status === 401 || res.status === 403) {
-            break;
-          }
-          // Jika 503 (high demand) atau 404, coba fallback ke model berikutnya dalam daftar
-        } catch {
-          // Lanjut coba model berikutnya
-        }
-      }
-
-      if (isSuccess) {
-        toast.success(`Koneksi sukses! Kunci "${key.name}" aktif dan valid (${matchedModel}).`);
+      if (res.ok) {
+        toast.success(`Koneksi sukses! Kunci "${key.name}" aktif dan valid di Google AI Studio.`);
         if (key.status === "DEPLETED" || key.status === "ERROR") {
           await supabase
             .from("ai_api_keys")
@@ -590,15 +560,17 @@ const AdminDashboard: React.FC = () => {
             .eq("id", key.id);
           fetchData();
         }
-      } else if (lastRes?.status === 429) {
+      } else if (res.status === 429) {
         toast.error(`Kunci "${key.name}" terkena batas kuota / rate limit (429).`);
-      } else if (lastRes?.status === 503) {
+      } else if (res.status === 400 || res.status === 401 || res.status === 403) {
+        toast.error(`Kunci "${key.name}" tidak valid / ditolak oleh Google (${res.status}).`);
+      } else if (res.status === 503) {
         toast.warning(
-          `Kunci "${key.name}" valid, namun server Google sedang mengalami lonjakan beban sementara (503). Coba beberapa saat lagi.`
+          `Kunci "${key.name}" valid, namun server Google sedang mengalami lonjakan beban sementara (503). Coba sesaat lagi.`
         );
       } else {
-        const text = lastRes ? await lastRes.text() : "Tidak ada respon";
-        toast.error(`Kunci "${key.name}" gagal diverifikasi (${lastRes?.status ?? "Err"}): ${text.substring(0, 100)}`);
+        const text = await res.text();
+        toast.error(`Kunci "${key.name}" gagal diverifikasi (${res.status}): ${text.substring(0, 100)}`);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
