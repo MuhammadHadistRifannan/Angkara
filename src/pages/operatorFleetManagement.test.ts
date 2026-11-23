@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, fireEvent, within } from "@testing-library/react";
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
 import OperatorDashboard from "./OperatorDashboard";
@@ -291,8 +291,14 @@ describe("OperatorDashboard & BoatModal - Task 4 Manajemen Armada Operator", () 
     });
 
     await waitFor(() => {
-      // Temukan tombol toggle kelaikan pada KM Sri Rejeki 01
-      const toggleBtn = screen.getByRole("button", { name: /Set Docking|Ubah Kelaikan/i });
+      // Temukan tombol ubah status kapal pada kartu KM Sri Rejeki 01
+      const boatNameEl = screen.getByText("KM Sri Rejeki 01");
+      const card = boatNameEl.closest('[class*="rounded-2xl"]');
+      expect(card).not.toBeNull();
+      const toggleBtn = within(card as HTMLElement).getByRole("button", {
+        name: /Tandai Diperbaiki/i,
+      });
+
       expect(toggleBtn).toBeDefined();
       fireEvent.click(toggleBtn);
     });
@@ -303,7 +309,7 @@ describe("OperatorDashboard & BoatModal - Task 4 Manajemen Armada Operator", () 
           available: false,
         })
       );
-      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/status kelaikan/i));
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/diubah menjadi/i));
     });
   });
 });

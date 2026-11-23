@@ -129,16 +129,16 @@ describe("OperatorDashboard - Sidebar & Pengaturan Profil", () => {
 
     await waitFor(() => {
       expect(screen.getByLabelText(/Nama Usaha/i)).toBeDefined();
-      expect(screen.getByLabelText(/Nomor Telepon/i)).toBeDefined();
+      expect(screen.getByLabelText(/Nomor HP/i)).toBeDefined();
     });
 
-    const submitBtn = screen.getByRole("button", { name: /Simpan Perubahan Profil/i });
+    const submitBtn = screen.getByRole("button", { name: /Simpan/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalledWith(
-        expect.stringMatching(/berhasil diperbarui/i)
+        expect.stringMatching(/berhasil disimpan/i)
       );
     });
   });

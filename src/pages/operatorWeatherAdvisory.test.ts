@@ -158,24 +158,24 @@ describe("Sailing Safety Rules & Operator Weather Advisory", () => {
       expect(result.title).toMatch(/AMAN/i);
     });
 
-    it("gelombang 1.1m (mendekati ambang 1.25m) -> status 'waspada' (wajib pelampung SOLAS)", () => {
+    it("gelombang 1.1m (mendekati ambang 1.25m) -> status 'waspada' (wajib jaket pelampung)", () => {
       const result = evaluateSailingSafety(1.1, 10.0, true);
       expect(result.level).toBe("waspada");
       expect(result.title).toMatch(/WASPADA/i);
-      expect(result.actionGuide).toMatch(/SOLAS/i);
+      expect(result.actionGuide).toMatch(/jaket pelampung/i);
     });
 
-    it("gelombang 1.6m atau angin 18 knot -> status 'tunda' (larangan berlayar KSOP)", () => {
+    it("gelombang 1.6m atau angin 18 knot -> status 'tunda' (jangan berlayar dulu)", () => {
       const result = evaluateSailingSafety(1.6, 11.0, true);
       expect(result.level).toBe("tunda");
       expect(result.title).toMatch(/TUNDA|LARANGAN/i);
     });
 
-    it("data gelombang null (sensor offline) -> status maksimal 'waspada', TIDAK PERNAH 'aman'", () => {
+    it("data gelombang null (data tidak ada) -> status maksimal 'waspada', TIDAK PERNAH 'aman'", () => {
       const result = evaluateSailingSafety(null, 10.0, true);
       expect(result.level).toBe("waspada");
       expect(result.level).not.toBe("aman");
-      expect(result.title).toMatch(/TIDAK TERSEDIA|OFFLINE/i);
+      expect(result.title).toMatch(/TIDAK ADA/i);
     });
   });
 
@@ -193,13 +193,13 @@ describe("Sailing Safety Rules & Operator Weather Advisory", () => {
         })
       );
 
-      expect(screen.getByText(/Papan Status Keselamatan Maritim/i)).toBeDefined();
+      expect(screen.getByText(/Cuaca Laut Hari Ini/i)).toBeDefined();
       expect(screen.getAllByText(/0.7 m/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/8.5 knot/i).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText(/AMAN BERLAYAR/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Boleh Berlayar/i).length).toBeGreaterThanOrEqual(1);
     });
 
-    it("menampilkan alert bahaya dan instruksi KSOP saat kondisi laut berstatus 'tunda'", async () => {
+    it("menampilkan alert bahaya saat kondisi laut berstatus 'tunda'", async () => {
       render(
         React.createElement(OperatorWeatherAdvisory, {
           initialData: {
@@ -230,7 +230,7 @@ describe("Sailing Safety Rules & Operator Weather Advisory", () => {
         })
       );
 
-      expect(screen.getAllByText(/Realtime|Auto-refresh/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/Diperbarui otomatis|Otomatis diperbarui/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByRole("combobox", { name: /Mode Telemetri Cuaca/i })).toBeDefined();
     });
 
@@ -272,7 +272,7 @@ describe("Sailing Safety Rules & Operator Weather Advisory", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/Papan Status Keselamatan Maritim/i)).toBeDefined();
+        expect(screen.getByText(/Cuaca Laut Hari Ini/i)).toBeDefined();
         expect(screen.getByText(/Teluk Penyu & Nusakambangan/i)).toBeDefined();
       });
     });

@@ -195,7 +195,7 @@ describe("OperatorDashboard - Task 3 Konsol Booking Operator", () => {
       // Verifikasi tombol-tombol filter status booking hadir
       expect(screen.getByRole("button", { name: /Filter status: Semua/i })).toBeDefined();
       expect(screen.getByRole("button", { name: /Filter status: Menunggu/i })).toBeDefined();
-      expect(screen.getByRole("button", { name: /Filter status: Terkonfirmasi/i })).toBeDefined();
+      expect(screen.getByRole("button", { name: /Filter status: Diterima/i })).toBeDefined();
       expect(screen.getByRole("button", { name: /Filter status: Selesai/i })).toBeDefined();
     });
   });
@@ -228,7 +228,7 @@ describe("OperatorDashboard - Task 3 Konsol Booking Operator", () => {
       expect(mockUpdateFn).toHaveBeenCalledWith(
         expect.objectContaining({ booking_status: "confirmed" })
       );
-      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/dikonfirmasi/i));
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/diterima/i));
     });
   });
 
@@ -248,8 +248,8 @@ describe("OperatorDashboard - Task 3 Konsol Booking Operator", () => {
     });
 
     await waitFor(() => {
-      // Temukan tombol 'Selesaikan Trip' pada booking terkonfirmasi
-      const completeBtn = screen.getByRole("button", { name: /Selesaikan Trip/i });
+      // Temukan tombol 'Selesaikan Perjalanan' pada booking terkonfirmasi
+      const completeBtn = screen.getByRole("button", { name: /Selesaikan Perjalanan/i });
       expect(completeBtn).toBeDefined();
       fireEvent.click(completeBtn);
     });

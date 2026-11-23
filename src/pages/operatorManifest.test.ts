@@ -122,7 +122,7 @@ describe("OperatorDashboard & ManifestModal - Task 5 Manifes Penumpang & Checkli
     cleanup();
   });
 
-  it("menampilkan tombol 'Manifes KSOP' pada kartu booking di tab Booking", async () => {
+  it("menampilkan tombol 'Daftar Penumpang' pada kartu booking di tab Booking", async () => {
     render(
       React.createElement(
         MemoryRouter,
@@ -138,12 +138,12 @@ describe("OperatorDashboard & ManifestModal - Task 5 Manifes Penumpang & Checkli
     });
 
     await waitFor(() => {
-      const manifestBtn = screen.getByRole("button", { name: /Manifes KSOP/i });
+      const manifestBtn = screen.getByRole("button", { name: /Daftar Penumpang/i });
       expect(manifestBtn).toBeDefined();
     });
   });
 
-  it("membuka ManifestModal dan menampilkan lembar resmi KSOP, rincian penumpang, dan alokasi pelampung SOLAS", () => {
+  it("membuka ManifestModal dan menampilkan daftar penumpang, rincian penumpang, dan alokasi jaket pelampung", () => {
     render(
       React.createElement(ManifestModal, {
         open: true,
@@ -153,15 +153,15 @@ describe("OperatorDashboard & ManifestModal - Task 5 Manifes Penumpang & Checkli
       })
     );
 
-    expect(screen.getByText(/KANTOR KESYAHBANDARAN DAN OTORITAS PELABUHAN/i)).toBeDefined();
-    expect(screen.getAllByText(/LEMBAR MANIFES PENUMPANG & CHECKLIST KELAIKAN/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/POS DERMAGA PANDANARANG/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/DAFTAR PENUMPANG & CEK KAPAL/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/KM Sri Rejeki 01/i)).toBeDefined();
     expect(screen.getByText(/4 Orang/i)).toBeDefined();
-    expect(screen.getByText(/4 Jaket Pelampung SOLAS/i)).toBeDefined();
+    expect(screen.getByText(/4 Jaket Pelampung Siap/i)).toBeDefined();
     expect(screen.getByText(/Bawa 1 balita dan 1 lansia/i)).toBeDefined();
   });
 
-  it("menampilkan 5 butir checklist kepatuhan kelaikan Syahbandar KSOP dan dapat dicentang", () => {
+  it("menampilkan 5 butir cek kapal sebelum berlayar dan dapat dicentang", () => {
     render(
       React.createElement(ManifestModal, {
         open: true,
@@ -171,14 +171,14 @@ describe("OperatorDashboard & ManifestModal - Task 5 Manifes Penumpang & Checkli
       })
     );
 
-    expect(screen.getByText(/Rompi pelampung standar SOLAS/i)).toBeDefined();
-    expect(screen.getByText(/Kotak P3K Maritim & senter isyarat/i)).toBeDefined();
-    expect(screen.getByText(/Kondisi mesin kapal, kemudi, dan bahan bakar cadangan/i)).toBeDefined();
-    expect(screen.getByText(/Telemetri cuaca maritim BMKG/i)).toBeDefined();
+    expect(screen.getByText(/Jaket pelampung tersedia sejumlah penumpang/i)).toBeDefined();
+    expect(screen.getByText(/Kotak P3K & senter darurat siap dipakai/i)).toBeDefined();
+    expect(screen.getByText(/Mesin, kemudi, dan bahan bakar cadangan sudah siap/i)).toBeDefined();
+    expect(screen.getByText(/Prakiraan gelombang & angin/i)).toBeDefined();
     expect(screen.getByText(/Surat Persetujuan Berlayar/i)).toBeDefined();
   });
 
-  it("tombol 'Cetak Manifes' memanggil window.print()", () => {
+  it("tombol 'Cetak Daftar Penumpang' memanggil window.print()", () => {
     const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
 
     render(
@@ -190,7 +190,7 @@ describe("OperatorDashboard & ManifestModal - Task 5 Manifes Penumpang & Checkli
       })
     );
 
-    const printBtn = screen.getByRole("button", { name: /Cetak Manifes/i });
+    const printBtn = screen.getByRole("button", { name: /Cetak Daftar Penumpang/i });
     expect(printBtn).toBeDefined();
     fireEvent.click(printBtn);
 
