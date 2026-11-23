@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,8 +37,9 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BoatModal, type OperatorBoatData } from "@/components/BoatModal";
-import { ManifestModal } from "@/components/ManifestModal";
+import { ManifestModal, type ManifestBookingData } from "@/components/ManifestModal";
 import {
   TourPackageModal,
   type OperatorTourPackageData,
@@ -48,6 +49,7 @@ import {
   type SailingSafetyLevel,
   type SailingSafetyVerdict,
 } from "@/components/weather/OperatorWeatherAdvisory";
+import { buildDailyStats } from "@/lib/operatorStats";
 
 interface OperatorData {
   id: string;
@@ -57,7 +59,11 @@ interface OperatorData {
   verified: boolean;
   phone: string;
   email: string;
+  sailing_status?: string | null;
+  sailing_status_note?: string | null;
+  sailing_status_updated_at?: string | null;
 }
+
 
 interface OperatorBoat {
   id: string;
@@ -93,6 +99,36 @@ interface OperatorBooking {
 }
 
 type BookingFilterType = "all" | "pending" | "confirmed" | "completed" | "cancelled";
+
+
+// Tooltip grafik booking & pemasukan (format rupiah).
+const ChartTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { name?: string; value?: number | string }[];
+  label?: string;
+}) => {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div className="bg-white border border-slate-200 p-3 rounded-xl shadow-lg text-xs space-y-1">
+      <div className="font-bold text-slate-900 border-b border-slate-100 pb-1">{label}</div>
+      {payload.map((entry, i) => (
+        <div key={i} className="flex items-center justify-between gap-4">
+          <span className="text-slate-600">{entry.name}</span>
+          <span className="font-bold text-slate-900">
+            {entry.name === "Pemasukan"
+              ? `Rp ${Number(entry.value || 0).toLocaleString("id-ID")}`
+              : entry.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 
 
 // Uang yang sudah masuk: lunas dihitung penuh, DP dihitung 30%.
@@ -140,6 +176,10 @@ const OperatorDashboard = () => {
     pendingBookings: 0,
   });
   const [currentSafety, setCurrentSafety] = useState<SailingSafetyLevel>("aman");
+const [sailingStatus, setSailingStatus] = useState<string>("auto");
+const [sailingNote, setSailingNote] = useState("");
+const [isSavingSailingStatus, setIsSavingSailingStatus] = useState(false);
+
   const [, setSafetyVerdict] = useState<SailingSafetyVerdict | null>(null);
 
   // State navigasi tab, mobile sidebar drawer, dan profil operator
@@ -218,6 +258,9 @@ const OperatorDashboard = () => {
       setEditCompanyName(operatorData.company_name || "");
       setEditPhone(operatorData.phone || "");
       setEditKsopCert(operatorData.ksop_certificate || "");
+      const opData = operatorData as OperatorData;
+      setSailingStatus(opData.sailing_status || "auto");
+      setSailingNote(opData.sailing_status_note || "");
       fetchBoats(operatorData.id);
       fetchBookings(operatorData.id);
       fetchPackages(operatorData.id);
@@ -541,18 +584,67 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
   }
 };
 
+// Buka dialog daftar penumpang
+const handleOpenManifest = (booking: OperatorBooking) => {
+  setSelectedBookingForManifest(booking);
+  setIsManifestModalOpen(true);
+};
 
-  // Buka dialog lembar manifes penumpang & checklist KSOP
-  const handleOpenManifest = (booking: OperatorBooking) => {
-    setSelectedBookingForManifest(booking);
-    setIsManifestModalOpen(true);
-  };
+// Check-in dari daftar penumpang: tandai penumpang sudah naik.
+// (Memakai status "Selesai" yang sudah ada; belum ada status "Sudah Berangkat" sendiri.)
+const handleCheckInFromManifest = async (booking: ManifestBookingData) => {
+  await handleUpdateBookingStatus(booking.id, "completed");
+  setIsManifestModalOpen(false);
+};
+
 
   // Handler update status keselamatan maritim dari papan telemetri
-  const handleWeatherStatusChange = useCallback((verdict: SailingSafetyVerdict) => {
-    setCurrentSafety(verdict.level);
-    setSafetyVerdict(verdict);
-  }, []);
+const handleWeatherStatusChange = useCallback((verdict: SailingSafetyVerdict) => {
+  setCurrentSafety(verdict.level);
+  setSafetyVerdict(verdict);
+}, []);
+
+// Simpan status berlayar hari ini (diisi operator tiap pagi).
+// "auto" = ikut cuaca otomatis; selain itu status manual operator yang dipakai.
+const handleSaveSailingStatus = async () => {
+  if (!operator?.id) return;
+  setIsSavingSailingStatus(true);
+  try {
+    // "as never": kolom baru belum ada di tipe Supabase yang digenerate
+    // (tipe diperbarui setelah migrasi diterapkan). Saat runtime, kalau kolom
+    // belum ada, update gagal dan ditangkap di catch di bawah.
+    const { error } = await supabase
+      .from("operators")
+      .update({
+        sailing_status: sailingStatus,
+        sailing_status_note: sailingNote.trim() || null,
+        sailing_status_updated_at: new Date().toISOString(),
+      } as never)
+      .eq("id", operator.id);
+    if (error) throw error;
+    setOperator((prev) =>
+      prev
+        ? {
+            ...prev,
+            sailing_status: sailingStatus,
+            sailing_status_note: sailingNote.trim() || null,
+            sailing_status_updated_at: new Date().toISOString(),
+          }
+        : null
+    );
+    toast.success("Status berlayar hari ini sudah disimpan");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg.includes("sailing_status")) {
+      toast.error("Status belum bisa disimpan, database belum diperbarui");
+    } else {
+      toast.error("Gagal menyimpan status berlayar");
+    }
+  } finally {
+    setIsSavingSailingStatus(false);
+  }
+};
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -646,9 +738,20 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
   const cancelledCount = bookings.filter((b) => b.booking_status === "cancelled").length;
 
   const filteredBookings = bookings.filter((b) => {
-    if (bookingFilter === "all") return true;
-    return b.booking_status === bookingFilter;
-  });
+  if (bookingFilter === "all") return true;
+  return b.booking_status === bookingFilter;
+});
+
+// Status berlayar yang dipakai: kalau operator sudah isi manual, pakai itu.
+// Kalau tidak, ikut cuaca otomatis (Open-Meteo).
+const effectiveSafety: SailingSafetyLevel =
+  operator?.sailing_status && operator.sailing_status !== "auto"
+    ? (operator.sailing_status as SailingSafetyLevel)
+    : currentSafety;
+
+const dailyStats = useMemo(() => buildDailyStats(bookings), [bookings]);
+const hasChartData = dailyStats.some((s) => s.booking > 0);
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
@@ -886,10 +989,82 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
               )}
             </div>
 
-            {/* Papan Status Keselamatan Maritim Live BMKG / Open-Meteo */}
-            <div>
-              <OperatorWeatherAdvisory onStatusChange={handleWeatherStatusChange} />
-            </div>
+            {/* Cuaca Laut Hari Ini */}
+<div>
+  <OperatorWeatherAdvisory onStatusChange={handleWeatherStatusChange} />
+</div>
+
+{/* Status Berlayar Hari Ini (diisi operator tiap pagi) */}
+<Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+      <Anchor className="h-5 w-5 text-primary" />
+      Status Berlayar Hari Ini
+    </CardTitle>
+    <CardDescription className="text-xs text-slate-500">
+      Isi tiap pagi sebelum kapal berangkat. Kalau diisi manual, status ini yang tampil di kapal Anda.
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="space-y-3">
+    <div className="flex flex-wrap gap-2">
+      {(
+        [
+          ["auto", "Ikut Cuaca Otomatis"],
+          ["aman", "Aman"],
+          ["waspada", "Waspada"],
+          ["tunda", "Tunda"],
+        ] as const
+      ).map(([value, label]) => (
+        <Button
+          key={value}
+          type="button"
+          variant={sailingStatus === value ? "default" : "outline"}
+          size="sm"
+          onClick={() => setSailingStatus(value)}
+          className="rounded-xl text-xs font-bold"
+        >
+          {label}
+        </Button>
+      ))}
+    </div>
+    <div className="space-y-1.5">
+      <Label htmlFor="sailingNote" className="text-xs font-bold text-slate-700">
+        Catatan (boleh kosong)
+      </Label>
+      <Input
+        id="sailingNote"
+        value={sailingNote}
+        onChange={(e) => setSailingNote(e.target.value)}
+        placeholder="cth. Ombak besar di luar Teluk Penyu"
+        className="rounded-xl border-slate-200 text-sm"
+      />
+    </div>
+    <Button
+      type="button"
+      variant="hero"
+      size="sm"
+      disabled={isSavingSailingStatus}
+      onClick={handleSaveSailingStatus}
+      className="rounded-xl text-xs font-bold"
+    >
+      {isSavingSailingStatus ? "Menyimpan..." : "Simpan Status Hari Ini"}
+    </Button>
+    {operator?.sailing_status_updated_at && (
+      <p className="text-[11px] text-slate-400">
+        Terakhir disimpan:{" "}
+        {new Date(operator.sailing_status_updated_at).toLocaleString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}{" "}
+        WIB
+      </p>
+    )}
+  </CardContent>
+</Card>
+
 
             {/* Stats Cards Ringkasan */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -956,7 +1131,7 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-5 bg-sky-50 rounded-2xl border border-sky-100">
+                <div className="p-5 bg-primary/5 rounded-2xl border border-primary/20">
                   <h4 className="font-bold text-sm text-slate-900 mb-3">Total Selama Ini</h4>
                   <div className="grid md:grid-cols-3 gap-4 text-xs">
                     <div>
@@ -981,6 +1156,47 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
                 </div>
               </CardContent>
             </Card>
+            {/* Grafik Booking & Pemasukan 14 Hari Terakhir */}
+  <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
+        <TrendingUp className="h-5 w-5 text-primary" />
+        Booking 14 Hari Terakhir
+      </CardTitle>
+      <CardDescription className="text-xs text-slate-500">
+        Jumlah booking masuk dan pemasukan tiap hari.
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      {hasChartData ? (
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={dailyStats} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={{ stroke: "#e2e8f0" }} interval="preserveStartEnd" />
+              <YAxis yAxisId="left" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) =>
+                  v >= 1000000 ? `${(v / 1000000).toFixed(1)} jt` : `${Math.round(v / 1000)} rb`
+                }
+              />
+              <Tooltip content={<ChartTooltip />} />
+              <Legend />
+              <Bar yAxisId="left" dataKey="booking" name="Booking Masuk" fill="#0b4f9c" radius={[6, 6, 0, 0]} />
+              <Line yAxisId="right" type="monotone" dataKey="pemasukan" name="Pemasukan" stroke="#059669" strokeWidth={2} dot={false} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500 py-8 text-center">Belum ada booking masuk 14 hari terakhir.</p>
+      )}
+    </CardContent>
+  </Card>
           </TabsContent>
 
           {/* TAB 1: Kapal Saya */}
@@ -1034,11 +1250,11 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
                       <div className="flex justify-between items-center py-1">
                         <span className="text-slate-500">Cuaca Hari Ini:</span>
                         <span>
-                          {currentSafety === "aman" ? (
+                          {effectiveSafety === "aman" ? (
                             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold">
                               ● Aman Berlayar
                             </Badge>
-                          ) : currentSafety === "waspada" ? (
+                          ) : effectiveSafety === "waspada" ? (
                             <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-bold">
                               ▲ Waspada
                             </Badge>
@@ -1309,8 +1525,8 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
               </div>
             </div>
 
-            {/* Peringatan Darurat KSOP bila kondisi cuaca Tunda */}
-            {currentSafety === "tunda" && (
+            {/* Peringatan bila cuaca Tunda */}
+            {effectiveSafety === "tunda" && (
               <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-900 flex items-start gap-3">
                 <AlertOctagon className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
                 <div className="text-xs sm:text-sm">
@@ -1349,7 +1565,7 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
                                   {getPaymentLabel(booking.payment_status)}
                                 </strong>
                               </span>
-                              {currentSafety === "tunda" &&
+                              {effectiveSafety === "tunda" &&
                                 (booking.booking_status === "pending" ||
                                   booking.booking_status === "confirmed") && (
                                   <Badge className="bg-rose-100 text-rose-900 border-rose-300 font-bold text-[10px]">
@@ -1590,13 +1806,16 @@ const handleCopyBooking = async (booking: OperatorBooking) => {
         onSaveSuccess={handleBoatSaved}
       />
 
-      {/* Modal Lembar Manifes & Checklist KSOP */}
+      {/* Modal Daftar Penumpang & Cek Kapal */}
       <ManifestModal
         open={isManifestModalOpen}
         onOpenChange={setIsManifestModalOpen}
         booking={selectedBookingForManifest}
         operatorName={operator?.company_name}
+        onCheckIn={handleCheckInFromManifest}
+        isCheckingIn={isUpdating === selectedBookingForManifest?.id}
       />
+
 
       {/* Modal Tambah / Edit Paket Wisata */}
       <TourPackageModal

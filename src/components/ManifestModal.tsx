@@ -19,7 +19,9 @@ import {
   Clock,
   Users,
   FileCheck2,
+  CheckCircle2,
 } from "lucide-react";
+
 import logoSuar from "@/assets/logo-suar.png";
 
 export interface ManifestBookingData {
@@ -42,7 +44,10 @@ export interface ManifestModalProps {
   onOpenChange: (open: boolean) => void;
   booking: ManifestBookingData | null;
   operatorName?: string;
+  onCheckIn?: (booking: ManifestBookingData) => void;
+  isCheckingIn?: boolean;
 }
+
 
 const DEFAULT_CHECKLIST = [
   {
@@ -76,7 +81,9 @@ export const ManifestModal: React.FC<ManifestModalProps> = ({
   open,
   onOpenChange,
   booking,
-  operatorName = "Koperasi Nelayan Pandanarang Cilacap",
+    operatorName = "Koperasi Nelayan Pandanarang Cilacap",
+  onCheckIn,
+  isCheckingIn,
 }) => {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
     lifejackets: false,
@@ -288,15 +295,34 @@ export const ManifestModal: React.FC<ManifestModalProps> = ({
             Tutup
           </Button>
 
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handlePrint}
-            className="rounded-xl text-xs font-bold bg-[#090D16] hover:bg-slate-800 text-white gap-2 shadow-md px-4"
-          >
-            <Printer className="h-4 w-4" />
-            <span>Cetak Daftar Penumpang</span>
-          </Button>
+          <div className="flex items-center gap-2">
+  {booking &&
+    booking.booking_status !== "completed" &&
+    booking.booking_status !== "cancelled" &&
+    onCheckIn && (
+      <Button
+        variant="default"
+        size="sm"
+        disabled={isCheckingIn}
+        onClick={() => onCheckIn(booking)}
+        className="rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-md px-4"
+      >
+        <CheckCircle2 className="h-4 w-4" />
+        <span>{isCheckingIn ? "Menyimpan..." : "Tandai Sudah Berangkat"}</span>
+      </Button>
+    )}
+
+  <Button
+    variant="default"
+    size="sm"
+    onClick={handlePrint}
+    className="rounded-xl text-xs font-bold bg-[#090D16] hover:bg-slate-800 text-white gap-2 shadow-md px-4"
+  >
+    <Printer className="h-4 w-4" />
+    <span>Cetak Daftar Penumpang</span>
+  </Button>
+</div>
+
         </DialogFooter>
       </DialogContent>
     </Dialog>
