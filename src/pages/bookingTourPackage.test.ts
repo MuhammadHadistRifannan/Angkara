@@ -210,13 +210,24 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
+      expect(screen.getByTestId("pay-now-button")).toBeDefined();
+    });
+
+    const payNowBtn = screen.getByTestId("pay-now-button");
+    fireEvent.click(payNowBtn);
+
+    await waitFor(() => {
       expect(mockRpc).toHaveBeenCalledWith("create_booking", expect.objectContaining({
         p_boat_id: "boat-op-1",
         p_passengers: 1,
         p_time: "09:00",
       }));
       expect(toast.success).toHaveBeenCalledWith("Booking berhasil dibuat!");
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+      expect(screen.getByText(/Pemesanan & Pembayaran Berhasil!/i)).toBeDefined();
     });
+
+    const dashboardBtn = screen.getByRole("button", { name: /Buka di Dashboard/i });
+    fireEvent.click(dashboardBtn);
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
 });

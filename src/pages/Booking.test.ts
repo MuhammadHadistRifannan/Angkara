@@ -70,7 +70,7 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
     cleanup();
   });
 
-  it("berhasil membuat booking via RPC create_booking dan navigasi ke dashboard", async () => {
+  it("berhasil melalui progress bar, memilih metode pembayaran Midtrans, dan membuat booking", async () => {
     const { supabase: s } = await import("@/integrations/supabase/client");
     const mockRpc = s.rpc as unknown as ReturnType<typeof vi.fn>;
     mockRpc.mockResolvedValue({
@@ -86,10 +86,13 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
       )
     );
 
+    // Langkah 1: Detail Trip & Formulir
     await waitFor(() => {
       expect(screen.getByText("Baruna Express")).toBeDefined();
       expect(screen.getByText("Harga per pax")).toBeDefined();
       expect(screen.getByLabelText(/Tujuan Penyeberangan/i)).toBeDefined();
+      expect(screen.getByText("Detail Trip")).toBeDefined();
+      expect(screen.getByText("Metode Pembayaran")).toBeDefined();
     });
 
     const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
@@ -108,7 +111,18 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
     const notesInput = screen.getByPlaceholderText(/Tambahkan catatan/i);
     fireEvent.change(notesInput, { target: { value: "Bawa rombongan keluarga" } });
 
+    // Lanjut ke Step 2: Pembayaran
     fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pilih Metode & Skema Pembayaran/i)).toBeDefined();
+      expect(screen.getByText(/Bayar DP 30%/i)).toBeDefined();
+      expect(screen.getByText(/Bayar Lunas 100%/i)).toBeDefined();
+    });
+
+    // Klik tombol Bayar Sekarang
+    const payNowBtn = screen.getByTestId("pay-now-button");
+    fireEvent.click(payNowBtn);
 
     await waitFor(() => {
       expect(mockRpc).toHaveBeenCalledWith("create_booking", expect.objectContaining({
@@ -118,11 +132,16 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
         p_notes: expect.stringContaining("Bawa rombongan keluarga"),
       }));
       expect(toast.success).toHaveBeenCalledWith("Booking berhasil dibuat!");
-      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+      expect(screen.getByText(/Pemesanan & Pembayaran Berhasil!/i)).toBeDefined();
     });
+
+    // Klik tombol dashboard pada e-tiket
+    const dashboardBtn = screen.getByRole("button", { name: /Buka di Dashboard/i });
+    fireEvent.click(dashboardBtn);
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("menampilkan pesan galat 'not_enough_seats' dan mempertahankan isian form", async () => {
+  it("menampilkan pesan galat 'not_enough_seats' saat proses pembayaran gagal kursi", async () => {
     const { supabase: s } = await import("@/integrations/supabase/client");
     const mockRpc = s.rpc as unknown as ReturnType<typeof vi.fn>;
     mockRpc.mockResolvedValue({
@@ -158,11 +177,16 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
+      expect(screen.getByTestId("pay-now-button")).toBeDefined();
+    });
+
+    const payNowBtn = screen.getByTestId("pay-now-button");
+    fireEvent.click(payNowBtn);
+
+    await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
         "Kursi tidak cukup untuk tanggal ini. Coba kurangi penumpang atau pilih tanggal lain."
       );
-      expect(paxInput.value).toBe("5");
-      expect(notesInput.value).toBe("Catatan tetap ada");
       expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
@@ -195,6 +219,13 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
 
     const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
     fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pay-now-button")).toBeDefined();
+    });
+
+    const payNowBtn = screen.getByTestId("pay-now-button");
+    fireEvent.click(payNowBtn);
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Silakan login terlebih dahulu.");
