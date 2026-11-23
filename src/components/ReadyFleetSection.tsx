@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthModal } from "@/components/AuthModal";
 import { supabase } from "@/integrations/supabase/client";
 import { ShieldCheck, Star, MessageSquare, PhoneCall, Radio, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 
 interface FleetBoat {
   id: string;
@@ -206,6 +207,7 @@ export const ReadyFleetSection: React.FC = () => {
   const [canNext, setCanNext] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [pendingBoat, setPendingBoat] = useState<FleetBoat | null>(null);
+  const [pendingBookingBoatId, setPendingBookingBoatId] = useState<string | null>(null);
 
   const updateArrows = () => {
     const el = scrollRef.current;
@@ -246,13 +248,28 @@ export const ReadyFleetSection: React.FC = () => {
 
   const handleAuthSuccess = () => {
     setAuthOpen(false);
-    if (pendingBoat) {
+    if (pendingBookingBoatId) {
+      const boatId = pendingBookingBoatId;
+      setPendingBookingBoatId(null);
+      navigate(`/booking?boat=${encodeURIComponent(boatId)}`);
+    } else if (pendingBoat) {
       openWhatsApp(pendingBoat);
       setPendingBoat(null);
     }
   };
 
-  const handleBookNow = (boatId: string) => {
+  const handleBookNow = async (boatId: string) => {
+    const authRes = supabase.auth.getSession ? await supabase.auth.getSession() : null;
+    if (!authRes?.data?.session) {
+      if (typeof toast.info === "function") {
+        toast.info("Silakan login terlebih dahulu untuk memesan tiket.");
+      } else if (typeof toast.error === "function") {
+        toast.error("Silakan login terlebih dahulu untuk memesan tiket.");
+      }
+      setPendingBookingBoatId(boatId);
+      setAuthOpen(true);
+      return;
+    }
     navigate(`/booking?boat=${encodeURIComponent(boatId)}`);
   };
 
@@ -428,6 +445,7 @@ export const ReadyFleetSection: React.FC = () => {
         onClose={() => {
           setAuthOpen(false);
           setPendingBoat(null);
+          setPendingBookingBoatId(null);
         }}
         onSuccess={handleAuthSuccess}
       />

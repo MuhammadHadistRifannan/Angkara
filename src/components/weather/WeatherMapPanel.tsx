@@ -58,7 +58,7 @@ function levelFor(waveM: number | null, isWooden: boolean): "aman" | "waspada" |
 function categoryFor(waveM: number | null): string {
   if (waveM === null) return "TIDAK DIKETAHUI";
   if (waveM < 0.5) return "TENANG";
-  if (waveM <= 1.2) return "SEDANG";
+  if (waveM <= 1.25) return "SEDANG";
   if (waveM <= 2.0) return "TINGGI";
   return "SANGAT TINGGI";
 }

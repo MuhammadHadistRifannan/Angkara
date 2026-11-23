@@ -349,7 +349,7 @@ export const TourPackagesSection: React.FC = () => {
               <span>
                 {showAll
                   ? "Tampilkan Lebih Sedikit"
-                  : `Lihat Semua Rute (${filteredPackages.length} Paket)`}
+                  : "Lihat Semua Rute"}
               </span>
               <ChevronDown
                 className={`w-4 h-4 transition-transform duration-200 ${

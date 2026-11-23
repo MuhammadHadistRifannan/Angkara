@@ -475,6 +475,13 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 flex items-center gap-1 shadow-2xs"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Live BMKG &amp; Open-Meteo
+          </Badge>
+          <Badge
+            variant="outline"
             className={`px-3 py-1 text-xs font-bold tracking-wide ${styles.badge}`}
           >
             {verdict.title.split(":")[0]}

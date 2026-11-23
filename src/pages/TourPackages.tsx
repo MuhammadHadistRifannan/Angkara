@@ -64,8 +64,29 @@ const CATEGORY_LABELS: Record<string, string> = {
   mancing: "Mancing & Mercusuar",
 };
 
-const getPackageImage = (pkg: PagePackage): string =>
-  PKG_IMAGES_BY_ID[pkg.id] ?? imgTourPesisir;
+const getPackageImage = (pkg: PagePackage): string => {
+  if (PKG_IMAGES_BY_ID[pkg.id]) {
+    return PKG_IMAGES_BY_ID[pkg.id];
+  }
+  const nameLower = (pkg.name || "").toLowerCase();
+  const descLower = (pkg.description || "").toLowerCase();
+  const destLower = (pkg.destination || "").toLowerCase();
+  const fullText = `${nameLower} ${descLower} ${destLower}`;
+
+  if (fullText.includes("mangrove") || fullText.includes("segara") || fullText.includes("laguna")) {
+    return imgTourMangroveSegara;
+  }
+  if (fullText.includes("mancing") || fullText.includes("fishing") || fullText.includes("ikan")) {
+    return imgTourFishingBoat;
+  }
+  if (fullText.includes("karang bolong") || fullText.includes("cimiring") || fullText.includes("mercusuar")) {
+    return imgTourKarangBeach;
+  }
+  if (fullText.includes("sunset") || fullText.includes("sunrise") || fullText.includes("fajar")) {
+    return imgSunriseBoats;
+  }
+  return imgTourPesisir;
+};
 
 const getCategoryLabel = (category: string | null): string =>
   (category && CATEGORY_LABELS[category]) || "Paket Tour";

@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { toast } from "sonner";
+import { AuthModal } from "@/components/AuthModal";
 // import boatSpeedboat1 from "@/assets/boat-speedboat-1.jpg";
 // import boatTraditional1 from "@/assets/boat-traditional-1.jpg";
 // import boatSpeedboat2 from "@/assets/boat-speedboat-2.jpg";
@@ -124,6 +125,33 @@ const BoatsListing = () => {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [pendingBookingBoatId, setPendingBookingBoatId] = useState<string | null>(null);
+
+  const handleBookingClick = async (e: React.MouseEvent, boatId: string) => {
+    e.stopPropagation();
+    const authRes = supabase.auth.getSession ? await supabase.auth.getSession() : null;
+    if (!authRes?.data?.session) {
+      if (typeof toast.info === "function") {
+        toast.info("Silakan login terlebih dahulu untuk memesan tiket.");
+      } else if (typeof toast.error === "function") {
+        toast.error("Silakan login terlebih dahulu untuk memesan tiket.");
+      }
+      setPendingBookingBoatId(boatId);
+      setAuthOpen(true);
+      return;
+    }
+    navigate(`/booking?boatId=${boatId}`);
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthOpen(false);
+    if (pendingBookingBoatId) {
+      const bId = pendingBookingBoatId;
+      setPendingBookingBoatId(null);
+      navigate(`/booking?boatId=${bId}`);
+    }
+  };
 
   useEffect(() => {
     fetchBoats();
@@ -294,7 +322,7 @@ const BoatsListing = () => {
                   {/* Header */}
                   <div className="mb-4">
                     <h3 className="text-xl font-bold mb-1">{boat.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {boat.description}
                     </p>
                   </div>
@@ -338,10 +366,7 @@ const BoatsListing = () => {
                     </div>
                     <Button
                       variant="hero"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/booking?boatId=${boat.id}`);
-                      }}
+                      onClick={(e) => handleBookingClick(e, boat.id)}
                     >
                       Booking
                     </Button>
@@ -352,6 +377,15 @@ const BoatsListing = () => {
           </div>
         )}
       </div>
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => {
+          setAuthOpen(false);
+          setPendingBookingBoatId(null);
+        }}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };

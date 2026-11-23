@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { AuthModal } from "@/components/AuthModal";
 import { mapBookingError } from "@/lib/bookingErrors";
 import { formatDateWib, isDateInPastWib } from "@/lib/bookingDate";
 import { DEMO_BOATS, findDemoBoat, findDemoPackage } from "@/lib/demoFallback";
@@ -114,6 +115,21 @@ const Booking = () => {
   const [loading, setLoading] = useState(false);
   const [realBoats, setRealBoats] = useState<BoatDetail[]>([]);
   const [selectedBoatId, setSelectedBoatId] = useState(DEMO_BOATS[0].id);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Check auth status on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        if (typeof toast.info === "function") {
+          toast.info("Silakan login terlebih dahulu untuk melanjutkan pemesanan tiket.");
+        } else if (typeof toast.error === "function") {
+          toast.error("Silakan login terlebih dahulu untuk melanjutkan pemesanan tiket.");
+        }
+        setAuthModalOpen(true);
+      }
+    });
+  }, []);
 
   // Preload Midtrans script on mount
   useEffect(() => {
@@ -1234,6 +1250,17 @@ const Booking = () => {
           </div>
         )}
       </main>
+
+      <AuthModal
+        open={authModalOpen}
+        onClose={() => {
+          setAuthModalOpen(false);
+          navigate(-1);
+        }}
+        onSuccess={() => {
+          setAuthModalOpen(false);
+        }}
+      />
     </div>
   );
 };
