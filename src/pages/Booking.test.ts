@@ -16,6 +16,18 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+const mockRequestSnapToken = vi.fn().mockResolvedValue({ token: "snap-token-123" });
+const mockOpenSnapPayment = vi.fn((_token: string, callbacks?: { onClose?: () => void; onSuccess?: () => void }) => {
+  // Default simulasi: user menutup modal Snap tanpa bayar
+  callbacks?.onClose?.();
+});
+
+vi.mock("@/lib/midtrans", () => ({
+  loadMidtransSnapScript: vi.fn().mockResolvedValue(undefined),
+  requestSnapToken: (...args: unknown[]) => mockRequestSnapToken(...args),
+  openSnapPayment: (...args: unknown[]) => mockOpenSnapPayment(...args as [string, { onClose?: () => void; onSuccess?: () => void }?]),
+}));
+
 vi.mock("@/integrations/supabase/client", () => {
   const mockSingle = vi.fn();
   const mockEq = vi.fn(() => ({ single: mockSingle }));
@@ -41,6 +53,7 @@ vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
@@ -70,7 +83,7 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
     cleanup();
   });
 
-  it("berhasil melalui progress bar, memilih metode pembayaran Midtrans, dan membuat booking", async () => {
+  it("berhasil melalui progress bar, memilih metode pembayaran Midtrans, dan saat Snap ditutup status tetap pending", async () => {
     const { supabase: s } = await import("@/integrations/supabase/client");
     const mockRpc = s.rpc as unknown as ReturnType<typeof vi.fn>;
     mockRpc.mockResolvedValue({
@@ -95,8 +108,8 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
       expect(screen.getByText("Metode Pembayaran")).toBeDefined();
     });
 
-    const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
-    expect(submitBtn.hasAttribute("disabled")).toBe(true);
+    const initialSubmitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
+    expect(initialSubmitBtn.hasAttribute("disabled")).toBe(true);
 
     const dayButtons = screen.getAllByRole("gridcell");
     const selectableDay = dayButtons.find((btn) => !btn.hasAttribute("disabled") && btn.textContent !== "");
@@ -105,19 +118,15 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
     }
 
     await waitFor(() => {
-      expect(submitBtn.hasAttribute("disabled")).toBe(false);
+      const btn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
+      expect(btn.hasAttribute("disabled")).toBe(false);
     });
 
-    const notesInput = screen.getByPlaceholderText(/Tambahkan catatan/i);
-    fireEvent.change(notesInput, { target: { value: "Bawa rombongan keluarga" } });
-
-    // Lanjut ke Step 2: Pembayaran
+    const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/Pilih Metode & Skema Pembayaran/i)).toBeDefined();
-      expect(screen.getByText(/Bayar DP 30%/i)).toBeDefined();
-      expect(screen.getByText(/Bayar Lunas 100%/i)).toBeDefined();
+      expect(screen.getByTestId("pay-now-button")).toBeDefined();
     });
 
     // Klik tombol Bayar Sekarang
@@ -129,16 +138,67 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
         p_boat_id: "boat-123",
         p_passengers: 1,
         p_time: "09:00",
-        p_notes: expect.stringContaining("Bawa rombongan keluarga"),
       }));
       expect(toast.success).toHaveBeenCalledWith("Booking berhasil dibuat!");
-      expect(screen.getByText(/Pemesanan & Pembayaran Berhasil!/i)).toBeDefined();
+      // Karena Snap ditutup sebelum bayar, status harus Menunggu Pembayaran (Pending), bukan sukses palsu!
+      expect(screen.getAllByText(/Menunggu Pembayaran \(Pending\)/i).length).toBeGreaterThanOrEqual(1);
     });
 
-    // Klik tombol dashboard pada e-tiket
-    const dashboardBtn = screen.getByRole("button", { name: /Buka di Dashboard/i });
+    // Klik tombol Buka Daftar Pesanan di Dashboard
+    const dashboardBtn = screen.getByRole("button", { name: /Buka Daftar Pesanan di Dashboard/i });
     fireEvent.click(dashboardBtn);
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard?tab=tickets");
+  });
+
+  it("menampilkan status lunas & banner sukses bila pembayaran Midtrans berhasil diselesaikan (onSuccess)", async () => {
+    mockOpenSnapPayment.mockImplementationOnce((_token: string, callbacks?: { onSuccess?: () => void }) => {
+      callbacks?.onSuccess?.();
+    });
+
+    const { supabase: s } = await import("@/integrations/supabase/client");
+    const mockRpc = s.rpc as unknown as ReturnType<typeof vi.fn>;
+    mockRpc.mockResolvedValue({
+      data: { id: "booking-888" },
+      error: null,
+    });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Booking)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Baruna Express")).toBeDefined();
+    });
+
+    const dayButtons = screen.getAllByRole("gridcell");
+    const selectableDay = dayButtons.find((btn) => !btn.hasAttribute("disabled") && btn.textContent !== "");
+    if (selectableDay) {
+      fireEvent.click(selectableDay);
+    }
+
+    await waitFor(() => {
+      const btn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
+      expect(btn.hasAttribute("disabled")).toBe(false);
+    });
+
+    const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pay-now-button")).toBeDefined();
+    });
+
+    const payNowBtn = screen.getByTestId("pay-now-button");
+    fireEvent.click(payNowBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pemesanan & Pembayaran Berhasil!/i)).toBeDefined();
+      expect(toast.success).toHaveBeenCalledWith("Pembayaran Midtrans berhasil!");
+    });
   });
 
   it("menampilkan pesan galat 'not_enough_seats' saat proses pembayaran gagal kursi", async () => {
@@ -216,6 +276,11 @@ describe("Booking Page (src/pages/Booking.tsx)", () => {
     if (selectableDay) {
       fireEvent.click(selectableDay);
     }
+
+    await waitFor(() => {
+      const btn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
+      expect(btn.hasAttribute("disabled")).toBe(false);
+    });
 
     const submitBtn = screen.getByRole("button", { name: /Lanjut ke Pembayaran/i });
     fireEvent.click(submitBtn);

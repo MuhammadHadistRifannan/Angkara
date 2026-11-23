@@ -28,6 +28,8 @@ import {
   X,
   Compass,
   Star,
+  QrCode,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { checkIsOperator, checkIsAdmin } from "@/lib/authRoles";
@@ -36,6 +38,11 @@ import { ETicketModal, type ETicketData } from "@/components/ETicketModal";
 import { isTicketExpired } from "@/lib/ticketExpiry";
 import { ReviewModal } from "@/components/ReviewModal";
 import type { User } from "@supabase/supabase-js";
+import {
+  loadMidtransSnapScript,
+  requestSnapToken,
+  openSnapPayment,
+} from "@/lib/midtrans";
 
 interface UserBooking extends ETicketData {
   user_id: string;
@@ -64,6 +71,13 @@ const Dashboard = () => {
   const [profileName, setProfileName] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadMidtransSnapScript().catch((err) => {
+      console.warn("Midtrans snap preload in Dashboard error:", err);
+    });
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -211,11 +225,88 @@ const Dashboard = () => {
       !isTicketExpired(b)
   ).length;
 
+  const pendingTripsCount = bookings.filter(
+    (b) => b.payment_status === "pending" && !isTicketExpired(b)
+  ).length;
+
   const completedTripsCount = bookings.filter(
     (b) => b.booking_status === "completed"
   ).length;
 
   const totalSpent = bookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
+
+  const handleResumePayment = async (booking: UserBooking) => {
+    try {
+      setPayingBookingId(booking.id);
+      toast.info("Menghubungkan ke gerbang pembayaran Midtrans...");
+
+      // Default pembayaran DP 30%
+      const payableAmount = Math.round(booking.total_price * 0.3);
+      const orderId = `SUAR-${booking.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+
+      const snapRes = await requestSnapToken({
+        orderId,
+        grossAmount: payableAmount,
+        customerDetails: {
+          first_name: currentUser?.user_metadata?.full_name || "Wisatawan",
+          email: currentUser?.email,
+          phone: currentUser?.user_metadata?.phone,
+        },
+        itemDetails: [
+          {
+            id: booking.boat_id,
+            name: `DP Tiket ${booking.boats?.name || "Kapal Wisata"}`,
+            price: payableAmount,
+            quantity: 1,
+          },
+        ],
+      });
+
+      if (snapRes?.token) {
+        openSnapPayment(snapRes.token, {
+          onSuccess: async () => {
+            try {
+              await supabase.rpc("confirm_booking_payment", {
+                p_booking_id: booking.id,
+                p_payment_status: "dp_paid",
+              });
+            } catch (rpcErr) {
+              console.warn("RPC confirm_booking_payment error:", rpcErr);
+              await supabase
+                .from("bookings")
+                .update({ payment_status: "dp_paid", booking_status: "confirmed" })
+                .eq("id", booking.id);
+            }
+            toast.success("Pembayaran berhasil dikonfirmasi! Tiket Anda telah aktif.");
+            if (currentUser?.id) {
+              await fetchBookings(currentUser.id);
+            }
+          },
+          onPending: () => {
+            toast.info("Pembayaran masih berstatus Pending. Silakan selesaikan scan QRIS atau transfer Anda.");
+            if (currentUser?.id) {
+              fetchBookings(currentUser.id);
+            }
+          },
+          onError: () => {
+            toast.error("Pembayaran Midtrans dibatalkan atau gagal.");
+          },
+          onClose: () => {
+            toast.info("Pembayaran belum diselesaikan. Tiket tetap berstatus Menunggu Pembayaran.");
+          },
+        });
+      } else {
+        toast.error("Gagal mendapatkan sesi pembayaran Midtrans. Silakan coba sesaat lagi.");
+      }
+    } catch (err: unknown) {
+      toast.error(
+        "Gagal memproses pembayaran: " +
+          (err instanceof Error ? err.message : String(err))
+      );
+    } finally {
+      setPayingBookingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
@@ -304,11 +395,18 @@ const Dashboard = () => {
                     <Ticket className="h-4 w-4 text-primary" />
                     <span>Tiket & Riwayat</span>
                   </div>
-                  {activeTripsCount > 0 && (
-                    <span className="h-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
-                      {activeTripsCount}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {pendingTripsCount > 0 && (
+                      <span className="h-5 px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+                        {pendingTripsCount} Pending
+                      </span>
+                    )}
+                    {activeTripsCount > 0 && (
+                      <span className="h-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
+                        {activeTripsCount}
+                      </span>
+                    )}
+                  </div>
                 </TabsTrigger>
 
                 <TabsTrigger
@@ -517,11 +615,17 @@ const Dashboard = () => {
                               variant="outline"
                               className={
                                 booking.payment_status === "pending"
-                                  ? "border-amber-400/50 text-amber-300 text-[10px]"
-                                  : "border-emerald-400/50 text-emerald-300 text-[10px]"
+                                  ? "border-amber-400/80 bg-amber-500/20 text-amber-300 text-[10px] font-bold"
+                                  : booking.payment_status === "dp_paid"
+                                    ? "border-emerald-400/50 text-emerald-300 text-[10px]"
+                                    : "border-teal-400/50 text-teal-300 text-[10px]"
                               }
                             >
-                              {booking.payment_status === "pending" ? "DP Pending" : "DP Terverifikasi"}
+                              {booking.payment_status === "pending"
+                                ? "Menunggu Pembayaran"
+                                : booking.payment_status === "dp_paid"
+                                  ? "DP Terbayar (30%)"
+                                  : "Lunas Terverifikasi"}
                             </Badge>
                           </div>
                         </div>
@@ -597,11 +701,30 @@ const Dashboard = () => {
 
                       {/* Tombol Aksi Tiket */}
                       <div className="pt-2 flex flex-wrap items-center gap-3">
+                        {/* Tombol Bayar Sekarang jika belum lunas/dibayar */}
+                        {booking.payment_status === "pending" && !isTicketExpired(booking) && (
+                          <Button
+                            data-testid={`pay-booking-${booking.id}`}
+                            variant="hero"
+                            size="sm"
+                            onClick={() => handleResumePayment(booking)}
+                            disabled={payingBookingId === booking.id}
+                            className="rounded-xl text-xs font-bold gap-2 px-4 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+                          >
+                            <QrCode className="h-4 w-4" />
+                            <span>{payingBookingId === booking.id ? "Memproses..." : "Bayar Sekarang"}</span>
+                          </Button>
+                        )}
+
                         <Button
-                          variant="hero"
+                          variant={booking.payment_status === "pending" ? "outline" : "hero"}
                           size="sm"
                           onClick={() => handleOpenTicket(booking)}
-                          className="rounded-xl text-xs font-bold gap-2 px-4 shadow-sm"
+                          className={`rounded-xl text-xs font-bold gap-2 px-4 shadow-sm ${
+                            booking.payment_status === "pending"
+                              ? "border-slate-300 text-slate-700 hover:bg-slate-50"
+                              : ""
+                          }`}
                         >
                           <Ticket className="h-4 w-4" />
                           <span>E-Tiket & Boarding Pass</span>

@@ -95,6 +95,8 @@ const Booking = () => {
   const [paymentScheme, setPaymentScheme] = useState<PaymentScheme>("dp_30");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>("midtrans_qris");
   const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
+  const [paymentState, setPaymentState] = useState<"unpaid" | "pending" | "success">("unpaid");
+  const [currentSnapToken, setCurrentSnapToken] = useState<string | null>(null);
 
   const [date, setDate] = useState<Date | undefined>(() =>
     parseDateParam(dateParam)
@@ -410,41 +412,123 @@ const Booking = () => {
           });
 
           if (snapRes?.token) {
+            setCurrentSnapToken(snapRes.token);
             openSnapPayment(snapRes.token, {
-              onSuccess: () => {
+              onSuccess: async () => {
+                setPaymentState("success");
+                try {
+                  await supabase.rpc("confirm_booking_payment", {
+                    p_booking_id: bookingId,
+                    p_payment_status: paymentScheme === "dp_30" ? "dp_paid" : "fully_paid",
+                  });
+                } catch (rpcErr) {
+                  console.warn("Gagal update booking status via RPC:", rpcErr);
+                }
                 toast.success("Pembayaran Midtrans berhasil!");
                 setCurrentStep(3);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               },
               onPending: () => {
-                toast.info("Menunggu penyelesaian pembayaran...");
+                setPaymentState("pending");
+                toast.info("Pembayaran menunggu penyelesaian. Pesanan Anda tersimpan di menu Tiket/Pesanan.");
                 setCurrentStep(3);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               },
               onError: () => {
-                toast.error("Pembayaran Midtrans gagal atau dibatalkan.");
+                setPaymentState("pending");
+                toast.error("Pembayaran Midtrans dibatalkan atau gagal.");
+                setCurrentStep(3);
+                window.scrollTo({ top: 0, behavior: "smooth" });
               },
               onClose: () => {
-                // User menutup popup Snap -> tetap tampilkan tiket pending
+                // User menutup popup Snap tanpa menyelesaikan pembayaran
+                setPaymentState("pending");
+                toast.info(
+                  "Pembayaran belum diselesaikan. Tiket berstatus Menunggu Pembayaran (Pending) dan masuk ke daftar pesanan Anda."
+                );
                 setCurrentStep(3);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               },
             });
-            if (!window.snap?.pay) {
-              setCurrentStep(3);
-            }
             return;
           }
         } catch (snapErr) {
           console.warn("Snap checkout initiation error:", snapErr);
+          setPaymentState("pending");
+          setCurrentStep(3);
+          return;
         }
       }
 
       // Jika Tunai di Dermaga atau fallback
+      setPaymentState("pending");
       setCurrentStep(3);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       toast.error(mapBookingError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReopenPayment = async () => {
+    if (!createdBookingId) return;
+    setLoading(true);
+    try {
+      let token = currentSnapToken;
+      if (!token) {
+        const snapRes = await requestSnapToken({
+          orderId: `SUAR-${createdBookingId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-4)}`,
+          grossAmount: payableAmount,
+          customerDetails: {
+            first_name: "Wisatawan",
+          },
+          itemDetails: [
+            {
+              id: bookingBoatId,
+              name: pkg?.name || boat?.name || "Tiket Kapal Wisata",
+              price: payableAmount,
+              quantity: 1,
+            },
+          ],
+        });
+        token = snapRes?.token || null;
+        if (token) setCurrentSnapToken(token);
+      }
+
+      if (token) {
+        openSnapPayment(token, {
+          onSuccess: async () => {
+            setPaymentState("success");
+            try {
+              await supabase.rpc("confirm_booking_payment", {
+                p_booking_id: createdBookingId,
+                p_payment_status: paymentScheme === "dp_30" ? "dp_paid" : "fully_paid",
+              });
+            } catch (rpcErr) {
+              console.warn("Gagal update booking status via RPC:", rpcErr);
+            }
+            toast.success("Pembayaran Midtrans berhasil!");
+          },
+          onPending: () => {
+            setPaymentState("pending");
+            toast.info("Pembayaran masih menunggu penyelesaian (Pending).");
+          },
+          onError: () => {
+            toast.error("Pembayaran Midtrans dibatalkan atau gagal.");
+          },
+          onClose: () => {
+            toast.info("Pembayaran belum diselesaikan. Status tiket tetap Menunggu Pembayaran.");
+          },
+        });
+      } else {
+        toast.error("Gagal memulai sesi pembayaran Midtrans. Silakan coba dari Dashboard.");
+      }
+    } catch (err) {
+      toast.error(
+        "Gagal menghubungkan ke Midtrans: " +
+          (err instanceof Error ? err.message : String(err))
+      );
     } finally {
       setLoading(false);
     }
@@ -955,18 +1039,59 @@ const Booking = () => {
         {/* ================= STEP 3: E-TIKET DIGITAL ================= */}
         {currentStep === 3 && (
           <div className="max-w-2xl mx-auto space-y-6">
-            {/* Banner Sukses */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-950 flex items-center gap-3.5">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-emerald-900">
-                  Pemesanan & Pembayaran Berhasil!
-                </h2>
-                <p className="text-xs sm:text-sm text-emerald-800">
-                  E-Tiket resmi telah terbit. Tunjukkan boarding pass ini kepada nakhoda kapal di Dermaga Pandanarang.
-                </p>
+            {/* Banner Status Pembayaran */}
+            {paymentState === "success" ? (
+              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-950 flex items-center gap-3.5">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 shrink-0" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-emerald-900">
+                    Pemesanan & Pembayaran Berhasil!
+                  </h2>
+                  <p className="text-xs sm:text-sm text-emerald-800">
+                    E-Tiket resmi telah terbit dan aktif. Tunjukkan boarding pass ini kepada nakhoda kapal di Dermaga Pandanarang.
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : paymentMethod === "dock_cash" ? (
+              <div className="p-4 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-950 flex items-center gap-3.5">
+                <CheckCircle2 className="w-8 h-8 text-sky-600 shrink-0" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-sky-900">
+                    Pemesanan Berhasil Dicatat!
+                  </h2>
+                  <p className="text-xs sm:text-sm text-sky-800">
+                    Tiket tersimpan di daftar pesanan Anda. Silakan lakukan pembayaran tunai di dermaga saat proses boarding.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-300 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-amber-900">
+                      Menunggu Pembayaran (Pending)
+                    </h2>
+                    <p className="text-xs sm:text-sm text-amber-800 leading-snug">
+                      QRIS / transfer belum diselesaikan. Booking Anda telah tersimpan dengan status Menunggu Pembayaran di daftar pesanan Anda. Anda dapat membayar sekarang atau kapan saja melalui menu Dashboard.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  data-testid="reopen-payment-btn"
+                  variant="hero"
+                  size="sm"
+                  onClick={handleReopenPayment}
+                  disabled={loading}
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold shrink-0 self-end sm:self-center gap-1.5"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Bayar Sekarang</span>
+                </Button>
+              </div>
+            )}
 
             {/* Kartu Boarding Pass Digital */}
             <Card className="border border-slate-200 overflow-hidden shadow-xl rounded-3xl bg-white print:border-none print:shadow-none">
@@ -995,12 +1120,22 @@ const Booking = () => {
                   </div>
                   <div className="text-right">
                     <span className="text-slate-400 text-[10px] block">Status Pembayaran</span>
-                    <Badge className="bg-emerald-500 text-white text-[11px] font-bold">
-                      {paymentMethod === "dock_cash"
-                        ? "Menunggu Bayar di Dermaga"
-                        : paymentScheme === "dp_30"
+                    <Badge
+                      className={
+                        paymentState === "success"
+                          ? "bg-emerald-500 text-white text-[11px] font-bold"
+                          : paymentMethod === "dock_cash"
+                            ? "bg-sky-600 text-white text-[11px] font-bold"
+                            : "bg-amber-500 text-white text-[11px] font-bold"
+                      }
+                    >
+                      {paymentState === "success"
+                        ? paymentScheme === "dp_30"
                           ? "DP 30% Terbayar (Midtrans)"
-                          : "Lunas (Midtrans)"}
+                          : "Lunas (Midtrans)"
+                        : paymentMethod === "dock_cash"
+                          ? "Menunggu Bayar di Dermaga"
+                          : "Menunggu Pembayaran (Pending)"}
                     </Badge>
                   </div>
                 </div>
@@ -1063,6 +1198,17 @@ const Booking = () => {
 
                 {/* Tombol Aksi */}
                 <div className="flex flex-col sm:flex-row gap-3 pt-2 print:hidden">
+                  {paymentState !== "success" && paymentMethod !== "dock_cash" && (
+                    <Button
+                      variant="hero"
+                      className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2"
+                      onClick={handleReopenPayment}
+                      disabled={loading}
+                    >
+                      <QrCode className="w-4 h-4" />
+                      <span>Bayar Sekarang</span>
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     className="flex-1 border-slate-300 text-slate-700"
@@ -1072,11 +1218,15 @@ const Booking = () => {
                     Cetak / Simpan PDF
                   </Button>
                   <Button
-                    variant="hero"
-                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold"
-                    onClick={() => navigate("/dashboard")}
+                    variant={paymentState === "success" ? "hero" : "outline"}
+                    className={
+                      paymentState === "success"
+                        ? "flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                        : "flex-1 border-teal-300 text-teal-800 hover:bg-teal-50"
+                    }
+                    onClick={() => navigate("/dashboard?tab=tickets")}
                   >
-                    Buka di Dashboard
+                    Buka Daftar Pesanan di Dashboard
                   </Button>
                 </div>
               </CardContent>

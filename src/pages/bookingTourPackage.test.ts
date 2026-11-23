@@ -223,11 +223,11 @@ describe("Booking Paket Tour (src/pages/Booking.tsx) - TDD", () => {
         p_time: "09:00",
       }));
       expect(toast.success).toHaveBeenCalledWith("Booking berhasil dibuat!");
-      expect(screen.getByText(/Pemesanan & Pembayaran Berhasil!/i)).toBeDefined();
+      expect(screen.getAllByText(/Menunggu Pembayaran \(Pending\)/i).length).toBeGreaterThanOrEqual(1);
     });
 
-    const dashboardBtn = screen.getByRole("button", { name: /Buka di Dashboard/i });
+    const dashboardBtn = screen.getByRole("button", { name: /Buka Daftar Pesanan di Dashboard/i });
     fireEvent.click(dashboardBtn);
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard?tab=tickets");
   });
 });

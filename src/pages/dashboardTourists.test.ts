@@ -207,4 +207,63 @@ describe("Dashboard Wisatawan (Task 2 - Opsi B Full-Page Assistant)", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/admin", { replace: true });
     });
   });
+
+  it("menampilkan status 'Menunggu Pembayaran' dan tombol 'Bayar Sekarang' untuk tiket berstatus pending", async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "tourist-001",
+          email: "tourist@angkara.id",
+          user_metadata: { role: "tourist" },
+        },
+      },
+    } as unknown as { data: { user: null }; error: null });
+
+    const mockOrder = vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: "booking-pending-01",
+          user_id: "tourist-001",
+          boat_id: "boat-001",
+          booking_date: "2026-11-28",
+          departure_time: "09:00:00",
+          passengers: 2,
+          total_price: 200000,
+          booking_status: "pending",
+          payment_status: "pending",
+          notes: "Menunggu pembayaran QRIS",
+          boats: {
+            name: "KM Segara Anakan",
+            type: "speedboat",
+            image_url: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    vi.mocked(supabase.from).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          order: mockOrder,
+        }),
+      }),
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(Dashboard)
+      )
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Menunggu Pembayaran/i).length).toBeGreaterThanOrEqual(1);
+      const payBtn = screen.getByTestId("pay-booking-booking-pending-01");
+      expect(payBtn).toBeDefined();
+      expect(payBtn.textContent).toContain("Bayar Sekarang");
+    });
+  });
 });
