@@ -9,6 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Clock, Users, Package as PackageIcon, Star, MapPin, Compass } from "lucide-react";
 import { DEMO_PACKAGES } from "@/lib/demoFallback";
 import { toast } from "sonner";
+import imgTourPesisir from "@/assets/tour-pesisir-nusakambangan.jpg";
+import imgTourMangroveSegara from "@/assets/dest-segara-anakan.png";
+import imgTourFishingBoat from "@/assets/tour-fishing-boat.jpg";
+import imgTourKarangRocks from "@/assets/tour-karang-bolong.png";
+import imgTourKarangBeach from "@/assets/tour-karang-bolong-beach.jpg";
+import imgTourMangroveBoat from "@/assets/tour-mangrove-boat.jpg";
+import imgSunriseBoats from "@/assets/tour-sunrise-boats.jpg";
+import imgKarangBolongSouth from "@/assets/tour-karang-bolong-south.jpg";
 
 interface PagePackage {
   id: string;
@@ -19,6 +27,7 @@ interface PagePackage {
   unit: string;
   includes: string[];
   destination: string;
+  category: string | null;
   maxParticipants: number | null;
 }
 
@@ -31,8 +40,35 @@ const mapRowToPackage = (row: any): PagePackage => ({
   unit: "/ orang",
   includes: row.includes || [],
   destination: row.destination || "",
+  category: row.category ?? null,
   maxParticipants: row.max_participants ?? null,
 });
+
+// BATCH-6 2026-11-23: foto kartu paket — foto yang sama dengan kartu paket
+// di landing dan halaman detail rute, dikunci ke UUID tetap paket (dipakai
+// jalur Supabase seed maupun fallback demo).
+const PKG_IMAGES_BY_ID: Record<string, string> = {
+  "20000000-0000-4000-8000-000000000001": imgTourPesisir,
+  "20000000-0000-4000-8000-000000000002": imgTourMangroveSegara,
+  "20000000-0000-4000-8000-000000000003": imgTourFishingBoat,
+  "20000000-0000-4000-8000-000000000004": imgTourKarangRocks,
+  "20000000-0000-4000-8000-000000000005": imgTourKarangBeach,
+  "20000000-0000-4000-8000-000000000006": imgTourMangroveBoat,
+  "20000000-0000-4000-8000-000000000007": imgSunriseBoats,
+  "20000000-0000-4000-8000-000000000008": imgKarangBolongSouth,
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  keluarga: "Wisata Keluarga",
+  mangrove: "Ekowisata Mangrove",
+  mancing: "Mancing & Mercusuar",
+};
+
+const getPackageImage = (pkg: PagePackage): string =>
+  PKG_IMAGES_BY_ID[pkg.id] ?? imgTourPesisir;
+
+const getCategoryLabel = (category: string | null): string =>
+  (category && CATEGORY_LABELS[category]) || "Paket Tour";
 
 const TourPackages = () => {
   const navigate = useNavigate();
@@ -92,6 +128,7 @@ const TourPackages = () => {
         unit: d.unit,
         includes: d.includes,
         destination: d.destination,
+        category: d.category,
         maxParticipants: null,
       }))
     );
@@ -113,18 +150,28 @@ const TourPackages = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {packages.map((pkg) => (
-            <Card key={pkg.id} className="hover:shadow-xl transition-all border-2 hover:border-primary/50">
-              <CardHeader className="bg-primary/5">
-                <div className="flex justify-between items-start mb-2">
+            <Card key={pkg.id} className="hover:shadow-xl transition-all border-2 hover:border-primary/50 overflow-hidden">
+              <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-slate-100">
+                <img
+                  src={getPackageImage(pkg)}
+                  alt={pkg.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute top-3 left-3">
                   <Badge className="bg-primary text-white">
                     <PackageIcon className="h-3 w-3 mr-1" />
-                    Paket Tour
+                    {getCategoryLabel(pkg.category)}
                   </Badge>
+                </div>
+                <div className="absolute top-3 right-3">
                   <Badge variant="secondary">
                     <Star className="h-3 w-3 mr-1 fill-secondary" />
                     Populer
                   </Badge>
                 </div>
+              </div>
+              <CardHeader>
                 <CardTitle className="text-2xl">{pkg.name}</CardTitle>
                 {pkg.destination && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1 pt-1">
