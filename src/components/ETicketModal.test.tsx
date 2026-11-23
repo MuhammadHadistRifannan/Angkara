@@ -25,7 +25,7 @@ describe("ETicketModal Component", () => {
     vi.clearAllMocks();
   });
 
-  it("merender informasi tiket dengan kode booking dan status terverifikasi KSOP", () => {
+  it("merender informasi tiket dengan kode booking dan label e-tiket SUAR", () => {
     render(
       <ETicketModal
         open={true}
@@ -35,10 +35,10 @@ describe("ETicketModal Component", () => {
     );
 
     expect(screen.getByText("E-Tiket Penyeberangan Wisata")).toBeDefined();
-    expect(screen.getByText("TERVERIFIKASI KSOP")).toBeDefined();
+    expect(screen.getByText("E-TIKET SUAR")).toBeDefined();
     expect(screen.getByText("SUAR-A1B2C3D4")).toBeDefined();
     expect(screen.getByText("Speedboat Camar Laut")).toBeDefined();
-    expect(screen.getByText(/4 Jaket Pelampung SOLAS/i)).toBeDefined();
+    expect(screen.getByText(/4 jaket pelampung/i)).toBeDefined();
   });
 
   it("tidak menggunakan scrollbar (tanpa overflow-y-auto) dengan tata letak kompak agar pas di layar", () => {

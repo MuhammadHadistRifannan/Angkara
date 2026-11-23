@@ -114,7 +114,7 @@ export const FullPageAssistant: React.FC = () => {
       {/* Header Elegan Navigasi Gemini / ChatGPT style */}
       <div className="bg-[#090D16] text-white px-6 py-4 flex items-center justify-between border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-sky-400 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-cyan-500/20">
+          <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white font-bold shadow-md shadow-primary/20">
             <Bot className="h-6 w-6 text-slate-950" />
           </div>
           <div>
@@ -132,7 +132,7 @@ export const FullPageAssistant: React.FC = () => {
       <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/50">
         {messages.length === 0 ? (
           <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-center items-center text-center max-w-xl mx-auto space-y-6">
-            <div className="w-16 h-16 rounded-3xl bg-cyan-100 flex items-center justify-center text-cyan-700 shadow-inner">
+            <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
               <Compass className="h-8 w-8 animate-pulse" />
             </div>
 
@@ -141,7 +141,7 @@ export const FullPageAssistant: React.FC = () => {
                 Halo! Mau berlayar ke mana hari ini?
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Saya terhubung langsung ke database armada kapal resmi KSOP dan telemetri gelombang laut BMKG. Tanyakan apapun untuk merencanakan trip Anda dengan aman.
+                Saya Juru Mudi AI, tanyakan rute kapal, perkiraan cuaca, atau rekomendasi jadwal. Jawaban saya memakai data prakiraan Open-Meteo dan info armada SUAR.
               </p>
             </div>
 
@@ -156,9 +156,9 @@ export const FullPageAssistant: React.FC = () => {
                     key={idx}
                     type="button"
                     onClick={() => handleSend(suggestion)}
-                    className="p-3 text-left rounded-xl bg-white border border-slate-200/80 hover:border-cyan-400 hover:shadow-md text-xs font-medium text-slate-700 hover:text-slate-900 transition-all leading-snug group flex items-start gap-2"
+                    className="p-3 text-left rounded-xl bg-white border border-slate-200/80 hover:border-primary hover:shadow-md text-xs font-medium text-slate-700 hover:text-slate-900 transition-all leading-snug group flex items-start gap-2"
                   >
-                    <Sparkles className="h-3.5 w-3.5 text-cyan-600 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                    <Sparkles className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
                     <span>{suggestion}</span>
                   </button>
                 ))}
@@ -205,7 +205,7 @@ export const FullPageAssistant: React.FC = () => {
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isLoading}
-              className="h-11 px-4 text-sm rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-cyan-500 transition-all"
+              className="h-11 px-4 text-sm rounded-xl bg-slate-50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-primary transition-all"
               aria-label="Input pesan untuk Juru Mudi"
             />
             <Button

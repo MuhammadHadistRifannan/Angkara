@@ -13,11 +13,11 @@ const PermitInfo = () => {
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-br from-primary to-accent p-4 rounded-xl">
+            <div className="bg-primary p-4 rounded-xl">
               <Shield className="h-10 w-10 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 text-slate-900">
             Informasi Izin & Regulasi
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -80,7 +80,7 @@ const PermitInfo = () => {
 
         {/* Requirements */}
         <Card>
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardHeader className="bg-primary/5">
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
               Persyaratan Umum Operator

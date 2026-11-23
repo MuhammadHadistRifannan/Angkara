@@ -211,7 +211,7 @@ export const ReviewForm = ({ boatId, onSuccess }: ReviewFormProps) => {
   if (eligibility === "not_completed") {
     return (
       <Card className="rounded-2xl border-slate-200 bg-slate-50 p-6 text-center shadow-sm">
-        <ShieldCheck className="h-8 w-8 text-cyan-600 mx-auto mb-2" />
+        <ShieldCheck className="h-8 w-8 text-primary mx-auto mb-2" />
         <h4 className="font-bold text-sm text-slate-900 mb-1">Ulasan Terverifikasi KSOP</h4>
         <p className="text-xs text-slate-600 max-w-md mx-auto">
           Untuk menjaga transparansi dan reputasi nahkoda lokal, hanya wisatawan yang telah menyelesaikan trip/sewa dengan kapal ini yang dapat memberikan ulasan.

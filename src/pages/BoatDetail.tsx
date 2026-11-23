@@ -88,6 +88,8 @@ const BoatDetail = () => {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [reviewAuthOpen, setReviewAuthOpen] = useState(false);
+
 
   const handleBookingClick = async () => {
     if (!boat) return;
@@ -375,7 +377,7 @@ const BoatDetail = () => {
               <p className="text-muted-foreground mb-4">
                 Login untuk memberikan ulasan
               </p>
-              <Button variant="hero" onClick={() => navigate("/auth")}>
+              <Button variant="hero" onClick={() => setReviewAuthOpen(true)}>
                 Login
               </Button>
             </Card>
@@ -443,6 +445,12 @@ const BoatDetail = () => {
         onClose={() => setAuthOpen(false)}
         onSuccess={handleAuthSuccess}
       />
+      <AuthModal
+        open={reviewAuthOpen}
+        onClose={() => setReviewAuthOpen(false)}
+        onSuccess={() => setReviewAuthOpen(false)}
+      />
+
     </div>
   );
 };

@@ -146,9 +146,9 @@ describe("Dashboard Wisatawan (Task 2 - Opsi B Full-Page Assistant)", () => {
     });
 
     await waitFor(() => {
-      // Modal e-tiket menampilkan identitas pelayaran dan standar keselamatan SOLAS
+      // Modal e-tiket menampilkan identitas pelayaran dan info jaket pelampung
       expect(screen.getByText(/E-Tiket Penyeberangan Wisata/i)).toBeDefined();
-      expect(screen.getAllByText(/Pelampung SOLAS/i).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/jaket pelampung/i).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Dermaga Pandanarang/i).length).toBeGreaterThanOrEqual(1);
     });
   });

@@ -103,7 +103,7 @@ const TourPackages = () => {
       <Navbar />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 text-slate-900">
             Paket Wisata Tersedia
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -114,9 +114,9 @@ const TourPackages = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {packages.map((pkg) => (
             <Card key={pkg.id} className="hover:shadow-xl transition-all border-2 hover:border-primary/50">
-              <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+              <CardHeader className="bg-primary/5">
                 <div className="flex justify-between items-start mb-2">
-                  <Badge className="bg-gradient-to-r from-primary to-accent text-white">
+                  <Badge className="bg-primary text-white">
                     <PackageIcon className="h-3 w-3 mr-1" />
                     Paket Tour
                   </Badge>

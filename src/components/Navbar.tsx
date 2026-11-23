@@ -175,8 +175,8 @@ const Navbar = () => {
   const linkClass = (id: string) =>
     `relative px-1 py-1.5 text-sm font-medium transition-colors ${
       activeId === id
-        ? "text-cyan-300 after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-cyan-400"
-        : "text-slate-200/90 hover:text-cyan-300 hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+        ? "text-white after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-primary-light"
+        : "text-slate-200/90 hover:text-white"
     }`;
 
   const dashboardPath = isAdmin
@@ -254,7 +254,7 @@ const Navbar = () => {
               onClick={handleOpenJuruMudi}
               className={`${linkClass("juru-mudi")} flex items-center gap-1.5 cursor-pointer`}
             >
-              <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+              <Sparkles className="h-3.5 w-3.5 text-primary-light" />
               <span>Juru Mudi</span>
             </button>
 
@@ -284,7 +284,7 @@ const Navbar = () => {
                     <a
                       href="/#how-it-works"
                       onClick={(e) => goToSection(e, "how-it-works")}
-                      className="block px-3 py-2 text-xs font-medium text-slate-200 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors"
+                      className="block px-3 py-2 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                     >
                       Cara Kerja Platform
                     </a>
@@ -296,7 +296,7 @@ const Navbar = () => {
                         setActiveId("permit-info");
                         navigate("/permit-info");
                       }}
-                      className="block px-3 py-2 text-xs font-medium text-slate-200 hover:text-cyan-300 hover:bg-white/5 rounded-lg transition-colors"
+                      className="block px-3 py-2 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                     >
                       Perizinan KSOP
                     </a>
@@ -314,7 +314,7 @@ const Navbar = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => navigate(dashboardPath)}
-                  className="bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-cyan-200 rounded-xl text-sm font-semibold transition-all"
+                  className="bg-primary text-white border-primary hover:bg-primary/90 rounded-xl text-sm font-semibold transition-all"
                 >
                   {dashboardLabel}
                 </Button>
@@ -322,7 +322,7 @@ const Navbar = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
-                  className="bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20 rounded-xl text-sm font-semibold transition-all"
+                  className="bg-rose-600 text-white border-rose-600 hover:bg-rose-700 rounded-xl text-sm font-semibold transition-all"
                 >
                   Keluar
                 </Button>
@@ -335,7 +335,8 @@ const Navbar = () => {
                     setAuthTab("signin");
                     setAuthOpen(true);
                   }}
-                  className="px-4 py-2 text-sm font-semibold text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/40 rounded-xl shadow-sm hover:shadow-cyan-500/20 transition-all duration-200"
+                  className="px-4 py-2 text-sm font-semibold text-primary-light bg-primary-light/10 hover:bg-primary-light/20 border border-primary-light/40 rounded-xl shadow-sm
+                  transition-all duration-200"
                 >
                   Masuk
                 </button>
@@ -347,7 +348,7 @@ const Navbar = () => {
                     setAuthTab("signup");
                     setAuthOpen(true);
                   }}
-                  className="px-5 py-2 text-sm font-semibold text-white rounded-xl shadow-lg hover:shadow-cyan-500/25 hover:scale-[1.03] transition-all duration-200"
+                  className="px-5 py-2 text-sm font-semibold text-white rounded-xl shadow-lg hover:scale-[1.03] transition-all duration-200"
                 >
                   Daftar
                 </Button>
@@ -358,7 +359,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:text-cyan-300 hover:bg-white/10 transition-colors"
+            className="md:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle Navigation Menu"
           >
@@ -408,9 +409,9 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={handleOpenJuruMudi}
-                className="text-left text-slate-200 hover:text-cyan-300 font-medium py-1 transition-colors flex items-center gap-2"
+                className="text-left text-slate-200 hover:text-white font-medium py-1 transition-colors flex items-center gap-2"
               >
-                <Sparkles className="h-4 w-4 text-cyan-400" />
+                <Sparkles className="h-4 w-4 text-primary-light" />
                 <span>Juru Mudi AI</span>
               </button>
 
@@ -447,7 +448,7 @@ const Navbar = () => {
                 <>
                   <Button
                     variant="outline"
-                    className="w-full bg-white/10 text-white border-white/20 hover:bg-white/20 rounded-xl"
+                    className="w-full bg-primary text-white border-primary hover:bg-primary/90 rounded-xl"
                     onClick={() => {
                       setIsMenuOpen(false);
                       navigate(dashboardPath);
@@ -457,7 +458,7 @@ const Navbar = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20 rounded-xl"
+                    className="w-full bg-rose-600 text-white border-rose-600 hover:bg-rose-700 rounded-xl"
                     onClick={handleLogout}
                   >
                     Keluar
@@ -467,7 +468,7 @@ const Navbar = () => {
                 <>
                   <Button
                     variant="outline"
-                    className="w-full bg-cyan-500/10 text-cyan-300 border-cyan-400/40 hover:bg-cyan-500/20 rounded-xl font-semibold"
+                    className="w-full bg-primary-light/10 text-primary-light border-primary-light/40 hover:bg-primary-light/20 rounded-xl font-semibold"
                     onClick={() => {
                       setIsMenuOpen(false);
                       setAuthTab("signin");

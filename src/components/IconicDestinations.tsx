@@ -131,7 +131,7 @@ export const IconicDestinations: React.FC = () => {
                   </h3>
 
                   {/* Description */}
-                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3 group-hover:text-white transition-colors">
+                  <p className="text-xs sm:text-sm text-slate-200/90 leading-relaxed line-clamp-3 group-hover:line-clamp-none group-hover:text-white transition-all">
                     {item.description}
                   </p>
                 </div>

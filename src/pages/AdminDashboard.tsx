@@ -583,7 +583,7 @@ const AdminDashboard: React.FC = () => {
         >
           <div className="space-y-6">
             {/* Kartu Profil Admin */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden">
+            <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-md relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <Avatar className="h-12 w-12 border-2 border-cyan-400 shadow-sm">

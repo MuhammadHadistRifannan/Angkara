@@ -91,7 +91,7 @@ export const SecondaryFeatures = ({ features }: SecondaryFeaturesProps) => {
               className="group rounded-2xl p-6 bg-[#091322] border border-slate-800/80 hover:bg-[#0c192d] hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-950/30 transition-all duration-200 flex flex-col justify-between cursor-pointer relative overflow-hidden"
             >
               {/* Subtle Top Accent Line on Hover */}
-              <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              <div className="absolute top-0 inset-x-0 h-0.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
               <div>
                 {/* Tag Kategori Kecil */}

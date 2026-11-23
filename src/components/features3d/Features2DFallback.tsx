@@ -42,7 +42,7 @@ export const Features2DFallback = () => {
                 className="border border-slate-800 bg-slate-900/60 backdrop-blur-md hover:border-cyan-500/50 transition-all duration-300"
               >
                 <CardContent className="p-6">
-                  <div className="bg-gradient-to-br from-cyan-500 to-sky-600 p-3 rounded-lg w-fit mb-4 text-white">
+                  <div className="bg-primary p-3 rounded-lg w-fit mb-4 text-white">
                     <Icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-xl font-semibold mb-2 text-white">{feature.title}</h3>

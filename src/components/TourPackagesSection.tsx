@@ -8,8 +8,8 @@ import imgTourFishingBoat from "@/assets/tour-fishing-boat.jpg";
 import imgTourKarangRocks from "@/assets/tour-karang-bolong.png";
 import imgTourKarangBeach from "@/assets/tour-karang-bolong-beach.jpg";
 import imgTourMangroveBoat from "@/assets/tour-mangrove-boat.jpg";
-import imgTourTransport from "@/assets/tour-transport-karang-bolong.jpg";
-import imgTourPath from "@/assets/tour-path-karang-bolong.jpg";
+import imgSunriseBoats from "@/assets/tour-sunrise-boats.jpg";
+import imgKarangBolongSouth from "@/assets/tour-karang-bolong-south.jpg";
 
 interface TourPackageItem {
   id: string;
@@ -33,7 +33,7 @@ const defaultTourPackages: TourPackageItem[] = [
     title: "Penyeberangan Teluk Penyu – Pantai Pasir Putih Permisan",
     destination: "Pantai Permisan",
     category: "keluarga",
-    badge: "Terpopuler Keluarga",
+    badge: "Wisata Keluarga",
     duration: "15 Menit",
     distance: "2,5 km",
     description:
@@ -49,7 +49,7 @@ const defaultTourPackages: TourPackageItem[] = [
     title: "Jelajah Hutan Mangrove & Laguna Segara Anakan",
     destination: "Laguna Segara Anakan",
     category: "mangrove",
-    badge: "Ekowisata Edukasi",
+    badge: "Ekowisata Mangrove",
     duration: "2 Jam",
     distance: "8,5 km",
     description:
@@ -65,7 +65,7 @@ const defaultTourPackages: TourPackageItem[] = [
     title: "Trip Memancing & View Mercusuar Cimiring 1870",
     destination: "Mercusuar Cimiring",
     category: "mancing",
-    badge: "Trip Petualangan & Mancing",
+    badge: "Mancing & Mercusuar",
     duration: "4 Jam",
     distance: "14 km",
     description:
@@ -113,7 +113,7 @@ const defaultTourPackages: TourPackageItem[] = [
     title: "Susur Sungai & Tambak Kepiting Laguna Segara Anakan",
     destination: "Laguna Segara Anakan",
     category: "mangrove",
-    badge: "Ekowisata Edukasi",
+    badge: "Ekowisata Mangrove",
     duration: "3 Jam",
     distance: "10 km",
     description:
@@ -129,7 +129,7 @@ const defaultTourPackages: TourPackageItem[] = [
     title: "Mancing Malam & Sunrise Mercusuar Cimiring",
     destination: "Mercusuar Cimiring",
     category: "mancing",
-    badge: "Trip Petualangan & Mancing",
+    badge: "Mancing & Mercusuar",
     duration: "6 Jam",
     distance: "14 km",
     description:
@@ -138,14 +138,14 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Charter Spesial",
     price: 750000,
     unit: "/ paket",
-    image_url: imgTourTransport,
+    image_url: imgSunriseBoats,
   },
   {
     id: "pkg-nusakambangan-sehari",
     title: "Jelajah Sehari – Permisan, Karang Bolong & Mercusuar Cimiring",
     destination: "Pantai Permisan, Pantai Karang Bolong & Mercusuar Cimiring",
     category: "keluarga",
-    badge: "Terpopuler Keluarga",
+    badge: "Wisata Keluarga",
     duration: "6 Jam",
     distance: "18 km",
     description:
@@ -154,7 +154,7 @@ const defaultTourPackages: TourPackageItem[] = [
     pricingType: "Mulai dari",
     price: 250000,
     unit: "/ orang",
-    image_url: imgTourPath,
+    image_url: imgKarangBolongSouth,
   },
 ];
 
@@ -238,7 +238,7 @@ export const TourPackagesSection: React.FC = () => {
                   }}
                   className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-[#0B1528] text-white shadow-md border border-cyan-400/20"
+                      ? "bg-[#0B1528] text-white shadow-md border border-[#0B1528]"
                       : "bg-slate-100/80 text-slate-700 hover:text-slate-900 border border-slate-200/80 hover:border-slate-300 hover:bg-white"
                   }`}
                 >

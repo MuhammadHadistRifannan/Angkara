@@ -271,7 +271,7 @@ export const FeaturesStage = () => {
         >
           {/* LAPISAN LATAR SECTION */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
-            <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--features-bg-top))] via-[#041d2f] via-45% to-[#020b17]" />
+            <div className="absolute inset-0 bg-[hsl(var(--features-bg-top))]" />
 
             {/* Cahaya lembut di belakang model 3D: satu sumber saja, tanpa sorot kerucut/noise */}
             <div

@@ -30,6 +30,11 @@ import imgTourMangrove from "@/assets/tour-mangrove-boat.jpg";
 import imgTourMancing from "@/assets/tour-fishing-boat.jpg";
 import destKarangBolong from "@/assets/dest-karang-bolong.png";
 import destMercusuarCimiring from "@/assets/dest-mercusuar-cimiring.png";
+import imgPesisirNusakambangan from "@/assets/tour-pesisir-nusakambangan.jpg";
+import imgKarangBolongRocks from "@/assets/tour-karang-bolong.png";
+import imgKarangBolongBeach from "@/assets/tour-karang-bolong-beach.jpg";
+import imgSunriseBoats from "@/assets/tour-sunrise-boats.jpg";
+import imgKarangBolongSouth from "@/assets/tour-karang-bolong-south.jpg";
 import destSegaraAnakan from "@/assets/dest-segara-anakan.png";
 
 interface RoutePackageData {
@@ -51,15 +56,29 @@ interface RoutePackageData {
 const DEFAULT_IMAGES: Record<string, string> = {
   mangrove: imgTourMangrove,
   mancing: imgTourMancing,
-  keluarga: imgTourTelukPenyu,
+  keluarga: imgPesisirNusakambangan,
 };
 
 const DEST_IMAGES: Record<string, string> = {
-  "Pantai Permisan": imgTourTelukPenyu,
+  "Pantai Permisan": imgPesisirNusakambangan,
   "Laguna Segara Anakan": destSegaraAnakan || imgTourMangrove,
   "Mercusuar Cimiring": destMercusuarCimiring || imgTourMancing,
   "Pantai Karang Bolong": destKarangBolong || imgTourTelukPenyu,
 };
+
+// Foto yang sama dengan kartu paket di landing, supaya gambar depan kartu
+// sama dengan gambar halaman detail rute (berdasarkan slug di URL).
+const PKG_IMAGES: Record<string, string> = {
+  "pkg-teluk-penyu": imgPesisirNusakambangan,
+  "pkg-segara-anakan": destSegaraAnakan,
+  "pkg-mancing-mercusuar": imgTourMancing,
+  "pkg-sunset-karang-bolong": imgKarangBolongRocks,
+  "pkg-snorkeling-karang-bolong": imgKarangBolongBeach,
+  "pkg-susur-tambak": imgTourMangrove,
+  "pkg-mancing-malam": imgSunriseBoats,
+  "pkg-nusakambangan-sehari": imgKarangBolongSouth,
+};
+
 
 export const RouteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -134,7 +153,7 @@ export const RouteDetail: React.FC = () => {
       // 2. Fallback ke Demo Data jika id cocok dengan demo
       const demo = findDemoPackage(id);
       if (demo && !cancelled) {
-        const img = DEST_IMAGES[demo.destination] || DEFAULT_IMAGES[demo.category] || imgTourTelukPenyu;
+        const img = PKG_IMAGES[id ?? ""] || DEST_IMAGES[demo.destination] || DEFAULT_IMAGES[demo.category] || imgTourTelukPenyu;
         setPkg({
           id: demo.id,
           name: demo.name,
@@ -268,11 +287,11 @@ export const RouteDetail: React.FC = () => {
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                  <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 shadow-sm font-semibold">
+                  <Badge className="bg-primary text-white border-0 shadow-sm font-semibold">
                     <Sparkles className="w-3.5 h-3.5 mr-1" />
                     {pkg.category}
                   </Badge>
-                  <Badge className="bg-emerald-600 text-white font-semibold border-0 shadow-sm flex items-center gap-1">
+                  <Badge className="bg-primary text-white font-semibold border-0 shadow-sm flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Terverifikasi KSOP
                   </Badge>

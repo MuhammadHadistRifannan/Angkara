@@ -111,7 +111,7 @@ export const WhyChooseSuar: React.FC = () => {
                 className="group rounded-3xl p-7 sm:p-8 bg-white border border-slate-200/90 shadow-sm hover:shadow-xl hover:border-sky-300 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
               >
                 {/* Top Subtle Shimmer Highlight on Hover */}
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute top-0 inset-x-0 h-1 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 <div>
                   {/* Top Bar: Nomor Besar & Tag Maritim (Tanpa Icon & Tanpa Background Icon) */}

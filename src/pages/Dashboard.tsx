@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { checkIsOperator, checkIsAdmin } from "@/lib/authRoles";
 import { FullPageAssistant } from "@/components/assistant/FullPageAssistant";
 import { ETicketModal, type ETicketData } from "@/components/ETicketModal";
+import { isTicketExpired } from "@/lib/ticketExpiry";
 import { ReviewModal } from "@/components/ReviewModal";
 import type { User } from "@supabase/supabase-js";
 
@@ -141,14 +142,21 @@ const Dashboard = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (booking: UserBooking) => {
+    if (isTicketExpired(booking)) {
+      return <Badge variant="destructive">Hangus</Badge>;
+    }
     const variants: { [key: string]: "default" | "secondary" | "destructive" } = {
       pending: "secondary",
       confirmed: "default",
       completed: "default",
       cancelled: "destructive",
     };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
+    return (
+      <Badge variant={variants[booking.booking_status] || "default"}>
+        {booking.booking_status}
+      </Badge>
+    );
   };
 
   const handleOpenTicket = (booking: UserBooking) => {
@@ -198,7 +206,9 @@ const Dashboard = () => {
     }
   };
   const activeTripsCount = bookings.filter(
-    (b) => b.booking_status === "confirmed" || b.booking_status === "pending"
+    (b) =>
+      (b.booking_status === "confirmed" || b.booking_status === "pending") &&
+      !isTicketExpired(b)
   ).length;
 
   const completedTripsCount = bookings.filter(
@@ -222,8 +232,8 @@ const Dashboard = () => {
         {/* Mobile Header Bar & Toggle Sidebar */}
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 border border-cyan-200">
-              <AvatarFallback className="bg-cyan-600 text-white font-bold text-xs">
+            <Avatar className="h-9 w-9 border border-primary/20">
+              <AvatarFallback className="bg-primary text-white font-bold text-xs">
                 {(profileName || currentUser?.email || "W").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -231,7 +241,7 @@ const Dashboard = () => {
               <p className="text-xs font-bold text-slate-900 line-clamp-1">
                 {profileName || currentUser?.email || "Wisatawan"}
               </p>
-              <span className="text-[10px] text-cyan-600 font-semibold block">Wisatawan SUAR</span>
+              <span className="text-[10px] text-primary font-semibold block">Wisatawan SUAR</span>
             </div>
           </div>
           <Button
@@ -255,11 +265,12 @@ const Dashboard = () => {
         >
           <div className="space-y-6">
             {/* Kartu Profil Wisatawan */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-md relative overflow-hidden">
+
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary-light/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
-                <Avatar className="h-12 w-12 border-2 border-cyan-400 shadow-sm">
-                  <AvatarFallback className="bg-cyan-600 text-white font-black text-sm">
+                <Avatar className="h-12 w-12 border-2 border-primary-light shadow-sm">
+                  <AvatarFallback className="bg-primary text-white font-black text-sm">
                     {(profileName || currentUser?.email || "W").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -271,7 +282,7 @@ const Dashboard = () => {
                     {currentUser?.email || "wisatawan@suar.id"}
                   </p>
                   <div className="mt-1.5 flex items-center gap-1.5">
-                    <Badge className="bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 text-[9px] px-1.5 py-0 font-semibold">
+                    <Badge className="bg-primary-light/20 text-primary-light border border-primary-light/30 text-[9px] px-1.5 py-0 font-semibold">
                       Wisatawan
                     </Badge>
                   </div>
@@ -287,14 +298,14 @@ const Dashboard = () => {
               <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1.5">
                 <TabsTrigger
                   value="tickets"
-                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Ticket className="h-4 w-4 text-cyan-600" />
+                    <Ticket className="h-4 w-4 text-primary" />
                     <span>Tiket & Riwayat</span>
                   </div>
                   {activeTripsCount > 0 && (
-                    <span className="h-5 px-1.5 rounded-full bg-cyan-600 text-white text-[10px] font-bold flex items-center justify-center">
+                    <span className="h-5 px-1.5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
                       {activeTripsCount}
                     </span>
                   )}
@@ -302,17 +313,17 @@ const Dashboard = () => {
 
                 <TabsTrigger
                   value="ai-chat"
-                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-[#090D16] data-[state=active]:text-white transition-all flex items-center gap-2.5"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-[#090D16] data-[state=active]:text-white transition-all flex items-center gap-2.5"
                 >
-                  <Bot className="h-4 w-4 text-cyan-400" />
+                  <Bot className="h-4 w-4 text-primary-light" />
                   <span>Juru Mudi AI</span>
                 </TabsTrigger>
 
                 <TabsTrigger
                   value="profile"
-                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center gap-2.5"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center gap-2.5"
                 >
-                  <UserIcon className="h-4 w-4 text-cyan-600" />
+                  <UserIcon className="h-4 w-4 text-primary" />
                   <span>Profil Wisatawan</span>
                 </TabsTrigger>
               </TabsList>
@@ -330,9 +341,9 @@ const Dashboard = () => {
                   setIsMobileSidebarOpen(false);
                   navigate("/#weather-map-section");
                 }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
               >
-                <Waves className="h-4 w-4 text-cyan-600" />
+                <Waves className="h-4 w-4 text-primary" />
                 <span>Pantau Peta Cuaca</span>
               </Button>
               <Button
@@ -342,9 +353,9 @@ const Dashboard = () => {
                   setIsMobileSidebarOpen(false);
                   navigate("/boats");
                 }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
               >
-                <Ship className="h-4 w-4 text-cyan-600" />
+                <Ship className="h-4 w-4 text-primary" />
                 <span>Katalog Armada Kapal</span>
               </Button>
               <Button
@@ -354,9 +365,9 @@ const Dashboard = () => {
                   setIsMobileSidebarOpen(false);
                   navigate("/tour-packages");
                 }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
               >
-                <Compass className="h-4 w-4 text-cyan-600" />
+                <Compass className="h-4 w-4 text-primary" />
                 <span>Katalog Paket Tour</span>
               </Button>
             </div>
@@ -395,7 +406,7 @@ const Dashboard = () => {
                       Siap Berlayar & Menunggu
                     </span>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
                     <Ship className="h-6 w-6" />
                   </div>
                 </CardContent>
@@ -444,7 +455,7 @@ const Dashboard = () => {
             {bookings.length === 0 ? (
               <Card className="rounded-3xl border-slate-200 bg-white shadow-sm overflow-hidden">
                 <CardContent className="py-16 text-center max-w-md mx-auto">
-                  <div className="w-16 h-16 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/5 text-primary flex items-center justify-center mx-auto mb-4">
                     <Ship className="h-8 w-8" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Belum ada booking pelayaran</h3>
@@ -464,7 +475,7 @@ const Dashboard = () => {
                       onClick={() => setActiveTab("ai-chat")}
                       className="rounded-xl font-bold text-xs gap-1.5"
                     >
-                      <Bot className="h-4 w-4 text-cyan-600" />
+                      <Bot className="h-4 w-4 text-primary" />
                       <span>Tanya Juru Mudi AI</span>
                     </Button>
                   </div>
@@ -481,7 +492,7 @@ const Dashboard = () => {
                       <div className="flex flex-wrap justify-between items-start gap-4">
                         <div>
                           <div className="flex items-center gap-2 mb-1.5">
-                            <span className="font-mono text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                            <span className="font-mono text-xs font-bold text-primary-light uppercase tracking-wider">
                               SUAR-{booking.id.replace(/-/g, "").slice(0, 8).toUpperCase()}
                             </span>
                             <Badge className="bg-white/10 text-slate-200 border-white/20 text-[10px]">
@@ -497,11 +508,11 @@ const Dashboard = () => {
                         </div>
 
                         <div className="text-right">
-                          <div className="text-2xl font-black text-cyan-300">
+                          <div className="text-2xl font-black text-white">
                             Rp {booking.total_price.toLocaleString("id-ID")}
                           </div>
                           <div className="flex items-center justify-end gap-2 mt-1">
-                            {getStatusBadge(booking.booking_status)}
+                            {getStatusBadge(booking)}
                             <Badge
                               variant="outline"
                               className={
@@ -521,7 +532,7 @@ const Dashboard = () => {
                       {/* Grid Detail Pelayaran */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-cyan-700 shadow-sm shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm shrink-0">
                             <Calendar className="h-5 w-5" />
                           </div>
                           <div>
@@ -542,7 +553,7 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-cyan-700 shadow-sm shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm shrink-0">
                             <Ship className="h-5 w-5" />
                           </div>
                           <div>
@@ -552,15 +563,15 @@ const Dashboard = () => {
                             <span className="text-xs sm:text-sm font-bold text-slate-900 block">
                               {booking.passengers} Orang Penumpang
                             </span>
-                            <span className="text-[10px] text-emerald-700 font-medium flex items-center gap-1">
+                            <span className="text-[10px] text-primary font-medium flex items-center gap-1">
                               <ShieldCheck className="h-3 w-3" />
-                              <span>Pelampung SOLAS Tersedia</span>
+                              <span>Jaket Pelampung Tersedia</span>
                             </span>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-cyan-700 shadow-sm shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm shrink-0">
                             <DollarSign className="h-5 w-5" />
                           </div>
                           <div>
@@ -578,9 +589,9 @@ const Dashboard = () => {
                       </div>
 
                       {booking.notes && (
-                        <div className="bg-sky-50/60 p-3.5 rounded-xl border border-sky-100 text-xs">
-                          <span className="text-sky-900 font-bold block mb-0.5">Catatan Khusus:</span>
-                          <span className="text-sky-800">{booking.notes}</span>
+                        <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+                          <span className="text-slate-900 font-bold block mb-0.5">Catatan Khusus:</span>
+                          <span className="text-slate-700">{booking.notes}</span>
                         </div>
                       )}
 
@@ -623,9 +634,9 @@ const Dashboard = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleChatOperator(booking)}
-                          className="rounded-xl text-xs font-bold gap-2 border-slate-300 text-slate-800 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300"
+                          className="rounded-xl text-xs font-bold gap-2 border-slate-300 text-slate-800 hover:bg-primary/5 hover:text-primary hover:border-primary/30"
                         >
-                          <MessageCircle className="h-4 w-4 text-emerald-600" />
+                          <MessageCircle className="h-4 w-4 text-primary" />
                           <span>Chat Nakhoda / Operator</span>
                         </Button>
 
@@ -643,9 +654,9 @@ const Dashboard = () => {
                             );
                             setActiveTab("ai-chat");
                           }}
-                          className="rounded-xl text-xs font-semibold text-cyan-800 hover:bg-cyan-50 gap-1.5 ml-auto"
+                          className="rounded-xl text-xs font-semibold text-primary hover:bg-primary/5 gap-1.5 ml-auto"
                         >
-                          <Bot className="h-4 w-4 text-cyan-600" />
+                          <Bot className="h-4 w-4 text-primary" />
                           <span>Cek Cuaca Pelayaran Ini</span>
                         </Button>
                       </div>
@@ -676,8 +687,8 @@ const Dashboard = () => {
               {/* Kartu Ringkasan Akun */}
               <Card className="rounded-2xl border-slate-200 bg-white shadow-sm p-6 space-y-4">
                 <div className="text-center">
-                  <Avatar className="h-20 w-20 mx-auto border-4 border-cyan-100 shadow-md">
-                    <AvatarFallback className="bg-cyan-600 text-white font-black text-2xl">
+                  <Avatar className="h-20 w-20 mx-auto border-4 border-primary/20 shadow-md">
+                    <AvatarFallback className="bg-primary text-white font-black text-2xl">
                       {(profileName || currentUser?.email || "W").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

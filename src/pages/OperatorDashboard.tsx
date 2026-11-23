@@ -641,7 +641,7 @@ const OperatorDashboard = () => {
         >
           <div className="space-y-6">
             {/* Kartu Profil Operator */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden">
+            <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-md relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
                 <Avatar className="h-12 w-12 border-2 border-cyan-400 shadow-sm">
@@ -904,7 +904,7 @@ const OperatorDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-5 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl border border-cyan-100">
+                <div className="p-5 bg-sky-50 rounded-2xl border border-sky-100">
                   <h4 className="font-bold text-sm text-slate-900 mb-3">Ringkasan Bulan Ini</h4>
                   <div className="grid md:grid-cols-3 gap-4 text-xs">
                     <div>

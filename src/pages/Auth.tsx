@@ -139,7 +139,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 py-8">
       <Card
         className={`w-full max-h-[92vh] overflow-y-auto transition-all duration-300 ${
           activeTab === "signup" && signupRole === "operator" ? "max-w-2xl" : "max-w-md"
