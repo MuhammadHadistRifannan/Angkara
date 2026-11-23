@@ -18,7 +18,7 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
-  Copy,
+  MessageCircle,
   Anchor,
   ShieldCheck,
   Ticket,
@@ -568,21 +568,36 @@ const [isSavingSailingStatus, setIsSavingSailingStatus] = useState(false);
     }
   };
 
-// Salin info booking supaya operator bisa menempelkannya ke chat WA wisatawan.
-// (Nomor HP wisatawan tidak tersimpan di booking, jadi tombol chat langsung tidak bisa jalan.)
-const handleCopyBooking = async (booking: OperatorBooking) => {
+// Chat wisatawan lewat WhatsApp pakai nomor HP dari profilnya.
+// Kalau nomornya belum diisi wisatawan, fallback: salin info booking
+// supaya operator bisa menempelkannya ke chat WA sendiri.
+const handleChatCustomer = async (booking: OperatorBooking) => {
   const dateStr = new Date(booking.booking_date).toLocaleDateString("id-ID");
   const ticketCode = `SUAR-${booking.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+  const message =
+    `Halo ${booking.customer_name || "Bapak/Ibu"}, ini nakhoda ${booking.boats?.name || "kapal"} (SUAR). ` +
+    `Booking ${ticketCode} tanggal ${dateStr} pukul ${booking.departure_time.slice(0, 5)} WIB, ` +
+    `${booking.passengers} penumpang. Mohon konfirmasi kehadiran Anda. Terima kasih.`;
+  const digits = (booking.customer_phone || "").replace(/\D/g, "");
+  let waNumber = "";
+  if (digits.startsWith("0")) waNumber = `62${digits.slice(1)}`;
+  else if (digits.startsWith("62")) waNumber = digits;
+  else if (digits) waNumber = `62${digits}`;
+  if (waNumber) {
+    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`, "_blank");
+    return;
+  }
   const text =
     `${ticketCode} • ${booking.boats?.name || "Kapal Wisata"} • ${dateStr} ${booking.departure_time.slice(0, 5)} WIB • ` +
     `${booking.passengers} penumpang • Total Rp ${booking.total_price.toLocaleString("id-ID")}`;
   try {
     await navigator.clipboard.writeText(text);
-    toast.success("Info booking disalin, tempel ke chat WA wisatawan");
+    toast.success("Nomor HP wisatawan belum diisi, info booking disalin");
   } catch {
     toast.error("Gagal menyalin info booking");
   }
 };
+
 
 // Buka dialog daftar penumpang
 const handleOpenManifest = (booking: OperatorBooking) => {
@@ -1575,8 +1590,21 @@ const hasChartData = dailyStats.some((s) => s.booking > 0);
                             </div>
 
                             <h3 className="font-black text-lg text-slate-900 pt-1">
-                              {booking.boats?.name || "Kapal Wisata"}
-                            </h3>
+  {booking.boats?.name || "Kapal Wisata"}
+                          </h3>
+                          {booking.customer_name && (
+                            <p className="text-xs text-slate-600">
+                              Wisatawan:{" "}
+                              <strong className="text-slate-900">{booking.customer_name}</strong>
+                              {booking.customer_phone && (
+                                <>
+                                  {" "}•{" "}
+                                  <span className="font-mono">{booking.customer_phone}</span>
+                                </>
+                              )}
+                            </p>
+                          )}
+
                             <p className="text-xs text-slate-600 flex flex-wrap items-center gap-3">
                               <span>
                                 Jadwal:{" "}
@@ -1696,11 +1724,12 @@ const hasChartData = dailyStats.some((s) => s.booking > 0);
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCopyBooking(booking)}
-                            className="rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 gap-1.5"
-                          >
-                            <Copy className="h-4 w-4 text-emerald-600" />
-                            <span>Salin Info Booking</span>
+                              onClick={() => handleChatCustomer(booking)}
+                              className="rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 gap-1.5"
+                            >
+                              <MessageCircle className="h-4 w-4 text-emerald-600" />
+                              <span>Chat Wisatawan</span>
+
                           </Button>
                         </div>
                       </CardContent>

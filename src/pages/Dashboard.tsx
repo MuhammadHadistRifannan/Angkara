@@ -210,7 +210,11 @@ const Dashboard = () => {
       });
       if (error) throw error;
       if (data?.user) {
+        // Simpan juga ke profiles.phone supaya nakhoda bisa membaca nomor ini
+        // (dipakai tombol Chat Wisatawan di konsol operator).
+        await supabase.from("profiles").update({ phone: profilePhone }).eq("id", data.user.id);
         setCurrentUser(data.user);
+
         toast.success("Profil wisatawan berhasil disimpan!");
       }
     } catch (err: unknown) {
