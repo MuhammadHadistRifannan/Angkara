@@ -79,8 +79,6 @@ Kawasan pesisir Cilacap — dengan titik berangkat Teluk Penyu dan Pelabuhan Tan
 - **Scroll-Driven Typewriter dengan Garansi Keterbacaan**: Judul hero berganti seiring scroll dengan proteksi keterbacaan (judul saat ini otomatis ditampilkan utuh sebelum berganti ke judul berikutnya).
 - **LiquidNav Floating Navbar**: Bilah navigasi melayang transparan berkaca buram (*glassmorphism*) dengan logo SUAR bernuansa biru bahari, indikator highlight aktif, serta animasi bounce entrance & exit yang responsif terhadap scroll kembali ke atas layar.
 
-![Hero Section SUAR](docs/assets/hero-section.png)
-
 ---
 
 ### 2. Panggung 3D Interaktif: “Lima Alasan Berlayar Tanpa Ragu”
@@ -96,8 +94,6 @@ Panggung visual 3D berbasis **React Three Fiber (@react-three/fiber)** dan **Dre
 > [!NOTE]
 > Dilengkapi **WebGL Error Boundary Fallback** otomatis: jika browser pengguna tidak mendukung akselerasi 3D WebGL, tampilan otomatis beralih ke grid 2D yang elegan tanpa memutus alur browsing pengguna.
 
-![Panggung 3D SUAR](docs/assets/features-3d.png)
-
 ---
 
 ### 3. Karusel Kartu Geser Interaktif: “Dan Masih Banyak Lagi”
@@ -112,15 +108,11 @@ Mengadopsi mekanika visual interaktif modern dengan gestur drag / sentuh layar d
     - **03. Rating Terverifikasi**: Ulasan hanya bisa ditulis penumpang yang sudah menyelesaikan pelayaran, bukan dari sembarang akun.
     - **04. Asisten AI Juru Mudi**: Tanya rekomendasi waktu berlayar, cari kapal yang cocok, dan panduan keselamatan sebelum berangkat.
 
-![Karusel Kartu Geser SUAR](docs/assets/cards-slider.png)
-
 ---
 
 ### 4. Peta Maritim Interaktif & Pemantau Keselamatan Titik Keberangkatan
 
 Peta geografis resolusi tinggi berbasis Leaflet yang memetakan titik berangkat utama (Teluk Penyu dan Pelabuhan Tanjung Intan), disertai status keselamatan deterministik.
-
-![Peta Cuaca Maritim SUAR](docs/assets/weather-map.png)
 
 ---
 
@@ -418,5 +410,5 @@ Karya ini dirancang dan dikembangkan dengan penuh dedikasi untuk kompetisi **IT 
 ---
 
 <div align="center">
-  <sub>Dibuat dengan ❤️ dan semangat gotong royong masyarakat pesisir Cilacap • 2026</sub>
+  <sub>Tim Belum Ada Namanya • 2026</sub>
 </div>
