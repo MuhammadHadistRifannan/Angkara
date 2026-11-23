@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ import {
   Mail,
   Menu,
   X,
-  Waves,
   LayoutDashboard,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -770,7 +768,6 @@ const hasChartData = dailyStats.some((s) => s.booking > 0);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
-      <Navbar />
 
       <Tabs
         value={activeTab}
@@ -778,7 +775,7 @@ const hasChartData = dailyStats.some((s) => s.booking > 0);
           setActiveTab(val);
           setIsMobileSidebarOpen(false);
         }}
-        className="flex-1 flex flex-col md:flex-row pt-20"
+        className="flex-1 flex flex-col md:flex-row"
       >
         {/* Mobile Header Bar & Toggle Sidebar */}
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
@@ -808,9 +805,9 @@ const hasChartData = dailyStats.some((s) => s.booking > 0);
         {/* Sidebar Navigasi & Profil Operator (Desktop & Mobile Drawer) - Full dari atas ke bawah */}
         <aside
           className={`
-            fixed md:sticky top-20 inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between shrink-0 transition-transform duration-200 ease-in-out md:translate-x-0
+            fixed md:sticky top-0 inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between shrink-0 transition-transform duration-200 ease-in-out md:translate-x-0
             ${isMobileSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
-            min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-y-auto
+            min-h-screen max-h-screen overflow-y-auto
           `}
         >
           <div className="space-y-6">
@@ -923,48 +920,6 @@ const hasChartData = dailyStats.some((s) => s.booking > 0);
                 </TabsTrigger></TabsList>
             </div>
 
-            {/* Pintasan */}
-            <div className="pt-2 border-t border-slate-200/80 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
-                Pintasan
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsMobileSidebarOpen(false);
-                  navigate("/#weather-map-section");
-                }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
-              >
-                <Waves className="h-4 w-4 text-primary" />
-                <span>Lihat Peta Cuaca</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsMobileSidebarOpen(false);
-                  navigate("/boats");
-                }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
-              >
-                <Ship className="h-4 w-4 text-primary" />
-                <span>Lihat Semua Kapal</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsMobileSidebarOpen(false);
-                  navigate("/tour-packages");
-                }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
-              >
-                <Compass className="h-4 w-4 text-primary" />
-                <span>Lihat Semua Paket</span>
-              </Button>
-            </div>
           </div>
 
           {/* Tombol Logout di Footer Sidebar */}
