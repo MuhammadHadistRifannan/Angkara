@@ -373,7 +373,7 @@ Seluruh aset eksternal yang digunakan dalam proyek SUAR dipilih dengan cermat de
 | --- | --- | --- | --- |
 | **Font Utama (Plus Jakarta Sans)** | Google Fonts | Tipografi utama seluruh antarmuka (display & sans, dimuat dari Google Fonts) | Open Font License (OFL) |
 | **Logo SUAR** | PNG / Vektor | Identitas resmi platform SUAR (desain orisinal tim) | Proprietary (Hak Cipta Tim SUAR) |
-| **Video Hero Latar** | MP4 Video | Rekaman kapal wisata pesisir Cilacap (dokumentasi tim) | Dokumentasi Tim |
+| **Video Hero Latar** | MP4 Video | Video rekaman kapal (Youtube) | [CC BY Youtube](https://youtu.be/ZOMrV1PZmfQ?si=WcfypLCCM43EOBf7) |
 | **Foto Pantai Karang Bolong** | Foto (Wikimedia Commons) | Foto pesisir Karang Bolong oleh **Crisco 1492** | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 | **Foto Sunrise Kapal** | Foto (Wikimedia Commons) | Foto kapal saat matahari terbit oleh **Wiaskara** | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 | **Foto Perahu Mangrove** | Foto (Wikimedia Commons) | Foto perahu di kawasan mangrove oleh **FarisJamal** | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
