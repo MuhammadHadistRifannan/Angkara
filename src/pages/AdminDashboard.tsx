@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import { checkIsAdmin } from "@/lib/authRoles";
 import type { User } from "@supabase/supabase-js";
@@ -27,6 +26,9 @@ import {
   Edit,
   Wifi,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  Home,
 } from "lucide-react";
 import { AiApiKeyDialog, type AiApiKeyFormData } from "@/components/admin/AiApiKeyDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -103,6 +105,69 @@ export interface AiApiKeyItem {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 5;
+
+interface TablePaginationProps {
+  currentPage: number;
+  totalItems: number;
+  pageSize?: number;
+  onPageChange: (newPage: number) => void;
+  itemLabel?: string;
+}
+
+const TablePagination: React.FC<TablePaginationProps> = ({
+  currentPage,
+  totalItems,
+  pageSize = ITEMS_PER_PAGE,
+  onPageChange,
+  itemLabel = "data",
+}) => {
+  if (totalItems === 0) return null;
+
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 bg-slate-50/60 text-xs">
+      <div className="text-slate-500 font-medium">
+        Menampilkan <span className="font-bold text-slate-800">{startItem}–{endItem}</span> dari{" "}
+        <span className="font-bold text-slate-800">{totalItems}</span> {itemLabel}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="h-8 px-2.5 text-xs font-semibold rounded-lg border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+          aria-label="Halaman sebelumnya"
+        >
+          <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+          <span>Sebelumnya</span>
+        </Button>
+
+        <div className="text-xs font-bold text-slate-700 px-2.5 py-1 rounded-md bg-white border border-slate-200 min-w-[5.5rem] text-center shadow-xs">
+          Hal. {currentPage} / {totalPages}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="h-8 px-2.5 text-xs font-semibold rounded-lg border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+          aria-label="Halaman berikutnya"
+        >
+          <span>Berikutnya</span>
+          <ChevronRight className="h-3.5 w-3.5 ml-1" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -118,6 +183,14 @@ const AdminDashboard: React.FC = () => {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [bookingFilter, setBookingFilter] = useState<string>("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Pagination State (5 items per page)
+  const [pageOperators, setPageOperators] = useState(1);
+  const [pageBoats, setPageBoats] = useState(1);
+  const [pagePackages, setPagePackages] = useState(1);
+  const [pageReviews, setPageReviews] = useState(1);
+  const [pageBookings, setPageBookings] = useState(1);
+  const [pageAiKeys, setPageAiKeys] = useState(1);
 
   // AI API Keys State (Multi-Key Pool & Failover)
   const [aiKeys, setAiKeys] = useState<AiApiKeyItem[]>([]);
@@ -535,53 +608,111 @@ const AdminDashboard: React.FC = () => {
       ? bookings
       : bookings.filter((b) => b.booking_status === bookingFilter);
 
+  // Pagination Calculations & Slices (5 items per page)
+  const totalOpPages = Math.ceil(operators.length / ITEMS_PER_PAGE) || 1;
+  const safePageOps = Math.min(Math.max(1, pageOperators), totalOpPages);
+  const paginatedOperators = operators.slice((safePageOps - 1) * ITEMS_PER_PAGE, safePageOps * ITEMS_PER_PAGE);
+
+  const totalBoatPages = Math.ceil(boats.length / ITEMS_PER_PAGE) || 1;
+  const safePageBoats = Math.min(Math.max(1, pageBoats), totalBoatPages);
+  const paginatedBoats = boats.slice((safePageBoats - 1) * ITEMS_PER_PAGE, safePageBoats * ITEMS_PER_PAGE);
+
+  const totalPackagePages = Math.ceil(tourPackages.length / ITEMS_PER_PAGE) || 1;
+  const safePagePackages = Math.min(Math.max(1, pagePackages), totalPackagePages);
+  const paginatedPackages = tourPackages.slice((safePagePackages - 1) * ITEMS_PER_PAGE, safePagePackages * ITEMS_PER_PAGE);
+
+  const totalReviewPages = Math.ceil(reviews.length / ITEMS_PER_PAGE) || 1;
+  const safePageReviews = Math.min(Math.max(1, pageReviews), totalReviewPages);
+  const paginatedReviews = reviews.slice((safePageReviews - 1) * ITEMS_PER_PAGE, safePageReviews * ITEMS_PER_PAGE);
+
+  const totalBookingPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE) || 1;
+  const safePageBookings = Math.min(Math.max(1, pageBookings), totalBookingPages);
+  const paginatedBookings = filteredBookings.slice((safePageBookings - 1) * ITEMS_PER_PAGE, safePageBookings * ITEMS_PER_PAGE);
+
+  const totalAiKeyPages = Math.ceil(aiKeys.length / ITEMS_PER_PAGE) || 1;
+  const safePageAiKeys = Math.min(Math.max(1, pageAiKeys), totalAiKeyPages);
+  const paginatedAiKeys = aiKeys.slice((safePageAiKeys - 1) * ITEMS_PER_PAGE, safePageAiKeys * ITEMS_PER_PAGE);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
-      <Navbar />
-
       <Tabs
         value={activeTab}
         onValueChange={(val) => {
           setActiveTab(val);
           setIsMobileSidebarOpen(false);
         }}
-        className="flex-1 flex flex-col md:flex-row pt-20"
+        className="flex-1 flex flex-col md:flex-row min-h-screen w-full"
       >
         {/* Mobile Header Bar & Toggle Sidebar */}
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 border border-cyan-200">
-              <AvatarFallback className="bg-cyan-600 text-white font-bold text-xs">
-                AD
-              </AvatarFallback>
-            </Avatar>
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-sm">
+              <Ship className="h-4 w-4" />
+            </div>
             <div>
-              <p className="text-xs font-bold text-slate-900 line-clamp-1">
-                {currentUser?.user_metadata?.full_name as string || currentUser?.email || "Admin SUAR"}
+              <p className="text-xs font-bold text-slate-900 line-clamp-1 leading-tight">
+                SUAR Admin
               </p>
-              <span className="text-[10px] text-cyan-600 font-semibold block">Pengelola Platform</span>
+              <span className="text-[10px] text-cyan-600 font-semibold block leading-tight">
+                {currentUser?.user_metadata?.full_name as string || "Pengelola Platform"}
+              </span>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
-            className="p-1.5 h-9 w-9 rounded-xl"
-            aria-label="Toggle Menu Sidebar"
-          >
-            {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="p-1.5 h-8 px-2 text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg gap-1"
+              title="Ke Beranda Publik"
+            >
+              <Home className="h-4 w-4" />
+              <span className="text-[11px]">Beranda</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMobileSidebarOpen((prev) => !prev)}
+              className="p-1.5 h-8 w-8 rounded-lg text-slate-700"
+              aria-label="Toggle Menu Sidebar"
+            >
+              {isMobileSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         {/* Sidebar Navigasi & Profil Admin (Desktop & Mobile Drawer) */}
         <aside
           className={`
-            fixed md:sticky top-20 inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between shrink-0 transition-transform duration-200 ease-in-out md:translate-x-0
+            fixed md:sticky top-0 inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200/80 p-5 flex flex-col justify-between shrink-0 transition-transform duration-200 ease-in-out md:translate-x-0
             ${isMobileSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"}
-            min-h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-y-auto
+            h-screen max-h-screen overflow-y-auto
           `}
         >
           <div className="space-y-6">
+            {/* Header Brand SUAR Admin */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/80">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
+                  <Ship className="h-5 w-5" />
+                </div>
+                <div>
+                  <span className="font-extrabold text-sm text-slate-900 tracking-tight block">SUAR Admin</span>
+                  <span className="text-[10px] text-cyan-600 font-bold block">Console Pengawasan</span>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="h-8 px-2 text-xs font-semibold text-slate-500 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg gap-1"
+                title="Ke Halaman Utama Publik"
+              >
+                <Home className="h-3.5 w-3.5" />
+                <span className="text-[11px]">Web</span>
+              </Button>
+            </div>
+
             {/* Kartu Profil Admin */}
             <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-md relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -878,7 +1009,7 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {operators.map((op) => (
+                    {paginatedOperators.map((op) => (
                       <tr key={op.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-5 py-4 font-bold text-slate-900">{op.name}</td>
                         <td className="px-5 py-4 text-slate-600">{op.contact || "—"}</td>
@@ -928,6 +1059,13 @@ const AdminDashboard: React.FC = () => {
                   </tbody>
                 </table>
               </CardContent>
+              <TablePagination
+                currentPage={safePageOps}
+                totalItems={operators.length}
+                pageSize={ITEMS_PER_PAGE}
+                onPageChange={setPageOperators}
+                itemLabel="operator"
+              />
             </Card>
           </TabsContent>
 
@@ -956,7 +1094,7 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {boats.map((boat) => (
+                    {paginatedBoats.map((boat) => (
                       <tr key={boat.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-5 py-4 font-bold text-slate-900">{boat.name}</td>
                         <td className="px-5 py-4 text-slate-600">{boat.operators?.name || "—"}</td>
@@ -1000,6 +1138,13 @@ const AdminDashboard: React.FC = () => {
                   </tbody>
                 </table>
               </CardContent>
+              <TablePagination
+                currentPage={safePageBoats}
+                totalItems={boats.length}
+                pageSize={ITEMS_PER_PAGE}
+                onPageChange={setPageBoats}
+                itemLabel="armada kapal"
+              />
             </Card>
 
             {/* Sub-section: Paket Tour */}
@@ -1026,7 +1171,7 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {tourPackages.map((tour) => (
+                    {paginatedPackages.map((tour) => (
                       <tr key={tour.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-5 py-4 font-bold text-slate-900">{tour.title}</td>
                         <td className="px-5 py-4 text-slate-600">{tour.operators?.name || "—"}</td>
@@ -1071,6 +1216,13 @@ const AdminDashboard: React.FC = () => {
                   </tbody>
                 </table>
               </CardContent>
+              <TablePagination
+                currentPage={safePagePackages}
+                totalItems={tourPackages.length}
+                pageSize={ITEMS_PER_PAGE}
+                onPageChange={setPagePackages}
+                itemLabel="paket wisata"
+              />
             </Card>
           </TabsContent>
 
@@ -1087,7 +1239,7 @@ const AdminDashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-5 space-y-3">
-                {reviews.map((rev) => (
+                {paginatedReviews.map((rev) => (
                   <div
                     key={rev.id}
                     className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-start justify-between gap-4 hover:border-slate-300 transition-colors"
@@ -1121,6 +1273,13 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 )}
               </CardContent>
+              <TablePagination
+                currentPage={safePageReviews}
+                totalItems={reviews.length}
+                pageSize={ITEMS_PER_PAGE}
+                onPageChange={setPageReviews}
+                itemLabel="ulasan"
+              />
             </Card>
           </TabsContent>
 
@@ -1141,7 +1300,10 @@ const AdminDashboard: React.FC = () => {
                   <span className="text-xs font-bold text-slate-500">Filter:</span>
                   <select
                     value={bookingFilter}
-                    onChange={(e) => setBookingFilter(e.target.value)}
+                    onChange={(e) => {
+                      setBookingFilter(e.target.value);
+                      setPageBookings(1);
+                    }}
                     className="bg-white border border-slate-200 text-xs text-slate-800 rounded-xl px-3 py-1.5 shadow-sm font-semibold outline-none focus:ring-2 focus:ring-cyan-500/20"
                   >
                     <option value="all">Semua Status</option>
@@ -1165,7 +1327,7 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredBookings.map((b) => (
+                    {paginatedBookings.map((b) => (
                       <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="px-5 py-4 font-mono text-[11px] text-cyan-800 font-bold">
                           SUAR-{b.id.replace(/-/g, "").slice(0, 8).toUpperCase()}
@@ -1205,6 +1367,13 @@ const AdminDashboard: React.FC = () => {
                   </tbody>
                 </table>
               </CardContent>
+              <TablePagination
+                currentPage={safePageBookings}
+                totalItems={filteredBookings.length}
+                pageSize={ITEMS_PER_PAGE}
+                onPageChange={setPageBookings}
+                itemLabel="booking"
+              />
             </Card>
           </TabsContent>
 
@@ -1358,7 +1527,7 @@ const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {aiKeys.map((k) => {
+                      {paginatedAiKeys.map((k) => {
                         const statusColors: Record<string, string> = {
                           ACTIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
                           INACTIVE: "bg-slate-100 text-slate-600 border-slate-200",
@@ -1487,6 +1656,13 @@ const AdminDashboard: React.FC = () => {
                       })}
                     </tbody>
                   </table>
+                  <TablePagination
+                    currentPage={safePageAiKeys}
+                    totalItems={aiKeys.length}
+                    pageSize={ITEMS_PER_PAGE}
+                    onPageChange={setPageAiKeys}
+                    itemLabel="kunci API"
+                  />
                 </div>
               </div>
             )}

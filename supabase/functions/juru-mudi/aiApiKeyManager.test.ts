@@ -61,7 +61,7 @@ describe("AI API Key Manager (Tradiora-Style Multi-Key Pool)", () => {
             }),
           };
         }
-        return {} as any;
+        return {} as unknown as ReturnType<SupabaseLike["from"]>;
       }),
     } as unknown as SupabaseLike;
 

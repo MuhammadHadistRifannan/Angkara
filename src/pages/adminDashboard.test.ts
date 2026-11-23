@@ -445,4 +445,71 @@ describe("AdminDashboard - Role Pengelola Platform SUAR", () => {
       expect(screen.getByText("ACTIVE")).toBeDefined();
     });
   });
+
+  it("menerapkan pagination maksimal 5 data per halaman pada tabel operator", async () => {
+    const manyOperators = Array.from({ length: 7 }, (_, i) => ({
+      id: `op-${i + 1}`,
+      name: `Koperasi Nelayan Angkara #${i + 1}`,
+      contact: `081234567${i}`,
+      ksop_permit_number: `KSOP/CLP/2026/0${i + 1}`,
+      verified: i % 2 === 0,
+      created_at: `2026-11-0${i + 1}T00:00:00Z`,
+    }));
+
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: {
+        user: {
+          id: "admin-01",
+          email: "admin@angkara.id",
+          user_metadata: { role: "admin" },
+        },
+      },
+    } as unknown as { data: { user: null }; error: null });
+
+    vi.mocked(supabase.from).mockImplementation((table: string) => {
+      if (table === "operators") {
+        return {
+          select: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: manyOperators, error: null }),
+          }),
+        } as unknown as ReturnType<typeof supabase.from>;
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      } as unknown as ReturnType<typeof supabase.from>;
+    });
+
+    render(
+      React.createElement(
+        MemoryRouter,
+        null,
+        React.createElement(AdminDashboard)
+      )
+    );
+
+    // Di halaman 1, hanya item 1 s/d 5 yang tampil
+    await waitFor(() => {
+      expect(screen.getByText("Koperasi Nelayan Angkara #1")).toBeDefined();
+      expect(screen.getByText("Koperasi Nelayan Angkara #5")).toBeDefined();
+      expect(screen.queryByText("Koperasi Nelayan Angkara #6")).toBeNull();
+      expect(screen.getByText(/Menampilkan/i)).toBeDefined();
+      expect(screen.getByText("1–5")).toBeDefined();
+      expect(screen.getByText("Hal. 1 / 2")).toBeDefined();
+    });
+
+    // Klik tombol berikutnya
+    const nextBtn = screen.getByRole("button", { name: /Halaman berikutnya/i });
+    fireEvent.click(nextBtn);
+
+    // Di halaman 2, item 6 dan 7 tampil, item 1 s/d 5 hilang dari tabel
+    await waitFor(() => {
+      expect(screen.queryByText("Koperasi Nelayan Angkara #1")).toBeNull();
+      expect(screen.getByText("Koperasi Nelayan Angkara #6")).toBeDefined();
+      expect(screen.getByText("Koperasi Nelayan Angkara #7")).toBeDefined();
+      expect(screen.getByText("6–7")).toBeDefined();
+      expect(screen.getByText("Hal. 2 / 2")).toBeDefined();
+    });
+  });
 });
