@@ -170,8 +170,8 @@ All colors MUST be HSL.
     max-height: none !important;
     margin: 0 auto !important;
     padding: 0 !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 1.5rem !important;
+    border: none !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
     background: #ffffff !important;
     color: #0f172a !important;
@@ -211,11 +211,14 @@ All colors MUST be HSL.
     print-color-adjust: exact !important;
   }
 
-  /* Sembunyikan tombol close dan elemen non-cetak */
-  .printable-eticket-dialog button[data-state],
-  .printable-eticket-dialog button > .sr-only,
-  .printable-manifest-dialog button[data-state],
-  .printable-manifest-dialog button > .sr-only,
+  /* Sembunyikan tombol close dialog dan elemen non-cetak.
+   Jangan sembunyikan button[data-state]: itu juga checkbox manifes. */
+.printable-eticket-dialog button[data-state],
+.printable-eticket-dialog button > .sr-only,
+.printable-manifest-dialog > button,
+.printable-manifest-dialog button > .sr-only,
+
+  
   button.print\:hidden,
   .print\:hidden,
   .no-print {

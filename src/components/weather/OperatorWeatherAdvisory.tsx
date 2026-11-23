@@ -58,18 +58,18 @@ export function evaluateSailingSafety(
   windKn: number | null,
   _isWoodenBoat = true
 ): SailingSafetyVerdict {
-  // 1. Kondisi Sensor Offline / Data Tidak Tersedia
+  // 1. Kondisi Data Tidak Ada / Data Tidak Tersedia
   if (waveM === null) {
     return {
       level: "waspada",
-      title: "WASPADA: Data Gelombang Tidak Tersedia (Sensor Offline)",
+      title: "Waspada: Data Gelombang Tidak Ada",
       message:
-        "Telemetri gelombang laut saat ini tidak dapat diakses secara real-time. Standar operasional KSOP melarang penetapan status Aman otomatis bila sensor tidak aktif.",
+        "Data gelombang saat ini tidak bisa diambil. Kalau datanya tidak ada, status tidak boleh Aman.",
       actionGuide:
-        "Wajib pengamatan visual langsung di mulut muara Dermaga Pandanarang. Seluruh nakhoda dan penumpang WAJIB mengenakan rompi pelampung standar SOLAS.",
-      waveStatus: "Sensor Offline / Tidak Tersedia",
+        "Lihat langsung kondisi laut di Dermaga Pandanarang. Semua penumpang wajib pakai jaket pelampung.",
+      waveStatus: "Data Tidak Ada",
       windStatus:
-        windKn !== null ? `${windKn.toFixed(1)} knot` : "Sensor Offline",
+        windKn !== null ? `${windKn.toFixed(1)} knot` : "Data Tidak Ada",
     };
   }
 
@@ -83,18 +83,18 @@ export function evaluateSailingSafety(
   // 2. Kondisi Tunda / Bahaya Ekstrem
   if (waveTunda || windTunda) {
     const reasons: string[] = [];
-    if (waveTunda) reasons.push(`Tinggi gelombang (${waveM.toFixed(1)} m > ${MAX_WAVE_M} m)`);
+    if (waveTunda) reasons.push(`Gelombang (${waveM.toFixed(1)} m > ${MAX_WAVE_M} m)`);
     if (windTunda && windKn !== null)
-      reasons.push(`Kecepatan angin (${windKn.toFixed(1)} knot > ${MAX_WIND_KN} knot)`);
+      reasons.push(`Angin (${windKn.toFixed(1)} knot > ${MAX_WIND_KN} knot)`);
 
     return {
       level: "tunda",
-      title: "TUNDA / LARANGAN BERLAYAR: Gelombang / Angin Melebihi Batas Aman",
-      message: `Peringatan Keselamatan: ${reasons.join(
+      title: "Tunda: Gelombang / Angin Terlalu Besar",
+      message: `Ombak atau angin sudah lewat batas aman: ${reasons.join(
         " dan "
-      )}. Kondisi perairan Teluk Penyu & Selat Nusakambangan berisiko tinggi terhadap stabilitas kapal wisata.`,
+      )}. Jangan berlayar dulu, berbahaya untuk kapal wisata.`,
       actionGuide:
-        "KSOP & Syahbandar: Seluruh armada wisata DILARANG melaut ke laut lepas Teluk Penyu. Koordinasikan penjadwalan ulang atau pembatalan tiket kepada penumpang.",
+        "Semua kapal wisata dilarang berlayar ke Teluk Penyu. Kabari penumpang untuk ganti jadwal atau batalkan tiketnya.",
       waveStatus: `Bahaya (${waveM.toFixed(1)} m > ${MAX_WAVE_M} m)`,
       windStatus:
         windKn !== null
@@ -110,12 +110,12 @@ export function evaluateSailingSafety(
   if (waveWaspada || windWaspada) {
     return {
       level: "waspada",
-      title: "WASPADA CUACA LAUT: Gelombang / Angin Mendekati Ambang Batas",
-      message: `Tinggi gelombang ${waveM.toFixed(
+      title: "Waspada: Gelombang / Angin Mulai Besar",
+      message: `Gelombang ${waveM.toFixed(
         1
-      )} m dan kecepatan angin ${windKn ? windKn.toFixed(1) : 0} knot mendekati batas ambang aman kapal rakyat (1.25 m).`,
+      )} m dan angin ${windKn ? windKn.toFixed(1) : 0} knot sudah mendekati batas aman (1.25 m).`,
       actionGuide:
-        "Pelayaran diizinkan dengan pembatasan muatan. Nakhoda dan seluruh wisatawan WAJIB mengenakan rompi pelampung standar SOLAS yang terkancing rapat.",
+        "Boleh berlayar, tapi kurangi jumlah penumpang. Semua penumpang wajib pakai jaket pelampung.",
       waveStatus: `Waspada (${waveM.toFixed(1)} m)`,
       windStatus: windKn !== null ? `${windKn.toFixed(1)} knot` : "-",
     };
@@ -124,12 +124,12 @@ export function evaluateSailingSafety(
   // 4. Kondisi Aman
   return {
     level: "aman",
-    title: "AMAN BERLAYAR: Kondisi Laut & Cuaca Normal",
-    message: `Gelombang laut ${waveM.toFixed(
+    title: "Aman: Laut Tenang, Boleh Berlayar",
+    message: `Gelombang ${waveM.toFixed(
       1
-    )} m dan angin ${windKn ? windKn.toFixed(1) : 0} knot berada dalam ambang aman operasional perahu wisata.`,
+    )} m dan angin ${windKn ? windKn.toFixed(1) : 0} knot masih dalam batas aman.`,
     actionGuide:
-      "Seluruh armada kapal diizinkan berlayar normal sesuai SOP Syahbandar. Pastikan manifes penumpang tercatat lengkap dan APD keselamatan tersedia di atas kapal.",
+      "Semua kapal boleh berlayar seperti biasa. Pastikan daftar penumpang lengkap dan jaket pelampung tersedia di kapal.",
     waveStatus: `Normal (${waveM.toFixed(1)} m)`,
     windStatus: windKn !== null ? `${windKn.toFixed(1)} knot (Tenang)` : "-",
   };
@@ -178,17 +178,17 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
       if (!isFirstMountRef.current) {
         if (verdict.level === "tunda") {
           toast.error(
-            "⚠️ PERINGATAN KSOP: Kondisi laut memburuk! Status berubah menjadi TUNDA BERLAYAR. Seluruh keberangkatan wajib ditunda.",
+            "Peringatan: laut memburuk, jangan berlayar. Tunda semua keberangkatan.",
             { duration: 6000 }
           );
         } else if (verdict.level === "waspada" && prevLevel === "aman") {
           toast.warning(
-            "⚠️ INFORMASI KSOP: Status maritim berubah menjadi WASPADA. Seluruh nakhoda dan penumpang wajib mengenakan rompi pelampung SOLAS.",
+            "Info: status berubah jadi Waspada. Semua penumpang wajib pakai jaket pelampung.",
             { duration: 5000 }
           );
         } else if (verdict.level === "aman" && (prevLevel === "tunda" || prevLevel === "waspada")) {
           toast.success(
-            "✅ INFORMASI KSOP: Kondisi laut kembali AMAN BERLAYAR. Seluruh armada diizinkan melaut normal.",
+            "Info: laut sudah aman lagi, boleh berlayar seperti biasa.",
             { duration: 4000 }
           );
         }
@@ -324,7 +324,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
           windKn: 13.0,
           trendM: 0.2,
           fetchedAt: new Date(),
-          source: "Simulasi: Waspada SOLAS",
+          source: "Simulasi: Waspada",
         });
         break;
       case "simulasi_tunda":
@@ -342,7 +342,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
           windKn: 12.0,
           trendM: null,
           fetchedAt: new Date(),
-          source: "Simulasi: Sensor Offline",
+          source: "Simulasi: Data Tidak Ada",
         });
         break;
       case "live":
@@ -462,8 +462,8 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
             />
           </div>
           <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-            <Radio className="h-3.5 w-3.5 text-cyan-600" />
-            Papan Status Keselamatan Maritim Live
+            <Radio className="h-3.5 w-3.5 text-primary" />
+            Cuaca Laut Hari Ini
           </span>
           <span className="text-slate-300">•</span>
           <span className="text-xs text-slate-500 font-medium hidden sm:inline">
@@ -480,7 +480,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
             {verdict.title.split(":")[0]}
           </Badge>
           <span className="text-[11px] font-medium text-slate-500 hidden md:inline">
-            • Auto-refresh Realtime
+            • Diperbarui otomatis
           </span>
         </div>
       </div>
@@ -505,9 +505,9 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
 
           {/* Kotak Petunjuk Tindakan Operator (Clean Slate Styling) */}
           <div className="rounded-xl bg-slate-50 border border-slate-200/90 p-3 sm:p-3.5 flex items-start gap-2.5">
-            <Anchor className="h-4 w-4 text-cyan-700 shrink-0 mt-0.5" />
+            <Anchor className="h-4 w-4 text-primary shrink-0 mt-0.5" />
             <div className="text-xs sm:text-sm leading-snug">
-              <span className="font-bold text-slate-900">Instruksi Syahbandar (KSOP): </span>
+              <span className="font-bold text-slate-900">Yang harus dilakukan: </span>
               <span className="text-slate-600">{verdict.actionGuide}</span>
             </div>
           </div>
@@ -519,7 +519,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
           <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-xs flex flex-col justify-between">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-semibold uppercase tracking-wider">Gelombang</span>
-              <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-primary/5 text-primary flex items-center justify-center">
                 <Waves className="h-4 w-4" />
               </div>
             </div>
@@ -528,14 +528,14 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
                 {data.waveM !== null ? `${data.waveM.toFixed(1)} m` : "N/A"}
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Batas Aman: ≤ 1.25 m
+                Aman sampai 1,25 m
               </p>
             </div>
             <Badge
               variant="outline"
               className={`text-[10px] w-fit font-semibold px-2 py-0.5 mt-1 ${styles.metricBadge}`}
             >
-              {data.waveM !== null ? verdict.waveStatus : "Sensor Offline"}
+              {data.waveM !== null ? verdict.waveStatus : "Data Tidak Ada"}
             </Badge>
           </div>
 
@@ -552,7 +552,7 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
                 {data.windKn !== null ? `${data.windKn.toFixed(1)} knot` : "N/A"}
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                Batas Aman: ≤ 15.0 knot
+                Aman sampai 15 knot
               </p>
             </div>
             <Badge
@@ -570,11 +570,11 @@ export const OperatorWeatherAdvisory: React.FC<OperatorWeatherAdvisoryProps> = (
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-slate-400" />
           <span>
-            Diperbarui: {formattedTime} WIB ({data.source || "Open-Meteo"}) • Auto-refresh Aktif
+            Diperbarui: {formattedTime} WIB ({data.source || "Open-Meteo"}) • Otomatis diperbarui
           </span>
         </div>
         <div className="text-slate-500 font-medium">
-          Standar Syahbandar: Gelombang 1,25 m • Angin 15 knot
+          Batas aman: gelombang 1,25 m • angin 15 knot
         </div>
       </div>
     </div>

@@ -18,14 +18,14 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
-  MessageCircle,
+  Copy,
   Anchor,
   ShieldCheck,
   Ticket,
   FileCheck2,
   AlertOctagon,
   Compass,
-  Sparkles,
+  Package,
   Trash2,
   User as UserIcon,
   LogOut,
@@ -81,6 +81,8 @@ interface OperatorBooking {
   booking_status: "pending" | "confirmed" | "completed" | "cancelled";
   payment_status: "pending" | "paid" | "dp_paid" | "refunded";
   notes?: string | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
   created_at?: string;
   boats?: {
     id: string;
@@ -91,6 +93,29 @@ interface OperatorBooking {
 }
 
 type BookingFilterType = "all" | "pending" | "confirmed" | "completed" | "cancelled";
+
+
+// Uang yang sudah masuk: lunas dihitung penuh, DP dihitung 30%.
+// Booking batal dan yang belum bayar tidak dihitung.
+const calcRevenue = (list: OperatorBooking[]) =>
+  list
+    .filter((b) => b.booking_status !== "cancelled")
+    .reduce((sum, b) => {
+      const pay = (b.payment_status || "").toLowerCase();
+      if (pay === "paid" || pay === "fully_paid") return sum + (b.total_price || 0);
+      if (pay === "dp_paid") return sum + Math.round((b.total_price || 0) * 0.3);
+      return sum;
+    }, 0);
+
+// Label pembayaran yang mudah dimengerti (nilai di database ada yang huruf besar).
+const getPaymentLabel = (status: string) => {
+  const s = (status || "").toLowerCase();
+  if (s === "paid" || s === "fully_paid") return "Lunas";
+  if (s === "dp_paid") return "DP Sudah Dibayar";
+  if (s === "refunded") return "Dikembalikan";
+  return "DP Belum Dibayar";
+};
+
 
 const OperatorDashboard = () => {
   const navigate = useNavigate();
@@ -281,9 +306,37 @@ const OperatorDashboard = () => {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      const typedData = data as unknown as OperatorBooking[];
-      setBookings(typedData);
-      const totalRevenue = typedData.reduce((sum, b) => sum + (b.total_price || 0), 0);
+  const typedData = data as unknown as OperatorBooking[];
+  // Ambil nama + nomor HP wisatawan dari profiles (bisa dibaca operator
+  // untuk wisatawan yang booking kapalnya - lihat migrasi O5).
+  // Best-effort: kalau gagal (mis. migrasi belum diterapkan), booking
+  // tetap tampil dan tombol chat memakai fallback salin.
+  try {
+    const userIds = [...new Set(typedData.map((b) => b.user_id))];
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone")
+        .in("id", userIds);
+      if (profiles) {
+        const byId = new Map<string, { full_name: string | null; phone: string | null }>();
+        for (const p of profiles) {
+          byId.set(p.id, { full_name: p.full_name, phone: p.phone });
+        }
+        for (const b of typedData) {
+          const p = byId.get(b.user_id);
+          b.customer_name = p?.full_name ?? null;
+          b.customer_phone = p?.phone ?? null;
+        }
+      }
+    }
+  } catch {
+    // Abaikan: info wisatawan tidak tampil, tombol chat pakai fallback.
+  }
+  setBookings(typedData);
+
+      
+      const totalRevenue = calcRevenue(typedData);
       const pending = typedData.filter((b) => b.booking_status === "pending").length;
       setStats((prev) => ({
         ...prev,
@@ -336,14 +389,14 @@ const OperatorDashboard = () => {
       );
 
       toast.success(
-        `Status kelaikan ${boat.name} diubah menjadi: ${
-          newStatus ? "Tersedia Berlayar" : "Docking / Perawatan"
+        `Status ${boat.name} diubah menjadi: ${
+          newStatus ? "Siap Berlayar" : "Lagi Diperbaiki"
         }`
       );
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ||
-        (err instanceof Error ? err.message : "Gagal mengubah status kelaikan kapal");
+        (err instanceof Error ? err.message : "Gagal mengubah status kapal");
       toast.error(msg);
     } finally {
       setIsTogglingBoat(null);
@@ -390,13 +443,13 @@ const OperatorDashboard = () => {
 
       toast.success(
         `Status paket "${pkg.name}" diubah menjadi: ${
-          newStatus ? "Aktif Ditawarkan" : "Nonaktif"
+          newStatus ? "Aktif" : "Nonaktif"
         }`
       );
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ||
-        (err instanceof Error ? err.message : "Gagal mengubah status paket wisata");
+        (err instanceof Error ? err.message : "Gagal mengubah status paket");
       toast.error(msg);
     } finally {
       setIsTogglingPackage(null);
@@ -405,7 +458,7 @@ const OperatorDashboard = () => {
 
   const handleDeletePackage = async (pkg: OperatorTourPackageData) => {
     if (!pkg.id) return;
-    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus paket "${pkg.name}"?`);
+    const confirmDelete = window.confirm(`Hapus paket "${pkg.name}"? Paket yang dihapus tidak bisa kembali.`);
     if (!confirmDelete) return;
 
     try {
@@ -417,11 +470,11 @@ const OperatorDashboard = () => {
       if (error) throw error;
 
       setPackages((prev) => prev.filter((p) => p.id !== pkg.id));
-      toast.success(`Paket wisata "${pkg.name}" berhasil dihapus`);
+      toast.success(`Paket "${pkg.name}" sudah dihapus`);
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ||
-        (err instanceof Error ? err.message : "Gagal menghapus paket wisata");
+        (err instanceof Error ? err.message : "Gagal menghapus paket");
       toast.error(msg);
     }
   };
@@ -450,41 +503,44 @@ const OperatorDashboard = () => {
         );
         return {
           ...prev,
+          totalRevenue: calcRevenue(updated),
           pendingBookings: updated.filter((b) => b.booking_status === "pending").length,
         };
       });
 
       if (newStatus === "confirmed") {
-        toast.success("Booking berhasil dikonfirmasi");
+        toast.success("Booking sudah diterima");
       } else if (newStatus === "completed") {
-        toast.success("Pelayaran berhasil diselesaikan! Wisatawan kini dapat memberikan ulasan.");
+        toast.success("Perjalanan selesai. Wisatawan sekarang bisa memberi ulasan.");
       } else if (newStatus === "cancelled") {
-        toast.success("Booking telah dibatalkan / ditolak");
+        toast.success("Booking sudah dibatalkan");
       }
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ||
-        (err instanceof Error ? err.message : "Gagal memperbarui status booking");
+        (err instanceof Error ? err.message : "Gagal mengubah status booking");
       toast.error(msg);
     } finally {
       setIsUpdating(null);
     }
   };
 
-  // Tautan komunikasi WhatsApp langsung ke wisatawan
-  const handleChatCustomer = (booking: OperatorBooking) => {
-    const dateStr = new Date(booking.booking_date).toLocaleDateString("id-ID");
-    const ticketCode = `SUAR-${booking.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
-    const message = encodeURIComponent(
-      `Halo Pelanggan SUAR, ini dari operator kapal ${
-        booking.boats?.name || "wisata"
-      }. Mengenai pesanan tiket ${ticketCode} untuk keberangkatan ${dateStr} jam ${booking.departure_time.slice(
-        0,
-        5
-      )} WIB (${booking.passengers} penumpang). Ada yang bisa kami bantu informasikan sebelum keberangkatan?`
-    );
-    window.open(`https://wa.me/?text=${message}`, "_blank");
-  };
+// Salin info booking supaya operator bisa menempelkannya ke chat WA wisatawan.
+// (Nomor HP wisatawan tidak tersimpan di booking, jadi tombol chat langsung tidak bisa jalan.)
+const handleCopyBooking = async (booking: OperatorBooking) => {
+  const dateStr = new Date(booking.booking_date).toLocaleDateString("id-ID");
+  const ticketCode = `SUAR-${booking.id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+  const text =
+    `${ticketCode} • ${booking.boats?.name || "Kapal Wisata"} • ${dateStr} ${booking.departure_time.slice(0, 5)} WIB • ` +
+    `${booking.passengers} penumpang • Total Rp ${booking.total_price.toLocaleString("id-ID")}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Info booking disalin, tempel ke chat WA wisatawan");
+  } catch {
+    toast.error("Gagal menyalin info booking");
+  }
+};
+
 
   // Buka dialog lembar manifes penumpang & checklist KSOP
   const handleOpenManifest = (booking: OperatorBooking) => {
@@ -503,19 +559,19 @@ const OperatorDashboard = () => {
       case "pending":
         return (
           <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-bold text-xs hover:bg-amber-100">
-            Menunggu Konfirmasi
+            Menunggu Jawaban
           </Badge>
         );
       case "confirmed":
         return (
           <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold text-xs hover:bg-emerald-100">
-            Terkonfirmasi
+            Diterima
           </Badge>
         );
       case "completed":
         return (
           <Badge className="bg-sky-100 text-sky-900 border-sky-300 font-bold text-xs hover:bg-sky-100">
-            Trip Selesai
+            Selesai
           </Badge>
         );
       case "cancelled":
@@ -534,7 +590,7 @@ const OperatorDashboard = () => {
     e.preventDefault();
     if (!operator?.id) return;
     if (!editCompanyName.trim()) {
-      toast.error("Nama usaha/operator tidak boleh kosong");
+      toast.error("Nama usaha harus diisi");
       return;
     }
     setIsSavingProfile(true);
@@ -560,11 +616,11 @@ const OperatorDashboard = () => {
             }
           : null
       );
-      toast.success("Profil dan legalitas operator berhasil diperbarui");
+      toast.success("Profil berhasil disimpan");
     } catch (err: unknown) {
       const msg =
         (err as { message?: string })?.message ||
-        (err instanceof Error ? err.message : "Gagal menyimpan profil operator");
+        (err instanceof Error ? err.message : "Gagal menyimpan profil");
       toast.error(msg);
     } finally {
       setIsSavingProfile(false);
@@ -575,10 +631,10 @@ const OperatorDashboard = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success("Berhasil keluar dari akun operator");
+      toast.success("Anda sudah keluar");
       navigate("/");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gagal logout";
+      const msg = err instanceof Error ? err.message : "Gagal keluar";
       toast.error(msg);
     }
   };
@@ -609,8 +665,8 @@ const OperatorDashboard = () => {
         {/* Mobile Header Bar & Toggle Sidebar */}
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9 border border-cyan-200">
-              <AvatarFallback className="bg-cyan-600 text-white font-bold text-xs">
+            <Avatar className="h-9 w-9 border border-primary/20">
+              <AvatarFallback className="bg-primary text-white font-bold text-xs">
                 {operator?.company_name ? operator.company_name.charAt(0).toUpperCase() : "O"}
               </AvatarFallback>
             </Avatar>
@@ -618,7 +674,7 @@ const OperatorDashboard = () => {
               <p className="text-xs font-bold text-slate-900 line-clamp-1">
                 {operator?.company_name || "Operator Kapal"}
               </p>
-              <span className="text-[10px] text-cyan-600 font-semibold block">Mitra Operator SUAR</span>
+              <span className="text-[10px] text-primary font-semibold block">Operator SUAR</span>
             </div>
           </div>
           <Button
@@ -642,10 +698,10 @@ const OperatorDashboard = () => {
           <div className="space-y-6">
             {/* Kartu Profil Operator */}
             <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-md relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary-light/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-3 relative z-10">
-                <Avatar className="h-12 w-12 border-2 border-cyan-400 shadow-sm">
-                  <AvatarFallback className="bg-cyan-600 text-white font-black text-sm">
+                <Avatar className="h-12 w-12 border-2 border-primary-light shadow-sm">
+                  <AvatarFallback className="bg-primary text-white font-black text-sm">
                     {operator?.company_name ? operator.company_name.slice(0, 2).toUpperCase() : "OP"}
                   </AvatarFallback>
                 </Avatar>
@@ -657,13 +713,13 @@ const OperatorDashboard = () => {
                     {operator?.email || "-"}
                   </p>
                   <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                    <Badge className="bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 text-[9px] px-1.5 py-0 font-semibold">
+                    <Badge className="bg-primary-light/20 text-primary-light border border-primary-light/30 text-[9px] px-1.5 py-0 font-semibold">
                       Operator
                     </Badge>
                     {operator?.verified ? (
                       <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] px-1.5 py-0 font-semibold flex items-center gap-1">
                         <ShieldCheck className="h-2.5 w-2.5" />
-                        KSOP Terverifikasi
+                        Terverifikasi
                       </Badge>
                     ) : (
                       <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] px-1.5 py-0 font-semibold">
@@ -675,8 +731,8 @@ const OperatorDashboard = () => {
               </div>
               {operator?.ksop_certificate && (
                 <div className="mt-3 pt-2.5 border-t border-slate-700/60 text-[10px] text-slate-300 flex items-center justify-between">
-                  <span className="text-slate-400">No. SKKSOP:</span>
-                  <span className="font-mono text-cyan-300 truncate ml-2">{operator.ksop_certificate}</span>
+                  <span className="text-slate-400">No. Sertifikat:</span>
+                  <span className="font-mono text-primary-light truncate ml-2">{operator.ksop_certificate}</span>
                 </div>
               )}
             </div>
@@ -684,23 +740,23 @@ const OperatorDashboard = () => {
             {/* Menu Navigasi Tabs Sidebar */}
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
-                Konsol Syahbandar
+                Menu
               </span>
               <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1.5">
                 <TabsTrigger
                   value="overview"
-                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center gap-2.5"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center gap-2.5"
                 >
-                  <LayoutDashboard className="h-4 w-4 text-cyan-600" />
+                  <LayoutDashboard className="h-4 w-4 text-primary" />
                   <span>Dashboard</span>
                 </TabsTrigger>
 
                 <TabsTrigger
                   value="boats"
-                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Ship className="h-4 w-4 text-cyan-600" />
+                    <Ship className="h-4 w-4 text-primary" />
                     <span>Kapal Saya</span>
                   </div>
                   {boats.length > 0 && (
@@ -712,14 +768,14 @@ const OperatorDashboard = () => {
 
                 <TabsTrigger
                   value="packages"
-                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Sparkles className="h-4 w-4 text-cyan-600" />
+                    <Package className="h-4 w-4 text-primary" />
                     <span>Paket Wisata</span>
                   </div>
                   {packages.length > 0 && (
-                    <span className="h-5 px-1.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-black flex items-center justify-center">
+                    <span className="h-5 px-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black flex items-center justify-center">
                       {packages.length}
                     </span>
                   )}
@@ -727,10 +783,10 @@ const OperatorDashboard = () => {
 
                 <TabsTrigger
                   value="bookings"
-                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center"
+                  className="w-full justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Ticket className="h-4 w-4 text-cyan-600" />
+                    <Ticket className="h-4 w-4 text-primary" />
                     <span>Booking</span>
                   </div>
                   {pendingCount > 0 && (
@@ -742,17 +798,17 @@ const OperatorDashboard = () => {
 
                 <TabsTrigger
                   value="profile"
-                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-cyan-700 hover:bg-slate-100 data-[state=active]:bg-cyan-50 data-[state=active]:text-cyan-800 data-[state=active]:border data-[state=active]:border-cyan-200 transition-all flex items-center gap-2.5"
+                  className="w-full justify-start px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 hover:text-primary hover:bg-slate-100 data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border data-[state=active]:border-primary/20 transition-all flex items-center gap-2.5"
                 >
-                  <UserIcon className="h-4 w-4 text-cyan-600" />
+                  <UserIcon className="h-4 w-4 text-primary" />
                   <span>Profil & Legalitas</span>
                 </TabsTrigger></TabsList>
             </div>
 
-            {/* Pintasan Bahari */}
+            {/* Pintasan */}
             <div className="pt-2 border-t border-slate-200/80 space-y-1">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-2 mb-2">
-                Pintasan Bahari
+                Pintasan
               </span>
               <Button
                 variant="ghost"
@@ -761,10 +817,10 @@ const OperatorDashboard = () => {
                   setIsMobileSidebarOpen(false);
                   navigate("/#weather-map-section");
                 }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
               >
-                <Waves className="h-4 w-4 text-cyan-600" />
-                <span>Pantau Peta Cuaca</span>
+                <Waves className="h-4 w-4 text-primary" />
+                <span>Lihat Peta Cuaca</span>
               </Button>
               <Button
                 variant="ghost"
@@ -773,10 +829,10 @@ const OperatorDashboard = () => {
                   setIsMobileSidebarOpen(false);
                   navigate("/boats");
                 }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
               >
-                <Ship className="h-4 w-4 text-cyan-600" />
-                <span>Katalog Armada Kapal</span>
+                <Ship className="h-4 w-4 text-primary" />
+                <span>Lihat Semua Kapal</span>
               </Button>
               <Button
                 variant="ghost"
@@ -785,10 +841,10 @@ const OperatorDashboard = () => {
                   setIsMobileSidebarOpen(false);
                   navigate("/tour-packages");
                 }}
-                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-cyan-700 hover:bg-cyan-50 gap-2.5 rounded-xl px-3"
+                className="w-full justify-start text-xs font-semibold text-slate-600 hover:text-primary hover:bg-primary/5 gap-2.5 rounded-xl px-3"
               >
-                <Compass className="h-4 w-4 text-cyan-600" />
-                <span>Katalog Paket Tour</span>
+                <Compass className="h-4 w-4 text-primary" />
+                <span>Lihat Semua Paket</span>
               </Button>
             </div>
           </div>
@@ -802,7 +858,7 @@ const OperatorDashboard = () => {
               className="w-full justify-center text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300 gap-2 rounded-xl"
             >
               <LogOut className="h-4 w-4 text-rose-500" />
-              <span>Keluar dari Akun</span>
+              <span>Keluar</span>
             </Button>
           </div>
         </aside>
@@ -811,25 +867,21 @@ const OperatorDashboard = () => {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full">
           {/* TAB 1: Dashboard (Ringkasan, Keselamatan Maritim, Stats & Analitik) */}
           <TabsContent value="overview" className="space-y-6 mt-0 animate-in fade-in duration-200">
-            {/* Header Konsol Operator */}
+            {/* Header Dashboard Operator */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-1">
-                  <Anchor className="h-3.5 w-3.5 text-cyan-600" />
-                  <span>Konsol Syahbandar & Mitra Operator</span>
-                </div>
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
                   Dashboard Operator
                 </h1>
                 <p className="text-slate-600 text-xs sm:text-sm mt-0.5">
-                  {operator?.company_name || "Ringkasan keselamatan maritim, armada, dan analitik bisnis pelayaran."}
+                  Ringkasan kapal, booking, dan pemasukan Anda.
                 </p>
               </div>
 
               {operator?.verified && (
                 <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold self-start sm:self-auto">
                   <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                  <span>Terverifikasi KSOP Kelas II Cilacap</span>
+                  <span>Operator Terverifikasi</span>
                 </div>
               )}
             </div>
@@ -847,7 +899,7 @@ const OperatorDashboard = () => {
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Kapal</p>
                     <p className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{stats.totalBoats}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
                     <Ship className="h-6 w-6" />
                   </div>
                 </CardContent>
@@ -868,9 +920,9 @@ const OperatorDashboard = () => {
               <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Estimasi Omzet</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perkiraan Pemasukan</p>
                     <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-                      Rp {(stats.totalRevenue / 1000000).toFixed(1)}jt
+                      Rp {stats.totalRevenue.toLocaleString("id-ID")}
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
@@ -882,7 +934,7 @@ const OperatorDashboard = () => {
               <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Perlu Persetujuan</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Menunggu Jawaban</p>
                     <p className="text-2xl sm:text-3xl font-black text-amber-600 mt-1">{stats.pendingBookings}</p>
                   </div>
                   <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center">
@@ -896,34 +948,33 @@ const OperatorDashboard = () => {
             <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
-                  <TrendingUp className="h-5 w-5 text-cyan-600" />
-                  Statistik Performa & Utilisasi Armada
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Ringkasan Usaha
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Analitik utilisasi armada dan estimasi perputaran omzet bulanan operasional kapal Anda di Pelabuhan Cilacap.
+                  Total booking dan pemasukan dari semua kapal Anda.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="p-5 bg-sky-50 rounded-2xl border border-sky-100">
-                  <h4 className="font-bold text-sm text-slate-900 mb-3">Ringkasan Bulan Ini</h4>
+                  <h4 className="font-bold text-sm text-slate-900 mb-3">Total Selama Ini</h4>
                   <div className="grid md:grid-cols-3 gap-4 text-xs">
                     <div>
-                      <div className="text-slate-500 font-medium">Total Booking Diterima</div>
+                      <div className="text-slate-500 font-medium">Booking Masuk</div>
                       <div className="text-2xl font-black text-slate-900 mt-1">{stats.totalBookings} Trip</div>
                     </div>
                     <div>
-                      <div className="text-slate-500 font-medium">Estimasi Omzet</div>
+                      <div className="text-slate-500 font-medium">Perkiraan Pemasukan</div>
                       <div className="text-2xl font-black text-slate-900 mt-1">
-                        Rp {(stats.totalRevenue / 1000000).toFixed(1)}jt
+                        Rp {stats.totalRevenue.toLocaleString("id-ID")}
                       </div>
                     </div>
                     <div>
-                      <div className="text-slate-500 font-medium">Tingkat Utilisasi Armada</div>
-                      <div className="text-2xl font-black text-cyan-800 mt-1">
+                      <div className="text-slate-500 font-medium">Booking per Kapal</div>
+                      <div className="text-2xl font-black text-primary mt-1">
                         {stats.totalBoats > 0
-                          ? Math.round((stats.totalBookings / stats.totalBoats) * 100)
+                          ? (stats.totalBookings / stats.totalBoats).toFixed(1).replace(".", ",")
                           : 0}
-                        %
                       </div>
                     </div>
                   </div>
@@ -936,8 +987,8 @@ const OperatorDashboard = () => {
           <TabsContent value="boats" className="space-y-4 animate-in fade-in duration-200">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-black tracking-tight text-slate-900">Daftar Armada Kapal</h2>
-                <p className="text-xs text-slate-500">Kelola spesifikasi, kapasitas, dan tarif sewa kapal Anda.</p>
+                <h2 className="text-xl font-black tracking-tight text-slate-900">Kapal Saya</h2>
+                <p className="text-xs text-slate-500">Atur kapal, jumlah penumpang, dan harganya.</p>
               </div>
               <Button
                 variant="hero"
@@ -963,37 +1014,37 @@ const OperatorDashboard = () => {
                   <CardContent className="pt-4">
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between py-1 border-b border-slate-50">
-                        <span className="text-slate-500">Kapasitas Maksimal:</span>
+                        <span className="text-slate-500">Jumlah Penumpang:</span>
                         <span className="font-bold text-slate-800">{boat.capacity} Orang</span>
                       </div>
                       <div className="flex justify-between py-1 border-b border-slate-50">
-                        <span className="text-slate-500">Tarif Dasar Sewa:</span>
-                        <span className="font-bold text-cyan-800">Rp {boat.base_price.toLocaleString("id-ID")}</span>
+                        <span className="text-slate-500">Harga Sewa:</span>
+                        <span className="font-bold text-primary">Rp {boat.base_price.toLocaleString("id-ID")}</span>
                       </div>
                       <div className="flex justify-between py-1 border-b border-slate-50">
-                        <span className="text-slate-500">Status Kelaikan:</span>
+                        <span className="text-slate-500">Status Kapal:</span>
                         <span
                           className={`font-bold ${
                             boat.available ? "text-emerald-600" : "text-rose-600"
                           }`}
                         >
-                          {boat.available ? "Tersedia Berlayar" : "Docking / Perawatan"}
+                          {boat.available ? "Siap Berlayar" : "Lagi Diperbaiki"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-slate-500">Kelaikan Cuaca:</span>
+                        <span className="text-slate-500">Cuaca Hari Ini:</span>
                         <span>
                           {currentSafety === "aman" ? (
                             <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold">
-                              ● Aman Melaut
+                              ● Aman Berlayar
                             </Badge>
                           ) : currentSafety === "waspada" ? (
                             <Badge className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-bold">
-                              ▲ Waspada (SOLAS)
+                              ▲ Waspada
                             </Badge>
                           ) : (
                             <Badge className="bg-rose-50 text-rose-800 border-rose-300 text-[10px] font-bold">
-                              ✖ Larangan KSOP
+                              ✖ Tunda Berlayar
                             </Badge>
                           )}
                         </span>
@@ -1019,7 +1070,7 @@ const OperatorDashboard = () => {
                             : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                         }`}
                       >
-                        {boat.available ? "Set Docking" : "Set Tersedia"}
+                        {boat.available ? "Tandai Diperbaiki" : "Tandai Siap"}
                       </Button>
                     </div>
                   </CardContent>
@@ -1034,7 +1085,7 @@ const OperatorDashboard = () => {
               <div>
                 <h2 className="text-xl font-black tracking-tight text-slate-900">Daftar Paket Wisata</h2>
                 <p className="text-xs text-slate-500">
-                  Kelola paket tour penyeberangan, charter mancing, dan tarif yang ditawarkan ke wisatawan.
+                  Atur paket tour dan harganya untuk wisatawan.
                 </p>
               </div>
               <Button
@@ -1052,7 +1103,7 @@ const OperatorDashboard = () => {
                 <Compass className="h-10 w-10 text-slate-300 mx-auto mb-2" />
                 <h3 className="font-bold text-slate-700 text-sm">Belum ada paket wisata</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  Mulai tawarkan paket tour penyeberangan Teluk Penyu atau charter kapal ke Nusakambangan.
+                  Buat paket tour pertama Anda, misalnya trip ke Teluk Penyu atau Nusakambangan.
                 </p>
                 <Button
                   variant="outline"
@@ -1089,23 +1140,23 @@ const OperatorDashboard = () => {
                       <CardContent className="pt-4 space-y-3">
                         <div className="space-y-1.5 text-xs">
                           <div className="flex justify-between py-1 border-b border-slate-50">
-                            <span className="text-slate-500">Tarif Paket:</span>
-                            <span className="font-black text-cyan-800 text-sm">
+                            <span className="text-slate-500">Harga Paket:</span>
+                            <span className="font-black text-primary text-sm">
                               Rp {pkg.price.toLocaleString("id-ID")}
                             </span>
                           </div>
                           <div className="flex justify-between py-1 border-b border-slate-50">
-                            <span className="text-slate-500">Estimasi Durasi:</span>
+                            <span className="text-slate-500">Lama Trip:</span>
                             <span className="font-bold text-slate-800">{pkg.duration_hours} Jam</span>
                           </div>
                           <div className="flex justify-between py-1 border-b border-slate-50">
-                            <span className="text-slate-500">Armada Kapal:</span>
+                            <span className="text-slate-500">Kapal:</span>
                             <span className="font-bold text-slate-800">
-                              {boats.find((b) => b.id === pkg.boat_id)?.name || "Disediakan Operator"}
+                              {boats.find((b) => b.id === pkg.boat_id)?.name || "Kapal dari operator"}
                             </span>
                           </div>
                           <div className="flex justify-between py-1 border-b border-slate-50">
-                            <span className="text-slate-500">Kapasitas Maksimal:</span>
+                            <span className="text-slate-500">Jumlah Penumpang:</span>
                             <span className="font-bold text-slate-800">
                               {pkg.max_participants ? `${pkg.max_participants} Orang` : "-"}
                             </span>
@@ -1177,9 +1228,9 @@ const OperatorDashboard = () => {
           <TabsContent value="bookings" className="space-y-4 animate-in fade-in duration-200">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black tracking-tight text-slate-900">Konsol Persetujuan Booking</h2>
+                <h2 className="text-xl font-black tracking-tight text-slate-900">Booking Masuk</h2>
                 <p className="text-xs text-slate-500">
-                  Konfirmasi atau selesaikan pesanan wisatawan untuk menjamin kelaikan manifes kapal.
+                  Konfirmasi atau selesaikan pesanan wisatawan dan siapkan manifes kapal.
                 </p>
               </div>
 
@@ -1214,7 +1265,7 @@ const OperatorDashboard = () => {
                   </span>
                 </Button>
                 <Button
-                  aria-label="Filter status: Terkonfirmasi"
+                  aria-label="Filter status: Diterima"
                   variant={bookingFilter === "confirmed" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setBookingFilter("confirmed")}
@@ -1222,7 +1273,7 @@ const OperatorDashboard = () => {
                     bookingFilter === "confirmed" ? "bg-[#090D16] text-white shadow-sm" : "text-slate-700 hover:text-slate-900"
                   }`}
                 >
-                  <span>Terkonfirmasi</span>
+                  <span>Diterima</span>
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-400 text-emerald-950 font-black">
                     {confirmedCount}
                   </span>
@@ -1263,9 +1314,9 @@ const OperatorDashboard = () => {
               <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-900 flex items-start gap-3">
                 <AlertOctagon className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
                 <div className="text-xs sm:text-sm">
-                  <p className="font-bold">PERINGATAN KSOP & SYAHBANDAR: Status Cuaca Maritim "TUNDA"</p>
+                  <p className="font-bold">Peringatan cuaca: status "TUNDA"</p>
                   <p className="mt-0.5 text-rose-800">
-                    Gelombang laut atau kecepatan angin saat ini melebihi ambang batas aman kapal wisata. Seluruh keberangkatan dihimbau ditunda demi keselamatan jiwa penumpang. Hubungi wisatawan untuk koordinasi penjadwalan ulang melalui tombol Chat WhatsApp.
+                    Gelombang atau angin saat ini melebihi ambang batas aman. Seluruh keberangkatan disarankan ditunda. Hubungi wisatawan untuk koordinasi penjadwalan ulang.
                   </p>
                 </div>
               </div>
@@ -1275,8 +1326,8 @@ const OperatorDashboard = () => {
             {filteredBookings.length === 0 ? (
               <Card className="rounded-2xl border-slate-200 border-dashed p-8 text-center bg-white">
                 <Ticket className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                <h3 className="font-bold text-slate-700 text-sm">Tidak ada booking untuk filter ini</h3>
-                <p className="text-xs text-slate-500 mt-1">Pilih filter lain untuk melihat pesanan lainnya.</p>
+                <h3 className="font-bold text-slate-700 text-sm">Tidak ada booking di sini</h3>
+                <p className="text-xs text-slate-500 mt-1">Coba pilih yang lain di atas.</p>
               </Card>
             ) : (
               <div className="space-y-4">
@@ -1294,15 +1345,15 @@ const OperatorDashboard = () => {
                               {getStatusBadge(booking.booking_status)}
                               <span className="text-xs text-slate-500 font-medium">
                                 Pembayaran:{" "}
-                                <strong className="text-slate-800 uppercase text-[11px]">
-                                  {booking.payment_status}
+                                <strong className="text-slate-800 text-[11px]">
+                                  {getPaymentLabel(booking.payment_status)}
                                 </strong>
                               </span>
                               {currentSafety === "tunda" &&
                                 (booking.booking_status === "pending" ||
                                   booking.booking_status === "confirmed") && (
                                   <Badge className="bg-rose-100 text-rose-900 border-rose-300 font-bold text-[10px]">
-                                    ⚠️ Cuaca Ekstrem: Tunda Melaut
+                                    Tunda Berlayar
                                   </Badge>
                                 )}
                             </div>
@@ -1334,8 +1385,8 @@ const OperatorDashboard = () => {
                           </div>
 
                           <div className="text-right sm:self-center">
-                            <span className="text-xs text-slate-500 block">Total Tarif Pelayaran</span>
-                            <span className="text-xl font-black text-cyan-800 block">
+                            <span className="text-xs text-slate-500 block">Total Harga</span>
+                            <span className="text-xl font-black text-primary block">
                               Rp {booking.total_price.toLocaleString("id-ID")}
                             </span>
                             <span className="text-[11px] text-slate-500">
@@ -1385,10 +1436,10 @@ const OperatorDashboard = () => {
                                 size="sm"
                                 disabled={isUpdating === booking.id}
                                 onClick={() => handleUpdateBookingStatus(booking.id, "completed")}
-                                className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold gap-1.5 shadow-sm"
+                                className="bg-primary hover:bg-primary text-white rounded-xl text-xs font-bold gap-1.5 shadow-sm"
                               >
                                 <Anchor className="h-4 w-4" />
-                                <span>Selesaikan Trip</span>
+                                <span>Selesaikan Perjalanan</span>
                               </Button>
                               <Button
                                 variant="ghost"
@@ -1405,14 +1456,14 @@ const OperatorDashboard = () => {
                           {booking.booking_status === "completed" && (
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-sky-700 bg-sky-50 px-3 py-1.5 rounded-xl border border-sky-100">
                               <CheckCircle2 className="h-4 w-4 text-sky-600" />
-                              <span>Pelayaran Telah Selesai</span>
+                              <span>Perjalanan Selesai</span>
                             </div>
                           )}
 
                           {booking.booking_status === "cancelled" && (
                             <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
                               <XCircle className="h-4 w-4 text-rose-600" />
-                              <span>Booking Telah Dibatalkan</span>
+                              <span>Booking Dibatalkan</span>
                             </div>
                           )}
 
@@ -1420,20 +1471,20 @@ const OperatorDashboard = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenManifest(booking)}
-                            className="rounded-xl text-xs font-semibold border-slate-200 text-slate-800 hover:bg-cyan-50 hover:text-cyan-800 hover:border-cyan-300 gap-1.5 ml-auto"
+                            className="rounded-xl text-xs font-semibold border-slate-200 text-slate-800 hover:bg-primary/5 hover:text-primary hover:border-primary/30 gap-1.5 ml-auto"
                           >
-                            <FileCheck2 className="h-4 w-4 text-cyan-600" />
-                            <span>Manifes KSOP</span>
+                            <FileCheck2 className="h-4 w-4 text-primary" />
+                            <span>Daftar Penumpang</span>
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleChatCustomer(booking)}
+                            onClick={() => handleCopyBooking(booking)}
                             className="rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 gap-1.5"
                           >
-                            <MessageCircle className="h-4 w-4 text-emerald-600" />
-                            <span>Chat Wisatawan</span>
+                            <Copy className="h-4 w-4 text-emerald-600" />
+                            <span>Salin Info Booking</span>
                           </Button>
                         </div>
                       </CardContent>
@@ -1449,18 +1500,18 @@ const OperatorDashboard = () => {
             <Card className="rounded-2xl border-slate-200 shadow-sm bg-white">
               <CardHeader>
                 <CardTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <UserIcon className="h-5 w-5 text-cyan-600" />
-                  Profil Usaha & Legalitas KSOP
+                  <UserIcon className="h-5 w-5 text-primary" />
+                  Profil Usaha
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500">
-                  Kelola identitas operator kapal, nomor kontak operasional, serta nomor registrasi kelaikan laut KSOP Kelas II Cilacap.
+                  Atur nama usaha, nomor HP, dan nomor sertifikat Anda.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleUpdateOperatorProfile} className="space-y-4 max-w-xl">
                   <div className="space-y-1.5">
                     <Label htmlFor="companyName" className="text-xs font-bold text-slate-700">
-                      Nama Usaha / Kelompok Nelayan / PO Kapal
+                      Nama Usaha
                     </Label>
                     <Input
                       id="companyName"
@@ -1474,7 +1525,7 @@ const OperatorDashboard = () => {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="operatorEmail" className="text-xs font-bold text-slate-700">
-                      Alamat Email Akun
+                      Email Akun
                     </Label>
                     <Input
                       id="operatorEmail"
@@ -1482,12 +1533,12 @@ const OperatorDashboard = () => {
                       disabled
                       className="rounded-xl border-slate-200 text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
                     />
-                    <p className="text-[11px] text-slate-400">Email terikat pada akun autentikasi.</p>
+                    <p className="text-[11px] text-slate-400">Email ini tidak bisa diubah.</p>
                   </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="operatorPhone" className="text-xs font-bold text-slate-700">
-                      Nomor Telepon / WhatsApp Operasional
+                      Nomor HP / WhatsApp
                     </Label>
                     <Input
                       id="operatorPhone"
@@ -1496,12 +1547,12 @@ const OperatorDashboard = () => {
                       placeholder="cth. 081234567890"
                       className="rounded-xl border-slate-200 text-sm"
                     />
-                    <p className="text-[11px] text-slate-400">Nomor ini digunakan wisatawan untuk koordinasi keberangkatan.</p>
+                    <p className="text-[11px] text-slate-400">Nomor ini dipakai wisatawan untuk menghubungi Anda.</p>
                   </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="operatorKsopCert" className="text-xs font-bold text-slate-700">
-                      Nomor Sertifikat / SKKSOP KSOP Kelas II Cilacap
+                      Nomor Sertifikat
                     </Label>
                     <Input
                       id="operatorKsopCert"
@@ -1510,7 +1561,7 @@ const OperatorDashboard = () => {
                       placeholder="cth. KSOP.CLP/2026/04-A"
                       className="rounded-xl border-slate-200 text-sm font-mono"
                     />
-                    <p className="text-[11px] text-slate-400">Nomor registrasi kelaikan laut armada kapal Anda.</p>
+                    <p className="text-[11px] text-slate-400">Nomor sertifikat kapal Anda dari KSOP.</p>
                   </div>
 
                   <div className="pt-2 flex items-center gap-3">
@@ -1520,7 +1571,7 @@ const OperatorDashboard = () => {
                       disabled={isSavingProfile}
                       className="rounded-xl font-bold text-xs"
                     >
-                      {isSavingProfile ? "Menyimpan..." : "Simpan Perubahan Profil"}
+                      {isSavingProfile ? "Menyimpan..." : "Simpan"}
                     </Button>
                   </div>
                 </form>
